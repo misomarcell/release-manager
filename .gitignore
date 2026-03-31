@@ -39,7 +39,13 @@ testem.log
 /typings
 __screenshots__/
 .env
+functions/.env
+functions/.env.*
+firebase-debug.log
+firebase-debug.*.log
+functions/lib
 
 # System files
 .DS_Store
 Thumbs.db
+/web/.angular

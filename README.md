@@ -1,63 +1,62 @@
 # movie-releases
 
-Angular 21 standalone application with Angular Material (M3), SSR, and PWA/service worker support.
+Monorepo workspace for an Angular SSR app on Firebase App Hosting with Firebase Functions API.
 
-## Setup
+## Structure
+
+- `web/` Angular app (SSR + Material + PWA)
+- `functions/` Firebase HTTP functions (`ncoreSearch`)
+- `shared/` shared TypeScript models
+
+## Install
 
 ```bash
 npm ci
 ```
 
-Copy `.env.example` to `.env` and set credentials.
-Use `NCORE_COOKIE` with the full cookie header value from your browser.
+## Run Locally
 
-Optional:
-- `NCORE_BASE_URL` (defaults to `https://ncore.pro`)
-
-## Run
-
+1. Start functions emulator:
 ```bash
-npm run start
+firebase emulators:start --only functions
 ```
 
-Open `http://localhost:4200`, type a query in the search field, and submit.
-The app calls `/api/ncore/search`, shows parsed results, and prints full returned JSON formatted in the page.
-
-## Build
-
+2. In another terminal start web app:
 ```bash
-npm run build
+npm run start --workspace web
 ```
 
-## Lint
+The web app calls the local functions emulator at `http://127.0.0.1:5001/<project-id>/us-central1/ncoreSearch` when running on localhost.
+
+## Env / Secrets
+
+- Local emulator values: create `functions/.env` from `functions/.env.example`
+- Production: set Firebase Function secrets/env values for:
+  - `NCORE_COOKIE`
+  - optional `NCORE_BASE_URL`
+
+## Validation
 
 ```bash
 npm run lint
-```
-
-## Validate
-
-```bash
+npm run build
+npm run knip
 npm run validate
 ```
 
-`validate` runs:
-- `npm run lint`
-- `npm run build`
-
-## Collect
-
-No dedicated `collect` script is defined in this repository. If you add one later, document its inputs/outputs here.
-
 ## Deploy
 
-Current deploy target is static build output from `dist/movie-releases/browser` (and SSR server output under `dist/movie-releases/server`).
+```bash
+npm run deploy
+```
 
-Typical flow:
-1. Run `npm run validate`.
-2. Build with `npm run build`.
-3. Publish artifacts from `dist/` using your chosen CI/CD pipeline (for example GitHub Actions to GitHub Pages or another host).
+Deploy uses:
+- Firebase Functions from `functions/`
+- App Hosting backend source from `web/`
 
-## Git Hooks
+## CI/CD
 
-Pre-commit hook uses Husky + lint-staged and lints staged `*.ts` and `*.html` files.
+GitHub Actions workflow: `.github/workflows/deploy.yml`
+- triggers on pushes to `main`
+- runs `npm ci`, `npm run validate`, then Firebase deploy
+- requires repository secret: `FIREBASE_TOKEN`
