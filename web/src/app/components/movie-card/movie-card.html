@@ -61,6 +61,11 @@
       }
     </div>
 
+    <button mat-button class="search-title-btn" (click)="onSearchTitle()">
+      <mat-icon>search</mat-icon>
+      Search for "{{ displayTitle() }}"
+    </button>
+
     <h4 class="releases-title">Releases on this page</h4>
     <div class="releases-list">
       @for (r of m.releases; track r.torrent_id; let last = $last) {

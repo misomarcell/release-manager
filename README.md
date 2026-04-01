@@ -35,6 +35,12 @@ docker compose up -d
 # 3. Open http://localhost:4000
 ```
 
+## Updating (after git pull)
+
+```bash
+docker compose build --no-cache backend frontend && docker compose up -d
+```
+
 ## Development Setup
 
 ```bash

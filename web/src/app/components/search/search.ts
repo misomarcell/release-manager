@@ -131,6 +131,12 @@ export class SearchComponent implements OnInit {
     void this.loadResults();
   }
 
+  protected onSearchByTitle(title: string): void {
+    this.searchQuery = title;
+    this.currentPage.set(1);
+    void this.loadResults();
+  }
+
   protected onPage(event: PageEvent): void {
     this.currentPage.set(event.pageIndex + 1);
     if (typeof window !== 'undefined') {
