@@ -30,8 +30,8 @@ export const config = {
     url: process.env['QBITTORRENT_URL']?.trim() || '',
     username: process.env['QBITTORRENT_USERNAME']?.trim() || 'admin',
     password: process.env['QBITTORRENT_PASSWORD']?.trim() || '',
-    savePathMovies: process.env['DOWNLOAD_PATH_MOVIES']?.trim() || '/srv/media/Movies',
-    savePathTv: process.env['DOWNLOAD_PATH_TV']?.trim() || '/srv/media/TV_Shows',
+    savePathMovies: process.env['DOWNLOAD_PATH_MOVIES']?.trim() || '/media/Movies',
+    savePathTv: process.env['DOWNLOAD_PATH_TV']?.trim() || '/media/TV_Shows',
   },
   cacheExpiryMs: 7 * 24 * 60 * 60 * 1000, // 1 week
 };

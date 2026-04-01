@@ -13,8 +13,8 @@ import type { GroupedMovie } from '../search/search';
 import type { NcoreResult } from '../../../../../shared/src/ncore.models';
 
 const TV_CATEGORIES = new Set(['hdser_hun', 'hdser']);
-const MOVIES_BASE = '/srv/media/Movies';
-const TV_BASE = '/srv/media/TV_Shows';
+const MOVIES_BASE = '/media/Movies';
+const TV_BASE = '/media/TV_Shows';
 
 @Component({
   selector: 'app-movie-card',
