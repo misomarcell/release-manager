@@ -17,7 +17,7 @@ RUN cd shared && npx tsc -p tsconfig.json
 FROM base AS build-backend
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build-shared /app/shared ./shared
-RUN rm -rf node_modules/shared && ln -s ../shared node_modules/shared
+COPY --from=build-shared /app/shared/dist ./node_modules/shared/dist
 COPY tsconfig.base.json ./
 COPY backend/ backend/
 RUN cd backend && npx tsc -p tsconfig.json
@@ -25,7 +25,7 @@ RUN cd backend && npx tsc -p tsconfig.json
 FROM base AS build-web
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build-shared /app/shared ./shared
-RUN rm -rf node_modules/shared && ln -s ../shared node_modules/shared
+COPY --from=build-shared /app/shared/dist ./node_modules/shared/dist
 COPY tsconfig.base.json ./
 COPY web/ web/
 RUN cd web && npx ng build --configuration production
@@ -34,7 +34,7 @@ RUN cd web && npx ng build --configuration production
 FROM base AS backend
 ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=build-shared /app/shared ./shared
+COPY --from=build-shared /app/shared/dist ./node_modules/shared/dist
 COPY --from=build-backend /app/backend/dist ./backend/dist
 COPY backend/package.json backend/
 EXPOSE 3000
@@ -44,6 +44,7 @@ CMD ["node", "backend/dist/index.js"]
 FROM base AS frontend
 ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=build-shared /app/shared/dist ./node_modules/shared/dist
 COPY --from=build-web /app/web/dist ./web/dist
 EXPOSE 4000
 ENV PORT=4000
