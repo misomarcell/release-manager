@@ -19,6 +19,7 @@
 - Keep code comments to the minimum.
 - Character coding should be UTF-8 in all files, supporting Hungarian characters.
 - No need for explicit readonly keyword in Angular components, leave private fields as simply private.
+- Always separate Angular component files into `.ts`, `.html`, and `.scss` — never use inline templates or styles.
 
 ## Backend Structure
 

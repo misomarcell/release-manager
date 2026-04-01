@@ -4,9 +4,9 @@ import { parseReleaseName, sanitizeImdbId } from '../utils/release-parser.js';
 import type { NcoreCategoryKey, NcoreResult, NcoreOmdbLookup } from 'shared/ncore.models';
 
 const SUPPORTED_CATEGORIES: Record<NcoreCategoryKey, string> = {
-  all: 'xvid_hun,xvid,dvd_hun,dvd,dvd9_hun,dvd9,hd_hun,hd,xvidser_hun,xvidser,dvdser_hun,dvdser,hdser_hun,hdser,mp3_hun,mp3,lossless_hun,lossless,clip,game_iso,game_rip,console,iso,misc,mobil,ebook_hun,ebook,xxx_xvid,xxx_dvd,xxx_imageset,xxx_hd',
-  movies: 'xvid_hun,xvid,dvd_hun,dvd,dvd9_hun,dvd9,hd_hun,hd',
-  tv: 'xvidser_hun,xvidser,dvdser_hun,dvdser,hdser_hun,hdser',
+  all: 'hd_hun,hd,hdser_hun,hdser,mp3_hun,mp3,lossless_hun,lossless,clip,game_iso,game_rip,console,iso,misc,mobil,ebook_hun,ebook',
+  movies: 'hd_hun,hd',
+  tv: 'hdser_hun,hdser',
   music: 'mp3_hun,mp3,lossless_hun,lossless,clip',
   games: 'game_iso,game_rip,console',
   software: 'iso,misc,mobil',
@@ -54,11 +54,11 @@ export async function searchNcore(params: NcoreSearchParams): Promise<NcoreRawRe
   const category = SUPPORTED_CATEGORIES[categoryKey];
   const page = Math.max(1, params.page ?? 1);
   const perPage = Math.min(100, Math.max(1, params.perPage ?? 15));
-  const searchQuery = params.search?.trim() || '*';
+  const searchQuery = params.search?.trim() || '2160p';
 
   const searchUrl = new URL('/torrents.php', baseUrl);
   searchUrl.searchParams.set('kivalasztott_tipus', category);
-  searchUrl.searchParams.set('query', searchQuery);
+  searchUrl.searchParams.set('mire', searchQuery);
   searchUrl.searchParams.set('tipus', 'kivalasztottak_kozott');
   searchUrl.searchParams.set('miszerint', 'seeders');
   searchUrl.searchParams.set('hogyan', 'DESC');
@@ -75,6 +75,8 @@ export async function searchNcore(params: NcoreSearchParams): Promise<NcoreRawRe
   }
 
   const cookieHeader = `nick=${encodeURIComponent(username)};pass=${encodeURIComponent(cookiePass)}`;
+
+  console.log('[nCore]', searchUrl.toString());
 
   const response = await fetch(searchUrl, {
     method: 'GET',

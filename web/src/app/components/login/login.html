@@ -1,0 +1,32 @@
+<div class="login-container">
+  <mat-card class="login-card">
+    <mat-card-header>
+      <mat-card-title>MovieReleases</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
+      <div class="actions">
+        <button mat-raised-button (click)="login()" [disabled]="loading()">
+          <mat-icon>fingerprint</mat-icon>
+          Sign in with Passkey
+        </button>
+        @if (loading()) {
+          <mat-spinner diameter="24" />
+        }
+      </div>
+      <details class="register-section">
+        <summary>Register a new Passkey</summary>
+        <mat-form-field appearance="outline">
+          <mat-label>Username</mat-label>
+          <input matInput [(ngModel)]="regUsername" />
+        </mat-form-field>
+        <button mat-stroked-button (click)="register()" [disabled]="loading() || !regUsername">
+          <mat-icon>person_add</mat-icon>
+          Register
+        </button>
+      </details>
+    </mat-card-content>
+  </mat-card>
+</div>

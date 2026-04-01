@@ -1,0 +1,48 @@
+import { config } from '../config.js';
+
+interface GitHubCommit {
+  sha: string;
+  html_url: string;
+  commit: { committer: { date: string } };
+}
+
+interface VersionInfo {
+  commitHash: string;
+  commitUrl: string;
+  commitDate: string;
+}
+
+let cached: { data: VersionInfo; fetchedAt: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+export async function fetchLatestCommit(): Promise<VersionInfo> {
+  if (cached && Date.now() - cached.fetchedAt < CACHE_TTL) {
+    return cached.data;
+  }
+
+  const { repo, token } = config.github;
+  const url = `https://api.github.com/repos/${repo}/commits?per_page=1`;
+
+  const headers: Record<string, string> = {
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'movie-releases-backend',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(url, { headers });
+  if (!res.ok) {
+    throw new Error(`GitHub API responded with ${res.status}`);
+  }
+
+  const [commit] = (await res.json()) as GitHubCommit[];
+  const data: VersionInfo = {
+    commitHash: commit.sha.slice(0, 7),
+    commitUrl: commit.html_url,
+    commitDate: commit.commit.committer.date,
+  };
+
+  cached = { data, fetchedAt: Date.now() };
+  return data;
+}

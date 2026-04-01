@@ -16,6 +16,10 @@ export const config = {
   omdb: {
     apiKey: process.env['OMDB_API_KEY']?.trim() || '',
   },
+  github: {
+    repo: process.env['GITHUB_REPO']?.trim() || 'misomarcell/movie-releases',
+    token: process.env['GITHUB_TOKEN']?.trim() || '',
+  },
   rp: {
     id: process.env['RP_ID'] ?? 'localhost',
     name: 'MovieReleases',

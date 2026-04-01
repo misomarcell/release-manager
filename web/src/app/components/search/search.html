@@ -1,0 +1,81 @@
+<mat-toolbar class="toolbar">
+  @if (version.commitHash()) {
+    <span class="version-info">
+      <a [href]="version.commitUrl()" target="_blank" rel="noopener" class="commit-link">{{
+        version.commitHash()
+      }}</a>
+      @if (version.commitDate(); as date) {
+        <span class="commit-date">{{ date | date: 'yyyy-MM-dd HH:mm' }}</span>
+      }
+    </span>
+  }
+  <span class="spacer"></span>
+  <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-btn">
+    <mat-icon>person</mat-icon>
+    {{ auth.username() }}
+    <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+  </button>
+  <mat-menu #userMenu="matMenu">
+    <button mat-menu-item (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      <span>Sign out</span>
+    </button>
+  </mat-menu>
+</mat-toolbar>
+
+<main class="container">
+  <mat-card class="search-card">
+    <mat-card-content class="search-bar">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-input">
+        <mat-label>Search</mat-label>
+        <input
+          matInput
+          [(ngModel)]="searchQuery"
+          (keydown.enter)="onSearch()"
+          placeholder="Movie or TV show name..."
+        />
+        <mat-icon matPrefix>search</mat-icon>
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="category-select">
+        <mat-label>Category</mat-label>
+        <mat-select [(ngModel)]="selectedCategory" (selectionChange)="onSearch()">
+          @for (cat of categories; track cat.key) {
+            <mat-option [value]="cat.key">{{ cat.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <button mat-flat-button class="search-btn" (click)="onSearch()" [disabled]="loading()">
+        <mat-icon>search</mat-icon>
+        Search
+      </button>
+    </mat-card-content>
+  </mat-card>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (error(); as err) {
+    <p class="error">{{ err }}</p>
+  }
+
+  @if (results().length > 0) {
+    <div class="results">
+      @for (torrent of results(); track torrent.torrent_id; let i = $index) {
+        <app-movie-card [torrent]="torrent" [index]="pageOffset() + i + 1" />
+      }
+    </div>
+
+    <mat-paginator
+      [length]="totalResults()"
+      [pageSize]="pageSize"
+      [pageIndex]="currentPage() - 1"
+      [pageSizeOptions]="[15]"
+      (page)="onPage($event)"
+      showFirstLastButtons
+      aria-label="Page selector"
+    />
+  } @else if (!loading() && !error()) {
+    <p class="empty">No results found.</p>
+  }
+</main>

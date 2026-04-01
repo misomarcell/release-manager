@@ -1,0 +1,85 @@
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--mat-sys-surface-container);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.version-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.commit-link {
+  color: var(--mat-sys-primary);
+  text-decoration: none;
+  font-family: monospace;
+}
+
+.commit-date {
+  opacity: 0.7;
+}
+
+.user-menu-btn {
+  font-size: 0.85rem;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.search-card {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+}
+
+.search-bar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.category-select {
+  min-width: 140px;
+}
+
+.search-btn {
+  height: 40px;
+}
+
+.error {
+  color: var(--mat-sys-error);
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+}
+
+.empty {
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+  margin-top: 2rem;
+}
+
+@media (max-width: 600px) {
+  .search-btn {
+    width: 100%;
+  }
+}

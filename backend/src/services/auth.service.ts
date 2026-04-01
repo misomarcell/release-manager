@@ -25,22 +25,21 @@ import {
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 export async function startRegistration(username: string) {
-  let user = await findUserByUsername(username);
-  if (!user) {
-    user = await createUser(username);
+  const existingUser = await findUserByUsername(username);
+  if (existingUser) {
+    const existingCreds = await getCredentialsByUserId(existingUser.id);
+    if (existingCreds.length > 0) {
+      throw new Error('Username is already registered');
+    }
+  } else {
+    await createUser(username);
   }
-
-  const existingCreds = await getCredentialsByUserId(user.id);
 
   const options = await generateRegistrationOptions({
     rpName: config.rp.name,
     rpID: config.rp.id,
     userName: username,
     attestationType: 'none',
-    excludeCredentials: existingCreds.map((c) => ({
-      id: c.id,
-      transports: c.transports as AuthenticatorTransport[],
-    })),
     authenticatorSelection: {
       residentKey: 'preferred',
       userVerification: 'preferred',
