@@ -14,7 +14,7 @@ export interface DownloadDialogData {
   title: string;
   isTV: boolean;
   suggestedPath: string;
-  category: 'movies' | 'tv';
+  category: 'Movies' | 'TV Shows';
 }
 
 @Component({

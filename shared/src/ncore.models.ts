@@ -52,7 +52,7 @@ export interface NcoreSearchResponse {
   perPage: number;
 }
 
-export type DownloadCategory = 'movies' | 'tv';
+export type DownloadCategory = 'Movies' | 'TV Shows';
 
 export interface DownloadRequest {
   downloadUrl: string;

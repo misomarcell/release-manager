@@ -56,7 +56,7 @@ export class MovieCardComponent {
   protected download(release: NcoreResult): void {
     const isTV = TV_CATEGORIES.has(release.category);
     const title = this.displayTitle();
-    const category = isTV ? 'tv' : ('movies' as const);
+    const category = isTV ? 'TV Shows' : ('Movies' as const);
     let suggestedPath: string;
 
     if (isTV) {
