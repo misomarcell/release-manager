@@ -6,6 +6,7 @@ let sessionCookie = '';
 
 async function login(): Promise<void> {
   const { url, username, password } = config.qbittorrent;
+  console.log('[qBittorrent]', `Logging in to ${url}`);
 
   const response = await fetch(`${url}/api/v2/auth/login`, {
     method: 'POST',
@@ -14,7 +15,8 @@ async function login(): Promise<void> {
   });
 
   if (!response.ok) {
-    throw new Error(`qBittorrent login failed: ${response.status}`);
+    const text = await response.text();
+    throw new Error(`qBittorrent login failed: ${response.status} ${text}`);
   }
 
   const setCookie = response.headers.get('set-cookie');
@@ -23,6 +25,7 @@ async function login(): Promise<void> {
     throw new Error('qBittorrent login did not return a session cookie');
   }
 
+  console.log('[qBittorrent]', 'Login successful');
   sessionCookie = `SID=${sid}`;
 }
 
@@ -56,6 +59,7 @@ export async function addTorrent(
   }
 
   const torrentData = await downloadTorrentFile(torrentId);
+  console.log('[qBittorrent]', `Torrent file size: ${torrentData.byteLength} bytes`);
 
   const formData = new FormData();
   formData.append(
@@ -73,8 +77,10 @@ export async function addTorrent(
     body: formData,
   });
 
+  const responseText = await response.text();
+  console.log('[qBittorrent]', `Response: ${response.status} ${responseText}`);
+
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`qBittorrent add failed: ${response.status} ${text}`);
+    throw new Error(`qBittorrent add failed: ${response.status} ${responseText}`);
   }
 }
