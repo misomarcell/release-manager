@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import {
   startRegistration,
   finishRegistration,
@@ -10,6 +11,16 @@ import {
 } from '../services/auth.service.js';
 
 const router = Router();
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later' },
+});
+
+router.use(authLimiter);
 
 router.post('/register/start', async (req: Request, res: Response) => {
   try {

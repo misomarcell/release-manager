@@ -29,7 +29,7 @@ export async function startRegistration(username: string) {
   if (existingUser) {
     const existingCreds = await getCredentialsByUserId(existingUser.id);
     if (existingCreds.length > 0) {
-      throw new Error('Username is already registered');
+      throw new Error('Registration failed');
     }
   } else {
     await createUser(username);
@@ -58,14 +58,14 @@ export async function finishRegistration(username: string, response: Registratio
     response.response.clientDataJSON
       ? extractChallengeFromClientData(response.response.clientDataJSON)
       : '',
+    username,
   );
 
-  // Fallback: verify even if challenge consumption had issues
   const verification = await verifyRegistrationResponse({
     response,
     expectedChallenge: async (challenge) => {
       if (valid) return true;
-      return await consumeChallenge(challenge);
+      return await consumeChallenge(challenge, username);
     },
     expectedOrigin: config.rp.origin,
     expectedRPID: config.rp.id,

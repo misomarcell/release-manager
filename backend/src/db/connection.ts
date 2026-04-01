@@ -39,7 +39,8 @@ export async function initDatabase(): Promise<void> {
       id          SERIAL PRIMARY KEY,
       challenge   VARCHAR(512) NOT NULL,
       username    VARCHAR(255),
-      created_at  TIMESTAMPTZ DEFAULT NOW()
+      created_at  TIMESTAMPTZ DEFAULT NOW(),
+      expires_at  TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '5 minutes')
     );
 
     CREATE TABLE IF NOT EXISTS omdb_cache (

@@ -21,6 +21,9 @@ export async function fetchLatestCommit(): Promise<VersionInfo> {
   }
 
   const { repo, token } = config.github;
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) {
+    throw new Error('Invalid GITHUB_REPO format');
+  }
   const url = `https://api.github.com/repos/${repo}/commits?per_page=1`;
 
   const headers: Record<string, string> = {

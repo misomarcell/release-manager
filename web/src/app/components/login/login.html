@@ -9,8 +9,10 @@
     @if (loading()) {
       <mat-spinner diameter="20" />
     } @else {
-      <mat-icon>fingerprint</mat-icon>
-      Sign in with Passkey
+      <ng-container>
+        <mat-icon>fingerprint</mat-icon>
+        Sign in with Passkey
+      </ng-container>
     }
   </button>
 
