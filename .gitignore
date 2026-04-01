@@ -39,11 +39,9 @@ testem.log
 /typings
 __screenshots__/
 .env
-functions/.env
-functions/.env.*
+backend/dist
 firebase-debug.log
 firebase-debug.*.log
-functions/lib
 
 # System files
 .DS_Store

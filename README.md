@@ -1,62 +1,124 @@
-# movie-releases
+# MovieReleases
 
-Monorepo workspace for an Angular SSR app on Firebase App Hosting with Firebase Functions API.
+A self-hosted web app for browsing and searching Hungarian nCore torrents, enriched with movie metadata from OMDB.
 
-## Structure
+## Features
 
-- `web/` Angular app (SSR + Material + PWA)
-- `functions/` Firebase HTTP functions (`ncoreSearch`)
-- `shared/` shared TypeScript models
+- **nCore integration**: Search torrents by category or keyword, sorted by seeders
+- **OMDB enrichment**: Movie posters, ratings, genres, plots via OMDB API
+- **PostgreSQL caching**: OMDB data cached for 1 week to respect API limits
+- **Passkey authentication**: WebAuthn/FIDO2 login — no passwords
+- **Dark theme**: Angular Material 3 dark mode
+- **Pagination**: 15 results per page
+- **Docker**: One-command deployment with `docker compose up`
 
-## Install
+## Tech Stack
+
+| Layer    | Technology                        |
+| -------- | --------------------------------- |
+| Frontend | Angular 21, Material 3, SSR       |
+| Backend  | Express 5, TypeScript, Node.js 22 |
+| Database | PostgreSQL 17                     |
+| Auth     | WebAuthn (SimpleWebAuthn)         |
+| Deploy   | Docker Compose                    |
+
+## Quick Start (Docker)
 
 ```bash
-npm ci
+# 1. Clone and configure
+cp .env.example .env
+# Edit .env with your nCore credentials and OMDB API key
+
+# 2. Start everything
+docker compose up -d
+
+# 3. Open http://localhost:4000
 ```
 
-## Run Locally
+## Development Setup
 
-1. Start functions emulator:
 ```bash
-firebase emulators:start --only functions
+# Install dependencies
+npm install
+
+# Start PostgreSQL and pgAdmin (database UI)
+docker compose up db pgadmin -d
+
+# Start backend (port 3000)
+npm run start:backend
+
+# Start frontend (port 4200, proxies /api to backend)
+npm start
 ```
 
-2. In another terminal start web app:
-```bash
-npm run start --workspace web
+### pgAdmin (Database UI)
+
+pgAdmin is included for managing PostgreSQL during development.
+
+- **URL:** http://localhost:5050
+- **Email:** `admin@local.dev`
+- **Password:** `admin`
+
+To connect to the database, register a new server in pgAdmin:
+
+| Field                | Value      |
+| -------------------- | ---------- |
+| Host                 | `db`       |
+| Port                 | `5432`     |
+| Maintenance database | `movieapp` |
+| Username             | `movieapp` |
+| Password             | `movieapp` |
+
+## Environment Variables
+
+| Variable            | Description                  | Default                                         |
+| ------------------- | ---------------------------- | ----------------------------------------------- |
+| `NCORE_BASE_URL`    | nCore base URL               | `https://ncore.pro`                             |
+| `NCORE_USERNAME`    | nCore cookie username        | —                                               |
+| `NCORE_COOKIE_PASS` | nCore cookie password        | —                                               |
+| `OMDB_API_KEY`      | OMDB API key                 | —                                               |
+| `DATABASE_URL`      | PostgreSQL connection string | `postgres://movieapp:movieapp@db:5432/movieapp` |
+| `SESSION_SECRET`    | Session signing secret       | `change-me-to-a-random-string`                  |
+| `RP_ID`             | WebAuthn Relying Party ID    | `localhost`                                     |
+| `RP_ORIGIN`         | WebAuthn origin URL          | `http://localhost:4000`                         |
+
+## Authentication
+
+1. Register a passkey at the login page
+2. Activate your account — either via pgAdmin or the command line:
+   ```bash
+   docker compose exec db psql -U movieapp -c "UPDATE users SET valid = true WHERE username = 'you';"
+   ```
+3. Log in with your passkey
+
+## Project Structure
+
 ```
-
-The web app calls the local functions emulator at `http://127.0.0.1:5001/<project-id>/us-central1/ncoreSearch` when running on localhost.
-
-## Env / Secrets
-
-- Local emulator values: create `functions/.env` from `functions/.env.example`
-- Production: set Firebase Function secrets/env values for:
-  - `NCORE_COOKIE`
-  - optional `NCORE_BASE_URL`
+├── backend/          # Express API server
+│   └── src/
+│       ├── routes/   # API endpoints
+│       ├── services/ # Business logic
+│       ├── repositories/  # Database access
+│       ├── middleware/     # Auth middleware
+│       ├── utils/    # Helpers
+│       └── db/       # PostgreSQL connection
+├── web/              # Angular frontend (SSR)
+│   └── src/app/
+│       ├── components/    # Login, Search, MovieCard
+│       ├── services/      # API & Auth services
+│       └── guards/        # Route guards
+├── shared/           # Shared TypeScript models
+├── docker-compose.yml
+├── Dockerfile
+└── .env.example
+```
 
 ## Validation
 
 ```bash
-npm run lint
-npm run build
-npm run knip
-npm run validate
+npm run validate   # Runs lint + build + knip
 ```
-
-## Deploy
-
-```bash
-npm run deploy
-```
-
-Deploy uses:
-- Firebase Functions from `functions/`
-- App Hosting backend source from `web/`
 
 ## CI/CD
 
-GitHub Actions workflow: `.github/workflows/deploy.yml`
-- triggers on pushes to `main`
-- runs `npm ci`, `npm run validate`, then Firebase deploy
-- requires repository secret: `FIREBASE_TOKEN`
+GitHub Actions runs validation on every push to `main` and on pull requests. Deploy to your server by pulling and running `docker compose up -d --build`.

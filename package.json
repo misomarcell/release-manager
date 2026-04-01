@@ -4,26 +4,23 @@
   "packageManager": "npm@11.7.0",
   "workspaces": [
     "shared",
-    "functions",
+    "backend",
     "web"
   ],
   "scripts": {
     "start": "npm run start --workspace web",
-    "build": "npm run build --workspace shared && npm run build --workspace functions && npm run build --workspace web",
-    "lint": "npm run lint --workspace shared && npm run lint --workspace functions && npm run lint --workspace web",
-    "knip": "npm run knip --workspace shared && npm run knip --workspace functions && npm run knip --workspace web",
+    "start:backend": "npm run dev --workspace backend",
+    "build": "npm run build --workspace shared && npm run build --workspace backend && npm run build --workspace web",
+    "lint": "npm run lint --workspace shared && npm run lint --workspace backend && npm run lint --workspace web",
+    "knip": "npm run knip --workspace shared && npm run knip --workspace backend && npm run knip --workspace web",
     "validate": "npm run lint && npm run build && npm run knip",
     "lint:staged": "lint-staged",
-    "prepare": "husky",
-    "deploy": "firebase deploy",
-    "deploy:functions": "firebase deploy --only functions",
-    "deploy:apphosting": "firebase deploy --only apphosting"
+    "prepare": "husky"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "angular-eslint": "21.3.1",
     "eslint": "^10.0.3",
-    "firebase-tools": "^14.10.1",
     "husky": "^9.1.7",
     "knip": "^5.63.1",
     "lint-staged": "^16.4.0",
