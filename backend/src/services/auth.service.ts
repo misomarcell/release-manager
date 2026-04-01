@@ -69,6 +69,7 @@ export async function finishRegistration(username: string, response: Registratio
     },
     expectedOrigin: config.rp.origin,
     expectedRPID: config.rp.id,
+    requireUserVerification: false,
   });
 
   if (!verification.verified || !verification.registrationInfo) {
@@ -113,6 +114,7 @@ export async function finishAuthentication(response: AuthenticationResponseJSON)
     },
     expectedOrigin: config.rp.origin,
     expectedRPID: config.rp.id,
+    requireUserVerification: false,
     credential: {
       id: cred.id,
       publicKey: new Uint8Array(cred.public_key),
