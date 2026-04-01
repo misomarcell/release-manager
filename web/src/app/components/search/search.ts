@@ -24,8 +24,10 @@ import { MovieCardComponent } from '../movie-card/movie-card';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { VersionService } from '../../services/version.service';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import type { NcoreCategoryKey, NcoreResult } from '../../../../../shared/src/ncore.models';
+
+const VALID_CATEGORIES: NcoreCategoryKey[] = ['all', 'movies', 'tv'];
 
 export interface GroupedMovie {
   key: string;
@@ -61,6 +63,7 @@ export interface GroupedMovie {
 export class SearchComponent implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   protected auth = inject(AuthService);
   protected version = inject(VersionService);
 
@@ -123,6 +126,21 @@ export class SearchComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    const params = this.route.snapshot.queryParams;
+    const cat = params['category'];
+    if (cat && VALID_CATEGORIES.includes(cat)) {
+      this.selectedCategory.set(cat as NcoreCategoryKey);
+    }
+    if (params['q']) {
+      this.searchQuery = params['q'];
+    }
+    if (params['uhd'] === 'false') {
+      this.uhdOnly.set(false);
+    }
+    const page = parseInt(params['page'], 10);
+    if (page > 0) {
+      this.currentPage.set(page);
+    }
     void this.loadResults();
   }
 
@@ -153,6 +171,7 @@ export class SearchComponent implements OnInit {
   private async loadResults(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
+    this.syncQueryParams();
 
     try {
       const hasSearchTerm = !!this.searchQuery.trim();
@@ -172,5 +191,14 @@ export class SearchComponent implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private syncQueryParams(): void {
+    const params: Record<string, string> = {};
+    if (this.searchQuery.trim()) params['q'] = this.searchQuery.trim();
+    if (this.selectedCategory() !== 'movies') params['category'] = this.selectedCategory();
+    if (!this.uhdOnly()) params['uhd'] = 'false';
+    if (this.currentPage() > 1) params['page'] = String(this.currentPage());
+    this.router.navigate([], { queryParams: params, replaceUrl: true });
   }
 }

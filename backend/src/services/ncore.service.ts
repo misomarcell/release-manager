@@ -4,13 +4,9 @@ import { parseReleaseName, sanitizeImdbId } from '../utils/release-parser.js';
 import type { NcoreCategoryKey, NcoreResult, NcoreOmdbLookup } from 'shared/ncore.models';
 
 const SUPPORTED_CATEGORIES: Record<NcoreCategoryKey, string> = {
-  all: 'hd_hun,hd,hdser_hun,hdser,mp3_hun,mp3,lossless_hun,lossless,clip,game_iso,game_rip,console,iso,misc,mobil,ebook_hun,ebook',
+  all: 'hd_hun,hd,hdser_hun,hdser',
   movies: 'hd_hun,hd',
   tv: 'hdser_hun,hdser',
-  music: 'mp3_hun,mp3,lossless_hun,lossless,clip',
-  games: 'game_iso,game_rip,console',
-  software: 'iso,misc,mobil',
-  books: 'ebook_hun,ebook',
 };
 
 function withBaseUrl(value: string, baseUrl: string): string {
@@ -69,11 +65,7 @@ export async function searchNcore(params: NcoreSearchParams): Promise<NcoreRawRe
   searchUrl.searchParams.set('tipus', 'kivalasztottak_kozott');
   searchUrl.searchParams.set('miszerint', 'seeders');
   searchUrl.searchParams.set('hogyan', 'DESC');
-  searchUrl.searchParams.set('submit.x', '0');
-  searchUrl.searchParams.set('submit.y', '0');
-  searchUrl.searchParams.set('submit', 'Ok');
   searchUrl.searchParams.set('tags', '');
-  searchUrl.searchParams.set('searchedfrompotato', 'qbittorrent');
   searchUrl.searchParams.set('jsons', 'true');
 
   // nCore uses 'oldal' for page number

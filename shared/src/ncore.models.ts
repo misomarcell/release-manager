@@ -1,4 +1,4 @@
-export type NcoreCategoryKey = 'all' | 'movies' | 'tv' | 'music' | 'games' | 'software' | 'books';
+export type NcoreCategoryKey = 'all' | 'movies' | 'tv';
 
 export interface NcoreOmdbLookup {
   imdbId: string;
