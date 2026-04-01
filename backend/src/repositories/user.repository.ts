@@ -69,15 +69,12 @@ export async function updateCredentialCounter(id: string, counter: number): Prom
 
 export async function saveChallenge(challenge: string, username?: string): Promise<void> {
   await query(
-    'INSERT INTO challenges (challenge, username, expires_at) VALUES ($1, $2, NOW() + INTERVAL \'5 minutes\')',
+    "INSERT INTO challenges (challenge, username, expires_at) VALUES ($1, $2, NOW() + INTERVAL '5 minutes')",
     [challenge, username ?? null],
   );
 }
 
-export async function consumeChallenge(
-  challenge: string,
-  username?: string,
-): Promise<boolean> {
+export async function consumeChallenge(challenge: string, username?: string): Promise<boolean> {
   await query('DELETE FROM challenges WHERE expires_at < NOW()');
   const sql = username
     ? 'DELETE FROM challenges WHERE challenge = $1 AND username = $2 AND expires_at > NOW() RETURNING id'

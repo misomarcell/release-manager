@@ -72,7 +72,7 @@ router.post('/login/finish', async (req: Request, res: Response) => {
     res.cookie('session', result.token, {
       httpOnly: true,
       secure: process.env['NODE_ENV'] === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       expires: result.expiresAt,
       path: '/',
     });

@@ -17,9 +17,10 @@ const angularApp = new AngularNodeAppEngine();
 app.use('/api', async (req, res) => {
   try {
     const url = new URL(req.originalUrl, backendUrl);
-    const headers: Record<string, string> = {
-      'content-type': 'application/json',
-    };
+    const headers: Record<string, string> = {};
+    if (req.headers['content-type']) {
+      headers['content-type'] = req.headers['content-type'] as string;
+    }
     if (req.headers['cookie']) {
       headers['cookie'] = req.headers['cookie'] as string;
     }
@@ -41,7 +42,12 @@ app.use('/api', async (req, res) => {
     res.status(upstream.status);
 
     for (const [key, value] of upstream.headers.entries()) {
+      if (key === 'set-cookie') continue;
       res.setHeader(key, value);
+    }
+    const setCookies = upstream.headers.getSetCookie();
+    if (setCookies.length > 0) {
+      res.setHeader('set-cookie', setCookies);
     }
 
     const body = await upstream.arrayBuffer();
