@@ -30,6 +30,9 @@ services:
       RP_ORIGIN: https://releases.example.com
     expose:
       - '3000'
+    networks:
+      - default
+      - media
     depends_on:
       db:
         condition: service_healthy
@@ -62,3 +65,7 @@ services:
 
 volumes:
   pgdata:
+
+networks:
+  media:
+    external: true
