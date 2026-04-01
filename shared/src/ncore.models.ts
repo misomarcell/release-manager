@@ -55,7 +55,7 @@ export interface NcoreSearchResponse {
 export type DownloadCategory = 'movies' | 'tv';
 
 export interface DownloadRequest {
-  torrentId: string;
+  downloadUrl: string;
   savePath: string;
   category: DownloadCategory;
 }

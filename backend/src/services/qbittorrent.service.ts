@@ -49,7 +49,7 @@ async function qbtFetch(path: string, init: RequestInit): Promise<Response> {
 }
 
 export async function addTorrent(
-  torrentId: string,
+  downloadUrl: string,
   savePath: string,
   category: DownloadCategory,
 ): Promise<void> {
@@ -58,7 +58,7 @@ export async function addTorrent(
     throw new Error('qBittorrent is not configured. Set QBITTORRENT_URL.');
   }
 
-  const torrentData = await downloadTorrentFile(torrentId);
+  const torrentData = await downloadTorrentFile(downloadUrl);
   console.log('[qBittorrent]', `Torrent file size: ${torrentData.byteLength} bytes`);
 
   const formData = new FormData();
@@ -70,7 +70,7 @@ export async function addTorrent(
   formData.append('savepath', savePath);
   formData.append('category', category);
 
-  console.log('[qBittorrent]', `Adding torrent ${torrentId} to ${savePath} (${category})`);
+  console.log('[qBittorrent]', `Adding torrent to ${savePath} (${category})`);
 
   const response = await qbtFetch('/api/v2/torrents/add', {
     method: 'POST',

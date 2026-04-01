@@ -65,8 +65,8 @@ router.get('/nfo/:id', requireAuth, async (req: Request, res: Response) => {
 
 router.post('/download', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { torrentId, savePath, category } = req.body as DownloadRequest;
-    if (!torrentId || !savePath || !category) {
+    const { downloadUrl, savePath, category } = req.body as DownloadRequest;
+    if (!downloadUrl || !savePath || !category) {
       res.status(400).json({ success: false, message: 'Missing required fields' });
       return;
     }
@@ -75,7 +75,7 @@ router.post('/download', requireAuth, async (req: Request, res: Response) => {
       return;
     }
 
-    await addTorrent(torrentId, savePath, category);
+    await addTorrent(downloadUrl, savePath, category);
     const response: DownloadResponse = { success: true, message: 'Torrent sent to qBittorrent' };
     res.json(response);
   } catch (error: unknown) {

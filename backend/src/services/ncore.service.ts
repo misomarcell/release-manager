@@ -165,17 +165,16 @@ export async function fetchNfo(torrentId: string): Promise<string> {
   return response.text();
 }
 
-export async function downloadTorrentFile(torrentId: string): Promise<ArrayBuffer> {
-  if (!/^\d+$/.test(torrentId)) {
-    throw new Error('Invalid torrent ID.');
+export async function downloadTorrentFile(downloadUrl: string): Promise<ArrayBuffer> {
+  const { baseUrl } = config.ncore;
+
+  const parsed = new URL(downloadUrl);
+  const expected = new URL(baseUrl);
+  if (parsed.hostname !== expected.hostname) {
+    throw new Error('Download URL does not match the configured nCore domain.');
   }
 
-  const { baseUrl } = config.ncore;
-  const downloadUrl = new URL('/torrents.php', baseUrl);
-  downloadUrl.searchParams.set('action', 'download');
-  downloadUrl.searchParams.set('id', torrentId);
-
-  console.log('[nCore]', `Downloading torrent ${torrentId}`);
+  console.log('[nCore]', `Downloading torrent from ${downloadUrl}`);
 
   const response = await fetch(downloadUrl, {
     headers: { Cookie: getCookieHeader() },

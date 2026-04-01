@@ -58,7 +58,7 @@ export class DownloadDialogComponent {
     this.error.set('');
     try {
       const result = await this.api.download({
-        torrentId: this.data.release.torrent_id,
+        downloadUrl: this.data.release.download_url,
         savePath: this.savePath,
         category: this.data.category,
       });
