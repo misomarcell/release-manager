@@ -7,14 +7,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ApiService } from '../../services/api.service';
-import type { NcoreResult, TvInfo } from '../../../../../shared/src/ncore.models';
+import type { NcoreResult, TvInfo, DownloadCategory } from '../../../../../shared/src/ncore.models';
 
 export interface DownloadDialogData {
   release: NcoreResult;
   title: string;
   isTV: boolean;
   suggestedPath: string;
-  category: 'Movies' | 'TV Shows';
+  category: DownloadCategory;
 }
 
 @Component({

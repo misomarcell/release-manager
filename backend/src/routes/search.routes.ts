@@ -5,11 +5,12 @@ import { fetchOmdbMetadata } from '../services/omdb.service.js';
 import { addTorrent } from '../services/qbittorrent.service.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import { requireAuth } from '../middleware/auth.js';
-import type {
-  NcoreResult,
-  NcoreSearchResponse,
-  DownloadRequest,
-  DownloadResponse,
+import {
+  DOWNLOAD_CATEGORIES,
+  type NcoreResult,
+  type NcoreSearchResponse,
+  type DownloadRequest,
+  type DownloadResponse,
 } from 'shared/ncore.models';
 
 const router = Router();
@@ -70,7 +71,7 @@ router.post('/download', requireAuth, async (req: Request, res: Response) => {
       res.status(400).json({ success: false, message: 'Missing required fields' });
       return;
     }
-    if (category !== 'movies' && category !== 'tv') {
+    if (!(DOWNLOAD_CATEGORIES as readonly string[]).includes(category)) {
       res.status(400).json({ success: false, message: 'Invalid category' });
       return;
     }

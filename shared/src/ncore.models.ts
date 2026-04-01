@@ -52,7 +52,8 @@ export interface NcoreSearchResponse {
   perPage: number;
 }
 
-export type DownloadCategory = 'Movies' | 'TV Shows';
+export const DOWNLOAD_CATEGORIES = ['Movies', 'TV Shows'] as const;
+export type DownloadCategory = (typeof DOWNLOAD_CATEGORIES)[number];
 
 export interface DownloadRequest {
   downloadUrl: string;
