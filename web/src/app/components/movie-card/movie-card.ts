@@ -3,7 +3,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
-import type { NcoreResult } from '../../../../../shared/src/ncore.models';
+import type { GroupedMovie } from '../search/search';
 
 @Component({
   selector: 'app-movie-card',
@@ -13,8 +13,7 @@ import type { NcoreResult } from '../../../../../shared/src/ncore.models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MovieCardComponent {
-  torrent = input.required<NcoreResult>();
-  index = input.required<number>();
+  movie = input.required<GroupedMovie>();
 
   protected formatBytes(bytes: number): string {
     if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';

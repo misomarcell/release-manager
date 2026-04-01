@@ -1,11 +1,10 @@
-@let t = torrent();
+@let m = movie();
 <mat-expansion-panel>
   <mat-expansion-panel-header>
     <div class="card-summary">
-      <span class="card-index">{{ index() }}.</span>
       <div class="poster-thumb">
-        @if (t.omdb?.poster) {
-          <img [src]="t.omdb?.poster" [alt]="t.omdb?.title || t.release_name" loading="lazy" />
+        @if (m.omdb?.poster) {
+          <img [src]="m.omdb?.poster" [alt]="m.omdb?.title || m.omdb_lookup.title" loading="lazy" />
         } @else {
           <div class="no-poster">
             <mat-icon>movie</mat-icon>
@@ -13,18 +12,18 @@
         }
       </div>
       <div class="card-info">
-        <span class="title">{{ t.omdb?.title || t.omdb_lookup.title || t.release_name }}</span>
+        <span class="title">{{ m.omdb?.title || m.omdb_lookup.title }}</span>
         <span class="meta">
-          @if (t.omdb?.year) {
-            {{ t.omdb?.year }}
+          @if (m.omdb?.year) {
+            {{ m.omdb?.year }}
           }
-          @if (t.omdb?.imdbRating) {
-            · ⭐ {{ t.omdb?.imdbRating }}
+          @if (m.omdb?.imdbRating) {
+            · ⭐ {{ m.omdb?.imdbRating }}
           }
-          @if (t.omdb?.genre) {
-            · {{ t.omdb?.genre }}
+          @if (m.omdb?.genre) {
+            · {{ m.omdb?.genre }}
           }
-          · {{ formatBytes(t.size) }}
+          · {{ m.releases.length }} release{{ m.releases.length > 1 ? 's' : '' }}
         </span>
       </div>
     </div>
@@ -33,77 +32,66 @@
   <mat-divider />
 
   <div class="card-details">
-    <div class="detail-info">
-      @if (t.omdb?.plot) {
-        <p class="plot">{{ t.omdb?.plot }}</p>
+    @if (m.omdb?.plot) {
+      <p class="plot">{{ m.omdb?.plot }}</p>
+    }
+
+    <div class="detail-table">
+      @if (m.omdb?.rated) {
+        <div class="detail-row">
+          <span class="detail-label">Rating</span>
+          <span class="detail-value">{{ m.omdb?.rated }}</span>
+        </div>
       }
-      <div class="detail-table">
+      @if (m.omdb?.runtime) {
         <div class="detail-row">
-          <span class="detail-label">Release</span>
-          <span class="detail-value release-name">{{ t.release_name }}</span>
+          <span class="detail-label">Runtime</span>
+          <span class="detail-value">{{ m.omdb?.runtime }}</span>
         </div>
+      }
+      @if (m.imdb_id) {
         <div class="detail-row">
-          <span class="detail-label">Category</span>
-          <span class="detail-value">{{ t.category }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Type</span>
-          <span class="detail-value">{{ t.type }}</span>
-        </div>
-        @if (t.omdb?.rated) {
-          <div class="detail-row">
-            <span class="detail-label">Rating</span>
-            <span class="detail-value">{{ t.omdb?.rated }}</span>
-          </div>
-        }
-        @if (t.omdb?.runtime) {
-          <div class="detail-row">
-            <span class="detail-label">Runtime</span>
-            <span class="detail-value">{{ t.omdb?.runtime }}</span>
-          </div>
-        }
-        <div class="detail-row">
-          <span class="detail-label">Size</span>
-          <span class="detail-value">{{ formatBytes(t.size) }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Peers</span>
+          <span class="detail-label">IMDb</span>
           <span class="detail-value">
-            <span class="seeders">▲ {{ t.seeders }}</span> ·
-            <span class="leechers">▼ {{ t.leechers }}</span>
+            <a [href]="'https://www.imdb.com/title/' + m.imdb_id" target="_blank" rel="noopener">{{
+              m.imdb_id
+            }}</a>
           </span>
         </div>
-        @if (t.imdb_id) {
-          <div class="detail-row">
-            <span class="detail-label">IMDb</span>
-            <span class="detail-value">
-              <a
-                [href]="'https://www.imdb.com/title/' + t.imdb_id"
-                target="_blank"
-                rel="noopener"
-                >{{ t.imdb_id }}</a
-              >
-            </span>
-          </div>
-        }
-        @if (t.freeleech) {
-          <div class="detail-row">
-            <span class="detail-label">Freeleech</span>
-            <span class="detail-value freeleech">Yes</span>
-          </div>
-        }
-      </div>
+      }
+    </div>
 
-      <div class="detail-actions">
-        <a mat-flat-button [href]="t.download_url" target="_blank" rel="noopener">
-          <mat-icon>download</mat-icon>
-          Download
-        </a>
-        <a mat-stroked-button [href]="t.details_url" target="_blank" rel="noopener">
-          <mat-icon>open_in_new</mat-icon>
-          Details
-        </a>
-      </div>
+    <h4 class="releases-title">Releases on this page</h4>
+    <div class="releases-list">
+      @for (r of m.releases; track r.torrent_id; let last = $last) {
+        <div class="release-item">
+          <a class="release-name" [href]="r.details_url" target="_blank" rel="noopener">
+            {{ r.release_name }}
+          </a>
+          <div class="release-meta">
+            <span class="release-size">{{ formatBytes(r.size) }}</span>
+            <span class="release-peers">
+              <span class="seeders">▲ {{ r.seeders }}</span>
+              <span class="leechers">▼ {{ r.leechers }}</span>
+            </span>
+            @if (r.freeleech) {
+              <span class="freeleech">FL</span>
+            }
+            <a
+              mat-icon-button
+              [href]="r.download_url"
+              target="_blank"
+              rel="noopener"
+              aria-label="Download"
+            >
+              <mat-icon>download</mat-icon>
+            </a>
+          </div>
+        </div>
+        @if (!last) {
+          <mat-divider />
+        }
+      }
     </div>
   </div>
 </mat-expansion-panel>

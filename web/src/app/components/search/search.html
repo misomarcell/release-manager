@@ -33,6 +33,11 @@
         placeholder="Search movies, TV shows..."
       />
       <mat-icon matPrefix>search</mat-icon>
+      @if (searchQuery) {
+        <button mat-icon-button matSuffix (click)="searchQuery = ''; onSearch()" aria-label="Clear">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
     </mat-form-field>
     <button
       mat-icon-button
@@ -73,10 +78,11 @@
     <p class="error">{{ err }}</p>
   }
 
-  @if (results().length > 0) {
+  @if (!loading() && groupedMovies().length > 0) {
+    <h2 class="list-title">{{ listTitle() }}</h2>
     <mat-accordion class="results">
-      @for (torrent of results(); track torrent.torrent_id; let i = $index) {
-        <app-movie-card [torrent]="torrent" [index]="pageOffset() + i + 1" />
+      @for (movie of groupedMovies(); track movie.key; let i = $index) {
+        <app-movie-card [movie]="movie" />
       }
     </mat-accordion>
 

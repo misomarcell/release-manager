@@ -19,13 +19,6 @@
   padding: 0.35rem 0.75rem;
 }
 
-.card-index {
-  font-weight: 600;
-  min-width: 1.75rem;
-  text-align: center;
-  color: var(--mat-sys-on-surface-variant);
-}
-
 .poster-thumb {
   width: 56px;
   height: 84px;
@@ -94,10 +87,10 @@
 }
 
 .plot {
-  font-style: italic;
   color: var(--mat-sys-on-surface-variant);
   margin: 0 0 1rem;
   line-height: 1.5;
+  font-size: 0.85rem;
 }
 
 .detail-table {
@@ -128,20 +121,62 @@
   color: var(--mat-sys-primary);
 }
 
+.releases-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mat-sys-on-surface-variant);
+  margin: 1.25rem 0 0.5rem;
+}
+
+.releases-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.release-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0;
+}
+
 .release-name {
   word-break: break-all;
+  color: var(--mat-sys-primary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  line-height: 1.4;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.release-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.release-size {
+  flex-shrink: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.release-peers {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
 }
 
 .freeleech {
   color: #4caf50;
-  font-weight: 500;
-}
-
-.detail-actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-  flex-wrap: wrap;
+  font-weight: 600;
+  font-size: 0.75rem;
+  flex-shrink: 0;
 }
 
 @media (max-width: 600px) {

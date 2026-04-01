@@ -27,6 +27,14 @@ import { VersionService } from '../../services/version.service';
 import { Router } from '@angular/router';
 import type { NcoreCategoryKey, NcoreResult } from '../../../../../shared/src/ncore.models';
 
+export interface GroupedMovie {
+  key: string;
+  omdb: NcoreResult['omdb'];
+  omdb_lookup: NcoreResult['omdb_lookup'];
+  imdb_id: string;
+  releases: NcoreResult[];
+}
+
 @Component({
   selector: 'app-search',
   imports: [
@@ -58,15 +66,48 @@ export class SearchComponent implements OnInit {
 
   protected loading = signal(false);
   protected error = signal<string | null>(null);
-  protected results = signal<NcoreResult[]>([]);
+  private results = signal<NcoreResult[]>([]);
   protected totalResults = signal(0);
   protected currentPage = signal(1);
-  protected pageOffset = signal(0);
   protected readonly pageSize = 100;
+
+  protected groupedMovies = computed(() => {
+    const results = this.results();
+    const groups = new Map<string, GroupedMovie>();
+    for (const r of results) {
+      const key = r.imdb_id || `${r.omdb_lookup.title}::${r.omdb_lookup.year}`;
+      const existing = groups.get(key);
+      if (existing) {
+        existing.releases.push(r);
+        if (!existing.omdb && r.omdb) {
+          existing.omdb = r.omdb;
+        }
+      } else {
+        groups.set(key, {
+          key,
+          omdb: r.omdb,
+          omdb_lookup: r.omdb_lookup,
+          imdb_id: r.imdb_id,
+          releases: [r],
+        });
+      }
+    }
+    return [...groups.values()];
+  });
 
   protected searchQuery = '';
   protected selectedCategory = signal<NcoreCategoryKey>('movies');
   protected uhdOnly = signal(true);
+  private lastSearchTerm = signal('');
+
+  protected listTitle = computed(() => {
+    const term = this.lastSearchTerm();
+    if (term) return `Results for: ${term}`;
+    const cat = this.selectedCategory();
+    if (cat === 'movies') return 'Top Movies';
+    if (cat === 'tv') return 'Top TV Shows';
+    return 'Top Releases';
+  });
 
   protected activeFilterCount = computed(() => {
     let count = 0;
@@ -79,10 +120,6 @@ export class SearchComponent implements OnInit {
     { key: 'all', label: 'All' },
     { key: 'movies', label: 'Movies' },
     { key: 'tv', label: 'TV Shows' },
-    { key: 'music', label: 'Music' },
-    { key: 'games', label: 'Games' },
-    { key: 'software', label: 'Software' },
-    { key: 'books', label: 'Books' },
   ];
 
   ngOnInit(): void {
@@ -113,6 +150,7 @@ export class SearchComponent implements OnInit {
 
     try {
       const hasSearchTerm = !!this.searchQuery.trim();
+      this.lastSearchTerm.set(this.searchQuery.trim());
       const response = await this.api.search(
         this.selectedCategory(),
         this.searchQuery,
@@ -122,7 +160,6 @@ export class SearchComponent implements OnInit {
       );
       this.results.set(response.results);
       this.totalResults.set(response.totalResults);
-      this.pageOffset.set((this.currentPage() - 1) * this.pageSize);
     } catch (e: unknown) {
       this.error.set(e instanceof Error ? e.message : 'Search failed');
       this.results.set([]);
