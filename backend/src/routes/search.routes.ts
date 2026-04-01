@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import { searchNcore } from '../services/ncore.service.js';
+import { searchNcore, fetchNfo } from '../services/ncore.service.js';
 import { fetchOmdbMetadata } from '../services/omdb.service.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -43,6 +43,16 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     res.json(response);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Search failed';
+    res.status(502).json({ error: message });
+  }
+});
+
+router.get('/nfo/:id', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const html = await fetchNfo(req.params['id'] as string);
+    res.type('html').send(html);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'NFO fetch failed';
     res.status(502).json({ error: message });
   }
 });

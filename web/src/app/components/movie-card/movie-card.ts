@@ -1,8 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatDialog } from '@angular/material/dialog';
+import { ApiService } from '../../services/api.service';
+import { NfoDialogComponent } from '../nfo-dialog/nfo-dialog';
 import type { GroupedMovie } from '../search/search';
 
 @Component({
@@ -13,6 +16,9 @@ import type { GroupedMovie } from '../search/search';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MovieCardComponent {
+  private dialog = inject(MatDialog);
+  private api = inject(ApiService);
+
   movie = input.required<GroupedMovie>();
   searchTitle = output<string>();
 
@@ -27,6 +33,15 @@ export class MovieCardComponent {
       .replace(/\s+/g, ' ')
       .trim();
     this.searchTitle.emit(clean);
+  }
+
+  protected async showNfo(torrentId: string): Promise<void> {
+    const html = await this.api.fetchNfo(torrentId);
+    this.dialog.open(NfoDialogComponent, {
+      data: { html },
+      width: '90vw',
+      maxWidth: '800px',
+    });
   }
 
   protected formatBytes(bytes: number): string {

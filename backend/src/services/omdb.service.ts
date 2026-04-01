@@ -48,6 +48,8 @@ export async function fetchOmdbMetadata(lookup: NcoreOmdbLookup): Promise<OmdbFe
   const requestUrl = buildRequestUrl(config.omdb.apiKey, lookup);
   if (!requestUrl) return { metadata: null, fromCache: false };
 
+  console.log('[OMDB]', requestUrl.toString());
+
   try {
     const response = await fetch(requestUrl);
     if (!response.ok) return { metadata: null, fromCache: false };

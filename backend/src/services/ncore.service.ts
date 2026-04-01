@@ -136,3 +136,37 @@ export async function searchNcore(params: NcoreSearchParams): Promise<NcoreRawRe
 
   return { category: categoryKey, results, totalResults, page, perPage };
 }
+
+export async function fetchNfo(torrentId: string): Promise<string> {
+  const { cookiePass, username, baseUrl } = config.ncore;
+  if (!username || !cookiePass) {
+    throw new Error('Missing nCore credentials.');
+  }
+
+  if (!/^\d+$/.test(torrentId)) {
+    throw new Error('Invalid torrent ID.');
+  }
+
+  const nfoUrl = new URL('/ajax.php', baseUrl);
+  nfoUrl.searchParams.set('action', 'nfo');
+  nfoUrl.searchParams.set('id', torrentId);
+  nfoUrl.searchParams.set('details', '1');
+
+  const cookieHeader = `nick=${encodeURIComponent(username)};pass=${encodeURIComponent(cookiePass)}`;
+
+  console.log('[nCore]', nfoUrl.toString());
+
+  const response = await fetch(nfoUrl, {
+    method: 'GET',
+    headers: {
+      Cookie: cookieHeader,
+      Accept: 'text/html,text/plain,*/*',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`nCore NFO request failed: ${response.status}`);
+  }
+
+  return response.text();
+}

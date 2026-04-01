@@ -31,4 +31,13 @@ export class ApiService {
       this.http.get<NcoreSearchResponse>('/api/search', { params, withCredentials: true }),
     );
   }
+
+  async fetchNfo(torrentId: string): Promise<string> {
+    return firstValueFrom(
+      this.http.get(`/api/search/nfo/${torrentId}`, {
+        withCredentials: true,
+        responseType: 'text',
+      }),
+    );
+  }
 }

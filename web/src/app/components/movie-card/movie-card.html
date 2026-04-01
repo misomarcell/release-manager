@@ -90,6 +90,9 @@
             >
               <mat-icon>download</mat-icon>
             </a>
+            <button mat-icon-button aria-label="Show NFO" (click)="showNfo(r.torrent_id)">
+              <mat-icon>info_outline</mat-icon>
+            </button>
           </div>
         </div>
         @if (!last) {
