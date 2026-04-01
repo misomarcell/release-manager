@@ -34,18 +34,34 @@
       />
       <mat-icon matPrefix>search</mat-icon>
     </mat-form-field>
-    <button mat-icon-button [matMenuTriggerFor]="filterMenu" class="filter-btn">
+    <button
+      mat-icon-button
+      [matMenuTriggerFor]="filterMenu"
+      class="filter-btn"
+      [matBadge]="activeFilterCount()"
+      [matBadgeHidden]="activeFilterCount() === 0"
+      matBadgeColor="primary"
+    >
       <mat-icon>tune</mat-icon>
     </button>
     <mat-menu #filterMenu="matMenu">
+      <div class="filter-section-label" mat-menu-item disabled>Category</div>
       @for (cat of categories; track cat.key) {
-        <button mat-menu-item (click)="selectedCategory = cat.key; onSearch()">
-          @if (selectedCategory === cat.key) {
+        <button mat-menu-item (click)="selectedCategory.set(cat.key); onSearch()">
+          @if (selectedCategory() === cat.key) {
             <mat-icon>check</mat-icon>
           }
           <span>{{ cat.label }}</span>
         </button>
       }
+      <mat-divider />
+      <div class="filter-section-label" mat-menu-item disabled>Quality</div>
+      <button mat-menu-item (click)="$event.stopPropagation(); uhdOnly.set(!uhdOnly()); onSearch()">
+        @if (uhdOnly()) {
+          <mat-icon>check</mat-icon>
+        }
+        <span>4K only</span>
+      </button>
     </mat-menu>
   </div>
 
@@ -58,17 +74,17 @@
   }
 
   @if (results().length > 0) {
-    <div class="results">
+    <mat-accordion class="results">
       @for (torrent of results(); track torrent.torrent_id; let i = $index) {
         <app-movie-card [torrent]="torrent" [index]="pageOffset() + i + 1" />
       }
-    </div>
+    </mat-accordion>
 
     <mat-paginator
       [length]="totalResults()"
       [pageSize]="pageSize"
       [pageIndex]="currentPage() - 1"
-      [pageSizeOptions]="[15]"
+      [hidePageSize]="true"
       (page)="onPage($event)"
       showFirstLastButtons
       aria-label="Page selector"

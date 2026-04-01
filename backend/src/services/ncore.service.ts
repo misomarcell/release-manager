@@ -34,6 +34,7 @@ interface NcoreSearchParams {
   search?: string;
   page?: number;
   perPage?: number;
+  uhd?: boolean;
 }
 
 interface NcoreRawResponse {
@@ -53,13 +54,15 @@ export async function searchNcore(params: NcoreSearchParams): Promise<NcoreRawRe
   const categoryKey = getCategoryKey(params.category);
   const category = SUPPORTED_CATEGORIES[categoryKey];
   const page = Math.max(1, params.page ?? 1);
-  const perPage = Math.min(100, Math.max(1, params.perPage ?? 15));
+  const perPage = Math.min(100, Math.max(1, params.perPage ?? 100));
   const searchQuery = params.search?.trim() || '';
 
   const searchUrl = new URL('/torrents.php', baseUrl);
   searchUrl.searchParams.set('kivalasztott_tipus', category);
   if (searchQuery) {
     searchUrl.searchParams.set('mire', searchQuery);
+  } else if (params.uhd) {
+    searchUrl.searchParams.set('mire', '2160p');
   } else {
     searchUrl.searchParams.set('query', '*');
   }

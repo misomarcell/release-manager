@@ -11,7 +11,8 @@ export class ApiService {
     category: NcoreCategoryKey = 'movies',
     search = '',
     page = 1,
-    perPage = 15,
+    perPage = 1000,
+    uhd = false,
   ): Promise<NcoreSearchResponse> {
     let params = new HttpParams()
       .set('category', category)
@@ -20,6 +21,10 @@ export class ApiService {
 
     if (search.trim()) {
       params = params.set('search', search.trim());
+    }
+
+    if (uhd) {
+      params = params.set('uhd', 'true');
     }
 
     return firstValueFrom(

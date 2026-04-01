@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -6,6 +13,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatAccordion } from '@angular/material/expansion';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -26,6 +37,10 @@ import type { NcoreCategoryKey, NcoreResult } from '../../../../../shared/src/nc
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
+    MatBadgeModule,
+    MatDividerModule,
+    MatSlideToggleModule,
+    MatAccordion,
     MatToolbarModule,
     MatProgressBarModule,
     MatPaginatorModule,
@@ -47,10 +62,18 @@ export class SearchComponent implements OnInit {
   protected totalResults = signal(0);
   protected currentPage = signal(1);
   protected pageOffset = signal(0);
-  protected readonly pageSize = 15;
+  protected readonly pageSize = 100;
 
   protected searchQuery = '';
-  protected selectedCategory: NcoreCategoryKey = 'movies';
+  protected selectedCategory = signal<NcoreCategoryKey>('movies');
+  protected uhdOnly = signal(true);
+
+  protected activeFilterCount = computed(() => {
+    let count = 0;
+    if (this.selectedCategory() !== 'all') count++;
+    if (this.uhdOnly()) count++;
+    return count;
+  });
 
   protected categories: { key: NcoreCategoryKey; label: string }[] = [
     { key: 'all', label: 'All' },
@@ -73,6 +96,9 @@ export class SearchComponent implements OnInit {
 
   protected onPage(event: PageEvent): void {
     this.currentPage.set(event.pageIndex + 1);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
     void this.loadResults();
   }
 
@@ -86,11 +112,13 @@ export class SearchComponent implements OnInit {
     this.error.set(null);
 
     try {
+      const hasSearchTerm = !!this.searchQuery.trim();
       const response = await this.api.search(
-        this.selectedCategory,
+        this.selectedCategory(),
         this.searchQuery,
         this.currentPage(),
         this.pageSize,
+        !hasSearchTerm && this.uhdOnly(),
       );
       this.results.set(response.results);
       this.totalResults.set(response.totalResults);

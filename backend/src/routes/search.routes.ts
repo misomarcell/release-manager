@@ -13,9 +13,10 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     const category = (req.query['category'] as string) ?? 'movies';
     const search = (req.query['search'] as string) ?? '';
     const page = parseInt((req.query['page'] as string) ?? '1', 10);
-    const perPage = parseInt((req.query['perPage'] as string) ?? '15', 10);
+    const perPage = parseInt((req.query['perPage'] as string) ?? '100', 10);
+    const uhd = req.query['uhd'] === 'true';
 
-    const ncoreResult = await searchNcore({ category, search, page, perPage });
+    const ncoreResult = await searchNcore({ category, search, page, perPage, uhd });
 
     // Enrich with OMDB metadata (6 concurrent)
     const enriched = await mapConcurrent(

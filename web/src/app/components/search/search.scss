@@ -52,12 +52,25 @@
   min-width: 0;
 }
 
+.filter-btn {
+  position: relative;
+}
+
+.filter-section-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mat-sys-on-surface-variant);
+  opacity: 1 !important;
+}
+
 .error {
   color: var(--mat-sys-error);
 }
 
 .results {
-  display: flex;
+  display: flex !important;
   flex-direction: column;
 }
 
