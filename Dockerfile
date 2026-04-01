@@ -17,6 +17,7 @@ RUN cd shared && npx tsc -p tsconfig.json
 FROM base AS build-backend
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build-shared /app/shared ./shared
+RUN rm -rf node_modules/shared && ln -s ../shared node_modules/shared
 COPY tsconfig.base.json ./
 COPY backend/ backend/
 RUN cd backend && npx tsc -p tsconfig.json
@@ -24,6 +25,7 @@ RUN cd backend && npx tsc -p tsconfig.json
 FROM base AS build-web
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build-shared /app/shared ./shared
+RUN rm -rf node_modules/shared && ln -s ../shared node_modules/shared
 COPY tsconfig.base.json ./
 COPY web/ web/
 RUN cd web && npx ng build --configuration production
