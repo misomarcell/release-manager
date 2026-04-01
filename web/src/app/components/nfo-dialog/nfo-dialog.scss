@@ -1,3 +1,9 @@
+:host {
+  ::ng-deep .mat-mdc-dialog-surface {
+    border: 1px solid var(--mat-sys-outline-variant);
+  }
+}
+
 .nfo-content {
   font-family: monospace;
   font-size: 0.8rem;
@@ -6,4 +12,7 @@
   margin: 0;
   max-height: 70vh;
   overflow: auto;
+  background: var(--mat-sys-surface-container-lowest);
+  padding: 1rem;
+  border-radius: 8px;
 }
