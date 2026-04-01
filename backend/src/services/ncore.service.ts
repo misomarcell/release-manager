@@ -54,11 +54,15 @@ export async function searchNcore(params: NcoreSearchParams): Promise<NcoreRawRe
   const category = SUPPORTED_CATEGORIES[categoryKey];
   const page = Math.max(1, params.page ?? 1);
   const perPage = Math.min(100, Math.max(1, params.perPage ?? 15));
-  const searchQuery = params.search?.trim() || '2160p';
+  const searchQuery = params.search?.trim() || '';
 
   const searchUrl = new URL('/torrents.php', baseUrl);
   searchUrl.searchParams.set('kivalasztott_tipus', category);
-  searchUrl.searchParams.set('mire', searchQuery);
+  if (searchQuery) {
+    searchUrl.searchParams.set('mire', searchQuery);
+  } else {
+    searchUrl.searchParams.set('query', '*');
+  }
   searchUrl.searchParams.set('tipus', 'kivalasztottak_kozott');
   searchUrl.searchParams.set('miszerint', 'seeders');
   searchUrl.searchParams.set('hogyan', 'DESC');

@@ -24,32 +24,30 @@
 </mat-toolbar>
 
 <main class="container">
-  <mat-card class="search-card">
-    <mat-card-content class="search-bar">
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-input">
-        <mat-label>Search</mat-label>
-        <input
-          matInput
-          [(ngModel)]="searchQuery"
-          (keydown.enter)="onSearch()"
-          placeholder="Movie or TV show name..."
-        />
-        <mat-icon matPrefix>search</mat-icon>
-      </mat-form-field>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="category-select">
-        <mat-label>Category</mat-label>
-        <mat-select [(ngModel)]="selectedCategory" (selectionChange)="onSearch()">
-          @for (cat of categories; track cat.key) {
-            <mat-option [value]="cat.key">{{ cat.label }}</mat-option>
+  <div class="search-bar">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-input">
+      <input
+        matInput
+        [(ngModel)]="searchQuery"
+        (keydown.enter)="onSearch()"
+        placeholder="Search movies, TV shows..."
+      />
+      <mat-icon matPrefix>search</mat-icon>
+    </mat-form-field>
+    <button mat-icon-button [matMenuTriggerFor]="filterMenu" class="filter-btn">
+      <mat-icon>tune</mat-icon>
+    </button>
+    <mat-menu #filterMenu="matMenu">
+      @for (cat of categories; track cat.key) {
+        <button mat-menu-item (click)="selectedCategory = cat.key; onSearch()">
+          @if (selectedCategory === cat.key) {
+            <mat-icon>check</mat-icon>
           }
-        </mat-select>
-      </mat-form-field>
-      <button mat-flat-button class="search-btn" (click)="onSearch()" [disabled]="loading()">
-        <mat-icon>search</mat-icon>
-        Search
-      </button>
-    </mat-card-content>
-  </mat-card>
+          <span>{{ cat.label }}</span>
+        </button>
+      }
+    </mat-menu>
+  </div>
 
   @if (loading()) {
     <mat-progress-bar mode="indeterminate" />
