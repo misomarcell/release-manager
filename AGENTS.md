@@ -7,7 +7,7 @@
   - `backend/`: Express API server with PostgreSQL
   - `shared/`: shared TypeScript models used by both app and backend
 - Frontend serves Angular SSR and proxies `/api/*` requests to the backend.
-- Backend handles nCore search, OMDB enrichment, caching, and Passkey authentication.
+- Backend handles nCore search, OMDB enrichment, caching, Passkey authentication, and qBittorrent integration.
 - PostgreSQL stores OMDB cache, user credentials, and sessions.
 
 ## Workflow
@@ -31,23 +31,25 @@ backend/src/
   middleware/auth.ts     # Session authentication middleware
   routes/
     auth.routes.ts      # Passkey registration/login endpoints
-    search.routes.ts    # nCore search + OMDB enrichment
+    search.routes.ts    # nCore search + OMDB enrichment + download
   services/
     auth.service.ts     # WebAuthn/Passkey logic
     ncore.service.ts    # nCore API integration
     omdb.service.ts     # OMDB API + PostgreSQL caching
+    qbittorrent.service.ts # qBittorrent Web API integration
   repositories/
     cache.repository.ts # OMDB cache database operations
     user.repository.ts  # User/credential/session database operations
   utils/
     coerce.ts           # Type coercion helpers
     concurrent.ts       # Concurrent promise mapper
-    release-parser.ts   # Release name parsing
+    release-parser.ts   # Release name + TV info parsing
 ```
 
 ## Docker
 
 - `docker-compose.yml` runs four services: `db` (PostgreSQL), `backend` (Express), `frontend` (Angular SSR), `pgadmin` (pgAdmin 4 database UI).
+- Backend connects to qBittorrent via `media` external Docker network.
 - Configuration via `.env` file at project root.
 - `Dockerfile` uses multi-stage builds with separate targets for backend and frontend.
 - For development, start only `db` and `pgadmin`: `docker compose up db pgadmin -d`.

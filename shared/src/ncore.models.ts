@@ -1,5 +1,13 @@
 export type NcoreCategoryKey = 'all' | 'movies' | 'tv';
 
+export type TvType = 'episode' | 'season' | 'series';
+
+export interface TvInfo {
+  type: TvType;
+  season: number | null;
+  episode: number | null;
+}
+
 export interface NcoreOmdbLookup {
   imdbId: string;
   title: string;
@@ -31,6 +39,7 @@ export interface NcoreResult {
   leechers: number;
   seeders: number;
   omdb_lookup: NcoreOmdbLookup;
+  tvInfo: TvInfo | null;
   omdb: OmdbMetadata | null;
   fromCache: boolean;
 }
@@ -41,4 +50,17 @@ export interface NcoreSearchResponse {
   totalResults: number;
   page: number;
   perPage: number;
+}
+
+export type DownloadCategory = 'movies' | 'tv';
+
+export interface DownloadRequest {
+  torrentId: string;
+  savePath: string;
+  category: DownloadCategory;
+}
+
+export interface DownloadResponse {
+  success: boolean;
+  message: string;
 }

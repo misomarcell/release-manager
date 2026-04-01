@@ -1,0 +1,40 @@
+<h2 mat-dialog-title>Send to qBittorrent</h2>
+<mat-dialog-content>
+  <p class="release-name">{{ data.release.release_name }}</p>
+
+  <div class="info-row">
+    <span class="info-label">Type</span>
+    <span class="info-value">
+      @if (data.isTV && data.release.tvInfo) {
+        {{ formatTvLabel(data.release.tvInfo) }}
+      } @else {
+        Movie
+      }
+    </span>
+  </div>
+
+  <div class="info-row">
+    <span class="info-label">Category</span>
+    <span class="info-value">{{ data.category }}</span>
+  </div>
+
+  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="path-field">
+    <mat-label>Save path</mat-label>
+    <input matInput [(ngModel)]="savePath" />
+    <mat-icon matPrefix>folder</mat-icon>
+  </mat-form-field>
+
+  @if (sending()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  @if (error(); as err) {
+    <p class="error">{{ err }}</p>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close [disabled]="sending()">Cancel</button>
+  <button mat-flat-button (click)="onDownload()" [disabled]="sending() || !savePath.trim()">
+    <mat-icon>download</mat-icon>
+    Download
+  </button>
+</mat-dialog-actions>

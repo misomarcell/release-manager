@@ -1,7 +1,12 @@
 import { config } from '../config.js';
 import { asRecord, asString, asNumber, asBoolean } from '../utils/coerce.js';
-import { parseReleaseName, sanitizeImdbId } from '../utils/release-parser.js';
+import { parseReleaseName, sanitizeImdbId, parseTvInfo } from '../utils/release-parser.js';
 import type { NcoreCategoryKey, NcoreResult, NcoreOmdbLookup } from 'shared/ncore.models';
+
+function getCookieHeader(): string {
+  const { username, cookiePass } = config.ncore;
+  return `nick=${encodeURIComponent(username)};pass=${encodeURIComponent(cookiePass)}`;
+}
 
 const SUPPORTED_CATEGORIES: Record<NcoreCategoryKey, string> = {
   all: 'hd_hun,hd,hdser_hun,hdser',
@@ -73,14 +78,12 @@ export async function searchNcore(params: NcoreSearchParams): Promise<NcoreRawRe
     searchUrl.searchParams.set('oldal', String(page));
   }
 
-  const cookieHeader = `nick=${encodeURIComponent(username)};pass=${encodeURIComponent(cookiePass)}`;
-
   console.log('[nCore]', searchUrl.toString());
 
   const response = await fetch(searchUrl, {
     method: 'GET',
     headers: {
-      Cookie: cookieHeader,
+      Cookie: getCookieHeader(),
       Accept: 'application/json,text/plain,*/*',
     },
   });
@@ -120,6 +123,7 @@ export async function searchNcore(params: NcoreSearchParams): Promise<NcoreRawRe
         leechers: asNumber(item['leechers']),
         seeders: asNumber(item['seeders']),
         omdb_lookup: buildOmdbLookup(releaseName, imdbId),
+        tvInfo: parseTvInfo(releaseName),
         omdb: null,
         fromCache: false,
       };
@@ -144,14 +148,12 @@ export async function fetchNfo(torrentId: string): Promise<string> {
   nfoUrl.searchParams.set('id', torrentId);
   nfoUrl.searchParams.set('details', '1');
 
-  const cookieHeader = `nick=${encodeURIComponent(username)};pass=${encodeURIComponent(cookiePass)}`;
-
   console.log('[nCore]', nfoUrl.toString());
 
   const response = await fetch(nfoUrl, {
     method: 'GET',
     headers: {
-      Cookie: cookieHeader,
+      Cookie: getCookieHeader(),
       Accept: 'text/html,text/plain,*/*',
     },
   });
@@ -161,4 +163,24 @@ export async function fetchNfo(torrentId: string): Promise<string> {
   }
 
   return response.text();
+}
+
+export async function downloadTorrentFile(torrentId: string): Promise<ArrayBuffer> {
+  if (!/^\d+$/.test(torrentId)) {
+    throw new Error('Invalid torrent ID.');
+  }
+
+  const { baseUrl } = config.ncore;
+  const downloadUrl = new URL('/torrents.php', baseUrl);
+  downloadUrl.searchParams.set('action', 'download');
+  downloadUrl.searchParams.set('id', torrentId);
+
+  console.log('[nCore]', `Downloading torrent ${torrentId}`);
+
+  const response = await fetch(downloadUrl, {
+    headers: { Cookie: getCookieHeader() },
+  });
+
+  if (!response.ok) throw new Error(`Failed to download torrent file: ${response.status}`);
+  return response.arrayBuffer();
 }

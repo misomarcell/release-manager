@@ -2,9 +2,15 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { searchNcore, fetchNfo } from '../services/ncore.service.js';
 import { fetchOmdbMetadata } from '../services/omdb.service.js';
+import { addTorrent } from '../services/qbittorrent.service.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import { requireAuth } from '../middleware/auth.js';
-import type { NcoreResult, NcoreSearchResponse } from 'shared/ncore.models';
+import type {
+  NcoreResult,
+  NcoreSearchResponse,
+  DownloadRequest,
+  DownloadResponse,
+} from 'shared/ncore.models';
 
 const router = Router();
 
@@ -54,6 +60,27 @@ router.get('/nfo/:id', requireAuth, async (req: Request, res: Response) => {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'NFO fetch failed';
     res.status(502).json({ error: message });
+  }
+});
+
+router.post('/download', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const { torrentId, savePath, category } = req.body as DownloadRequest;
+    if (!torrentId || !savePath || !category) {
+      res.status(400).json({ success: false, message: 'Missing required fields' });
+      return;
+    }
+    if (category !== 'movies' && category !== 'tv') {
+      res.status(400).json({ success: false, message: 'Invalid category' });
+      return;
+    }
+
+    await addTorrent(torrentId, savePath, category);
+    const response: DownloadResponse = { success: true, message: 'Torrent sent to qBittorrent' };
+    res.json(response);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Download failed';
+    res.status(502).json({ success: false, message } satisfies DownloadResponse);
   }
 });
 

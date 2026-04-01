@@ -39,7 +39,12 @@ export async function fetchLatestCommit(): Promise<VersionInfo> {
     throw new Error(`GitHub API responded with ${res.status}`);
   }
 
-  const [commit] = (await res.json()) as GitHubCommit[];
+  const commits = (await res.json()) as GitHubCommit[];
+  if (!commits.length) {
+    throw new Error('No commits found in repository');
+  }
+
+  const commit = commits[0];
   const data: VersionInfo = {
     commitHash: commit.sha.slice(0, 7),
     commitUrl: commit.html_url,

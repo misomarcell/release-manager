@@ -82,15 +82,9 @@
               <span class="freeleech">FL</span>
             }
             <div class="spacer"></div>
-            <a
-              mat-icon-button
-              [href]="r.download_url"
-              target="_blank"
-              rel="noopener"
-              aria-label="Download"
-            >
+            <button mat-icon-button aria-label="Send to qBittorrent" (click)="download(r)">
               <mat-icon>download</mat-icon>
-            </a>
+            </button>
             <button mat-icon-button aria-label="Show NFO" (click)="showNfo(r.torrent_id)">
               <mat-icon>info_outline</mat-icon>
             </button>

@@ -7,7 +7,6 @@ export const config = {
   port: parseInt(process.env['PORT'] ?? '3000', 10),
   databaseUrl:
     process.env['DATABASE_URL'] ?? 'postgres://movieapp:movieapp@localhost:5432/movieapp',
-  sessionSecret: process.env['SESSION_SECRET'] ?? 'change-me',
   ncore: {
     baseUrl: process.env['NCORE_BASE_URL']?.trim() || 'https://ncore.pro',
     username: process.env['NCORE_USERNAME']?.trim() || '',
@@ -26,6 +25,13 @@ export const config = {
     origin: (process.env['RP_ORIGIN'] ?? 'http://localhost:4000,http://localhost:4200')
       .split(',')
       .map((o) => o.trim()),
+  },
+  qbittorrent: {
+    url: process.env['QBITTORRENT_URL']?.trim() || '',
+    username: process.env['QBITTORRENT_USERNAME']?.trim() || 'admin',
+    password: process.env['QBITTORRENT_PASSWORD']?.trim() || '',
+    savePathMovies: process.env['DOWNLOAD_PATH_MOVIES']?.trim() || '/srv/media/Movies',
+    savePathTv: process.env['DOWNLOAD_PATH_TV']?.trim() || '/srv/media/TV_Shows',
   },
   cacheExpiryMs: 7 * 24 * 60 * 60 * 1000, // 1 week
 };
