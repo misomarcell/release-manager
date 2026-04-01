@@ -57,4 +57,23 @@ export async function initDatabase(): Promise<void> {
       expires_at   TIMESTAMPTZ NOT NULL
     );
   `);
+
+  await pool.query(`
+    ALTER TABLE challenges
+      ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
+
+    UPDATE challenges
+    SET expires_at = COALESCE(
+      expires_at,
+      created_at + INTERVAL '5 minutes',
+      NOW() + INTERVAL '5 minutes'
+    )
+    WHERE expires_at IS NULL;
+
+    ALTER TABLE challenges
+      ALTER COLUMN expires_at SET DEFAULT (NOW() + INTERVAL '5 minutes');
+
+    ALTER TABLE challenges
+      ALTER COLUMN expires_at SET NOT NULL;
+  `);
 }
