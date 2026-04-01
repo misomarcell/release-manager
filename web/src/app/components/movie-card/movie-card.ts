@@ -22,7 +22,10 @@ export class MovieCardComponent {
   });
 
   protected onSearchTitle(): void {
-    const clean = this.displayTitle().replace(/[^\p{L}\p{N} ]/gu, '').replace(/\s+/g, ' ').trim();
+    const clean = this.displayTitle()
+      .replace(/[^\p{L}\p{N} ]/gu, '')
+      .replace(/\s+/g, ' ')
+      .trim();
     this.searchTitle.emit(clean);
   }
 
