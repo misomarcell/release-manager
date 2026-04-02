@@ -2,17 +2,16 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
-}
 
-.search-input {
-  --mat-form-field-outlined-container-shape: 12px;
+  .search-input {
+    --mat-form-field-outlined-container-shape: 12px;
+    flex: 1;
+    min-width: 0;
+  }
 
-  flex: 1;
-  min-width: 0;
-}
-
-.filter-btn {
-  position: relative;
+  .filter-btn {
+    position: relative;
+  }
 }
 
 .filter-section-label {
