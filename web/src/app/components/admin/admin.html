@@ -59,6 +59,30 @@
 
     <mat-card class="action-card">
       <mat-card-header>
+        <mat-icon mat-card-avatar class="action-icon">logout</mat-icon>
+        <mat-card-title>Log out all users</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="action-description">
+          Terminates all active sessions, including your own. Everyone will need to log in again.
+        </p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-stroked-button (click)="logOutAllUsers()" [disabled]="clearing() !== null">
+          @if (clearing() === 'sessions') {
+            Logging out…
+          } @else {
+            <ng-container>
+              <mat-icon>play_arrow</mat-icon>
+              Execute action
+            </ng-container>
+          }
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="action-card">
+      <mat-card-header>
         <mat-icon mat-card-avatar class="action-icon">lan</mat-icon>
         <mat-card-title>Test qBittorrent connection</mat-card-title>
       </mat-card-header>

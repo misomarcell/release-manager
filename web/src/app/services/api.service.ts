@@ -101,4 +101,12 @@ export class ApiService {
       }),
     );
   }
+
+  async logOutAllUsers(): Promise<{ deleted: number }> {
+    return firstValueFrom(
+      this.http.delete<{ deleted: number }>('/api/admin/sessions', {
+        withCredentials: true,
+      }),
+    );
+  }
 }

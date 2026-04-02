@@ -34,6 +34,17 @@ router.delete('/expired-data', async (_req: Request, res: Response) => {
   }
 });
 
+router.delete('/sessions', async (_req: Request, res: Response) => {
+  try {
+    const result = await query('DELETE FROM sessions');
+    res.json({ deleted: result.rowCount ?? 0 });
+  } catch (error: unknown) {
+    res
+      .status(500)
+      .json({ error: error instanceof Error ? error.message : 'Failed to clear sessions' });
+  }
+});
+
 router.get('/qbittorrent-test', async (_req: Request, res: Response) => {
   try {
     const result = await testConnection();

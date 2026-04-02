@@ -73,6 +73,23 @@ export class AdminComponent {
     }
   }
 
+  protected async logOutAllUsers(): Promise<void> {
+    const confirmed = await this.confirm(
+      'Log out all users',
+      'This will terminate all active sessions, including your own. You will be redirected to the login page.',
+    );
+    if (!confirmed) return;
+
+    this.clearing.set('sessions');
+    try {
+      await this.api.logOutAllUsers();
+      this.router.navigate(['/login']);
+    } catch (e: unknown) {
+      this.snackBar.open(extractHttpError(e, 'Failed to log out users'), 'OK', { duration: 5000 });
+      this.clearing.set(null);
+    }
+  }
+
   protected async testQbittorrent(): Promise<void> {
     this.clearing.set('qbittorrent');
     try {
