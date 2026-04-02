@@ -76,4 +76,11 @@ export async function initDatabase(): Promise<void> {
     ALTER TABLE challenges
       ALTER COLUMN expires_at SET NOT NULL;
   `);
+
+  await pool.query(`
+    ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45),
+      ADD COLUMN IF NOT EXISTS user_agent TEXT,
+      ADD COLUMN IF NOT EXISTS last_login TIMESTAMPTZ;
+  `);
 }

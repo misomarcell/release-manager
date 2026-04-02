@@ -20,19 +20,20 @@ import {
   getSession,
   deleteSession,
   findUserById,
+  updateLastLogin,
 } from '../repositories/user.repository.js';
 
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-export async function startRegistration(username: string) {
+export async function startRegistration(username: string, ipAddress?: string, userAgent?: string) {
   const existingUser = await findUserByUsername(username);
   if (existingUser) {
     const existingCreds = await getCredentialsByUserId(existingUser.id);
     if (existingCreds.length > 0) {
-      throw new Error('Registration failed');
+      throw new Error('Username is already taken');
     }
   } else {
-    await createUser(username);
+    await createUser(username, ipAddress, userAgent);
   }
 
   const options = await generateRegistrationOptions({
@@ -54,19 +55,9 @@ export async function finishRegistration(username: string, response: Registratio
   const user = await findUserByUsername(username);
   if (!user) throw new Error('User not found');
 
-  const valid = await consumeChallenge(
-    response.response.clientDataJSON
-      ? extractChallengeFromClientData(response.response.clientDataJSON)
-      : '',
-    username,
-  );
-
   const verification = await verifyRegistrationResponse({
     response,
-    expectedChallenge: async (challenge) => {
-      if (valid) return true;
-      return await consumeChallenge(challenge, username);
-    },
+    expectedChallenge: async (challenge) => consumeChallenge(challenge, username),
     expectedOrigin: config.rp.origin,
     expectedRPID: config.rp.id,
     requireUserVerification: false,
@@ -126,6 +117,7 @@ export async function finishAuthentication(response: AuthenticationResponseJSON)
   if (!verification.verified) throw new Error('Authentication verification failed');
 
   await updateCredentialCounter(credId, verification.authenticationInfo.newCounter);
+  await updateLastLogin(user.id);
 
   const token = crypto.randomBytes(48).toString('base64url');
   const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
@@ -146,15 +138,6 @@ export async function validateSession(token: string) {
 
 export async function logout(token: string) {
   await deleteSession(token);
-}
-
-function extractChallengeFromClientData(clientDataJSON: string): string {
-  try {
-    const decoded = JSON.parse(Buffer.from(clientDataJSON, 'base64url').toString('utf-8'));
-    return decoded.challenge ?? '';
-  } catch {
-    return '';
-  }
 }
 
 type AuthenticatorTransport =

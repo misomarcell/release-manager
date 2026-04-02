@@ -7,8 +7,13 @@ export const routes: Routes = [
     loadComponent: () => import('./components/login/login').then((m) => m.LoginComponent),
   },
   {
+    path: 'users',
+    loadComponent: () => import('./components/users/users').then((m) => m.UsersComponent),
+    canActivate: [authGuard],
+  },
+  {
     path: '',
-    loadComponent: () => import('./components/search/search').then((m) => m.SearchComponent),
+    loadComponent: () => import('./components/home/home').then((m) => m.HomeComponent),
     canActivate: [authGuard],
   },
   {

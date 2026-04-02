@@ -6,6 +6,17 @@ interface UserRow {
   valid: boolean;
 }
 
+interface UserDetailRow {
+  id: number;
+  username: string;
+  valid: boolean;
+  created_at: Date;
+  ip_address: string | null;
+  user_agent: string | null;
+  last_login: Date | null;
+  credential_count: number;
+}
+
 interface CredentialRow {
   id: string;
   user_id: number;
@@ -26,10 +37,14 @@ export async function findUserById(id: number): Promise<UserRow | null> {
   return result.rows[0] ?? null;
 }
 
-export async function createUser(username: string): Promise<UserRow> {
+export async function createUser(
+  username: string,
+  ipAddress?: string,
+  userAgent?: string,
+): Promise<UserRow> {
   const result = await query<UserRow>(
-    'INSERT INTO users (username, valid) VALUES ($1, FALSE) RETURNING id, username, valid',
-    [username],
+    'INSERT INTO users (username, valid, ip_address, user_agent) VALUES ($1, FALSE, $2, $3) RETURNING id, username, valid',
+    [username, ipAddress ?? null, userAgent ?? null],
   );
   return result.rows[0];
 }
@@ -104,4 +119,34 @@ export async function getSession(
 
 export async function deleteSession(token: string): Promise<void> {
   await query('DELETE FROM sessions WHERE token = $1', [token]);
+}
+
+export async function getAllUsers(): Promise<UserDetailRow[]> {
+  const result = await query<UserDetailRow>(
+    `SELECT u.id, u.username, u.valid, u.created_at, u.ip_address, u.user_agent, u.last_login,
+            COUNT(c.id)::int AS credential_count
+     FROM users u
+     LEFT JOIN credentials c ON c.user_id = u.id
+     GROUP BY u.id
+     ORDER BY u.created_at DESC`,
+    [],
+  );
+  return result.rows;
+}
+
+export async function setUserValid(userId: number, valid: boolean): Promise<boolean> {
+  const result = await query('UPDATE users SET valid = $1 WHERE id = $2 RETURNING id', [
+    valid,
+    userId,
+  ]);
+  return result.rowCount !== null && result.rowCount > 0;
+}
+
+export async function updateLastLogin(userId: number): Promise<void> {
+  await query('UPDATE users SET last_login = NOW() WHERE id = $1', [userId]);
+}
+
+export async function deleteUser(userId: number): Promise<boolean> {
+  const result = await query('DELETE FROM users WHERE id = $1 RETURNING id', [userId]);
+  return result.rowCount !== null && result.rowCount > 0;
 }

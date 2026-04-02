@@ -9,7 +9,7 @@ import { ApiService } from '../../services/api.service';
 import { NfoDialogComponent } from '../nfo-dialog/nfo-dialog';
 import { DownloadDialogComponent } from '../download-dialog/download-dialog';
 import type { DownloadDialogData } from '../download-dialog/download-dialog';
-import type { GroupedMovie } from '../search/search';
+import type { GroupedMovie } from '../home/home';
 import type { NcoreResult } from '../../../../../shared/src/ncore.models';
 
 const TV_CATEGORIES = new Set(['hdser_hun', 'hdser']);

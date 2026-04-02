@@ -5,22 +5,19 @@ import {
   inject,
   signal,
   computed,
+  viewChild,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatBadgeModule } from '@angular/material/badge';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatAccordion } from '@angular/material/expansion';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MovieCardComponent } from '../movie-card/movie-card';
+import { ReleaseSearchComponent, SearchParams } from '../release-search/release-search';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { VersionService } from '../../services/version.service';
@@ -38,34 +35,31 @@ export interface GroupedMovie {
 }
 
 @Component({
-  selector: 'app-search',
+  selector: 'app-home',
   imports: [
-    FormsModule,
     DatePipe,
-    MatFormFieldModule,
-    MatInputModule,
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
-    MatBadgeModule,
     MatDividerModule,
-    MatSlideToggleModule,
     MatAccordion,
     MatToolbarModule,
     MatProgressBarModule,
     MatPaginatorModule,
     MovieCardComponent,
+    ReleaseSearchComponent,
   ],
-  templateUrl: './search.html',
-  styleUrl: './search.scss',
+  templateUrl: './home.html',
+  styleUrl: './home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SearchComponent implements OnInit {
+export class HomeComponent implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   protected auth = inject(AuthService);
   protected version = inject(VersionService);
+  private releaseSearch = viewChild(ReleaseSearchComponent);
 
   protected loading = signal(false);
   protected error = signal<string | null>(null);
@@ -73,6 +67,11 @@ export class SearchComponent implements OnInit {
   protected totalResults = signal(0);
   protected currentPage = signal(1);
   protected readonly pageSize = 100;
+
+  private searchQuery = '';
+  private selectedCategory = signal<NcoreCategoryKey>('movies');
+  private uhdOnly = signal(true);
+  private lastSearchTerm = signal('');
 
   protected groupedMovies = computed(() => {
     const results = this.results();
@@ -98,11 +97,6 @@ export class SearchComponent implements OnInit {
     return [...groups.values()];
   });
 
-  protected searchQuery = '';
-  protected selectedCategory = signal<NcoreCategoryKey>('movies');
-  protected uhdOnly = signal(true);
-  private lastSearchTerm = signal('');
-
   protected listTitle = computed(() => {
     const term = this.lastSearchTerm();
     if (term) return `Results for: ${term}`;
@@ -111,19 +105,6 @@ export class SearchComponent implements OnInit {
     if (cat === 'tv') return 'Top TV Shows';
     return 'Top Releases';
   });
-
-  protected activeFilterCount = computed(() => {
-    let count = 0;
-    if (this.selectedCategory() !== 'all') count++;
-    if (this.uhdOnly()) count++;
-    return count;
-  });
-
-  protected categories: { key: NcoreCategoryKey; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'movies', label: 'Movies' },
-    { key: 'tv', label: 'TV Shows' },
-  ];
 
   ngOnInit(): void {
     const params = this.route.snapshot.queryParams;
@@ -141,18 +122,30 @@ export class SearchComponent implements OnInit {
     if (page > 0) {
       this.currentPage.set(page);
     }
+
+    // Sync initial state to child after view init
+    queueMicrotask(() => {
+      const child = this.releaseSearch();
+      if (child) {
+        if (this.searchQuery) child.setQuery(this.searchQuery);
+        if (this.selectedCategory() !== 'movies') child.setCategory(this.selectedCategory());
+        if (!this.uhdOnly()) child.setUhdOnly(false);
+      }
+    });
+
     void this.loadResults();
   }
 
-  protected onSearch(): void {
+  protected onSearch(params: SearchParams): void {
+    this.searchQuery = params.query;
+    this.selectedCategory.set(params.category);
+    this.uhdOnly.set(params.uhdOnly);
     this.currentPage.set(1);
     void this.loadResults();
   }
 
   protected onSearchByTitle(title: string): void {
-    this.searchQuery = title;
-    this.currentPage.set(1);
-    void this.loadResults();
+    this.releaseSearch()?.setQuery(title);
   }
 
   protected onPage(event: PageEvent): void {
@@ -166,6 +159,10 @@ export class SearchComponent implements OnInit {
   protected async logout(): Promise<void> {
     await this.auth.logout();
     this.router.navigate(['/login']);
+  }
+
+  protected navigateToUsers(): void {
+    this.router.navigate(['/users']);
   }
 
   private async loadResults(): Promise<void> {

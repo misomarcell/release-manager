@@ -1,0 +1,25 @@
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.search-input {
+  --mat-form-field-outlined-container-shape: 12px;
+
+  flex: 1;
+  min-width: 0;
+}
+
+.filter-btn {
+  position: relative;
+}
+
+.filter-section-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mat-sys-on-surface-variant);
+  opacity: 1 !important;
+}

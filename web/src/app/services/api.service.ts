@@ -6,6 +6,7 @@ import type {
   NcoreSearchResponse,
   DownloadRequest,
   DownloadResponse,
+  UserInfo,
 } from '../../../../shared/src/ncore.models';
 
 @Injectable({ providedIn: 'root' })
@@ -50,5 +51,19 @@ export class ApiService {
     return firstValueFrom(
       this.http.post<DownloadResponse>('/api/search/download', request, { withCredentials: true }),
     );
+  }
+
+  async getUsers(): Promise<UserInfo[]> {
+    return firstValueFrom(this.http.get<UserInfo[]>('/api/users', { withCredentials: true }));
+  }
+
+  async setUserValid(userId: number, valid: boolean): Promise<void> {
+    await firstValueFrom(
+      this.http.patch(`/api/users/${userId}/valid`, { valid }, { withCredentials: true }),
+    );
+  }
+
+  async deleteUser(userId: number): Promise<void> {
+    await firstValueFrom(this.http.delete(`/api/users/${userId}`, { withCredentials: true }));
   }
 }

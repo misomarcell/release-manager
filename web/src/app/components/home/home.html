@@ -16,6 +16,11 @@
     <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
   </button>
   <mat-menu #userMenu="matMenu">
+    <button mat-menu-item (click)="navigateToUsers()">
+      <mat-icon>group</mat-icon>
+      <span>Manage users</span>
+    </button>
+    <mat-divider />
     <button mat-menu-item (click)="logout()">
       <mat-icon>logout</mat-icon>
       <span>Sign out</span>
@@ -24,51 +29,7 @@
 </mat-toolbar>
 
 <main class="container">
-  <div class="search-bar">
-    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-input">
-      <input
-        matInput
-        [(ngModel)]="searchQuery"
-        (keydown.enter)="onSearch()"
-        placeholder="Search movies, TV shows..."
-      />
-      <mat-icon matPrefix>search</mat-icon>
-      @if (searchQuery) {
-        <button mat-icon-button matSuffix (click)="searchQuery = ''; onSearch()" aria-label="Clear">
-          <mat-icon>close</mat-icon>
-        </button>
-      }
-    </mat-form-field>
-    <button
-      mat-icon-button
-      [matMenuTriggerFor]="filterMenu"
-      class="filter-btn"
-      [matBadge]="activeFilterCount()"
-      [matBadgeHidden]="activeFilterCount() === 0"
-      matBadgeColor="primary"
-    >
-      <mat-icon>tune</mat-icon>
-    </button>
-    <mat-menu #filterMenu="matMenu">
-      <div class="filter-section-label" mat-menu-item disabled>Category</div>
-      @for (cat of categories; track cat.key) {
-        <button mat-menu-item (click)="selectedCategory.set(cat.key); onSearch()">
-          @if (selectedCategory() === cat.key) {
-            <mat-icon>check</mat-icon>
-          }
-          <span>{{ cat.label }}</span>
-        </button>
-      }
-      <mat-divider />
-      <div class="filter-section-label" mat-menu-item disabled>Quality</div>
-      <button mat-menu-item (click)="$event.stopPropagation(); uhdOnly.set(!uhdOnly()); onSearch()">
-        @if (uhdOnly()) {
-          <mat-icon>check</mat-icon>
-        }
-        <span>4K only</span>
-      </button>
-    </mat-menu>
-  </div>
+  <app-release-search (searchSubmit)="onSearch($event)" />
 
   @if (loading()) {
     <mat-progress-bar mode="indeterminate" />

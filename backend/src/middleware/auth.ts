@@ -18,6 +18,6 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   next();
 }
 
-interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest extends Request {
   user: { userId: number; username: string };
 }

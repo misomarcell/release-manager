@@ -25,16 +25,25 @@ router.use(authLimiter);
 router.post('/register/start', async (req: Request, res: Response) => {
   try {
     const { username } = req.body as { username?: string };
-    if (!username?.trim()) {
+    const trimmed = username?.trim();
+    if (!trimmed) {
       res.status(400).json({ error: 'Username is required' });
       return;
     }
-    const options = await startRegistration(username.trim());
+    if (trimmed.length < 3 || trimmed.length > 32) {
+      res.status(400).json({ error: 'Username must be between 3 and 32 characters' });
+      return;
+    }
+    const options = await startRegistration(
+      trimmed,
+      req.ip ?? req.socket.remoteAddress,
+      req.headers['user-agent'],
+    );
     res.json(options);
   } catch (error: unknown) {
-    res
-      .status(500)
-      .json({ error: error instanceof Error ? error.message : 'Registration start failed' });
+    const message = error instanceof Error ? error.message : 'Registration start failed';
+    const status = message === 'Username is already taken' ? 409 : 500;
+    res.status(status).json({ error: message });
   }
 });
 

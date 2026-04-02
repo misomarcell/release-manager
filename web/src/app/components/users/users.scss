@@ -1,0 +1,86 @@
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--mat-sys-surface-container);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  gap: 0.5rem;
+}
+
+.toolbar-title {
+  font-size: 0.95rem;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.error {
+  color: var(--mat-sys-error);
+  font-size: 0.85rem;
+}
+
+.user-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.user-card {
+  --mat-card-subtitle-text-size: 0.8rem;
+}
+
+.user-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.85rem;
+}
+
+.detail-label {
+  color: var(--mat-sys-on-surface-variant);
+  flex-shrink: 0;
+}
+
+.ua-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  min-width: 0;
+}
+
+mat-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+
+  .mdc-button {
+    flex: 1;
+  }
+
+  .mat-warn {
+    --mat-button-outlined-outline-color: var(--mat-sys-error);
+    --mat-button-outlined-label-text-color: var(--mat-sys-error);
+  }
+}

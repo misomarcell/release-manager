@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { initDatabase } from './db/connection.js';
 import authRoutes from './routes/auth.routes.js';
 import searchRoutes from './routes/search.routes.js';
+import userRoutes from './routes/user.routes.js';
 import versionRoutes from './routes/version.routes.js';
 
 const app = express();
@@ -20,6 +21,7 @@ app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/version', versionRoutes);
 
 app.get('/api/health', (_req, res) => {

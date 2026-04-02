@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,6 +8,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../services/auth.service';
+import { extractHttpError } from '../../utils/http-error';
 
 @Component({
   selector: 'app-login',
@@ -31,16 +31,18 @@ export class LoginComponent {
 
   protected loading = signal(false);
   protected error = signal<string | null>(null);
+  protected success = signal<string | null>(null);
   protected regUsername = '';
 
   protected async login(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
+    this.success.set(null);
     try {
       await this.auth.login();
       this.router.navigate(['/']);
     } catch (e: unknown) {
-      this.error.set(this.extractError(e, 'Login failed'));
+      this.error.set(extractHttpError(e, 'Login failed'));
     } finally {
       this.loading.set(false);
     }
@@ -50,22 +52,17 @@ export class LoginComponent {
     if (!this.regUsername.trim()) return;
     this.loading.set(true);
     this.error.set(null);
+    this.success.set(null);
     try {
       await this.auth.register(this.regUsername.trim());
-      this.error.set(null);
-      alert(
-        'Passkey registered! Ask an admin to activate your account in the database (valid=true).',
+      this.success.set(
+        'Account created. You can sign in after an administrator has confirmed your account.',
       );
+      this.regUsername = '';
     } catch (e: unknown) {
-      this.error.set(this.extractError(e, 'Registration failed'));
+      this.error.set(extractHttpError(e, 'Registration failed'));
     } finally {
       this.loading.set(false);
     }
-  }
-
-  private extractError(e: unknown, fallback: string): string {
-    if (e instanceof HttpErrorResponse) return e.error?.error || e.message;
-    if (e instanceof Error) return e.message;
-    return fallback;
   }
 }
