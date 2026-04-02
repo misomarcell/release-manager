@@ -1,7 +1,7 @@
 import { config } from '../config.js';
 import { asRecord, asString, asNumber, asBoolean } from '../utils/coerce.js';
 import { parseReleaseName, sanitizeImdbId, parseTvInfo } from '../utils/release-parser.js';
-import type { NcoreCategoryKey, NcoreResult, NcoreOmdbLookup } from 'shared/ncore.models';
+import type { NcoreCategoryKey, NcoreResult, MetadataLookup } from 'shared/ncore.models';
 
 function getCookieHeader(): string {
   const { username, cookiePass } = config.ncore;
@@ -25,7 +25,7 @@ function getCategoryKey(value: unknown): NcoreCategoryKey {
   return 'all';
 }
 
-function buildOmdbLookup(releaseName: string, imdbId: string): NcoreOmdbLookup {
+function buildMetadataLookup(releaseName: string, imdbId: string): MetadataLookup {
   const parsed = parseReleaseName(releaseName);
   return { imdbId: sanitizeImdbId(imdbId), title: parsed.title, year: parsed.year };
 }
@@ -122,9 +122,9 @@ export async function searchNcore(params: NcoreSearchParams): Promise<NcoreRawRe
         type: asString(item['type']),
         leechers: asNumber(item['leechers']),
         seeders: asNumber(item['seeders']),
-        omdb_lookup: buildOmdbLookup(releaseName, imdbId),
+        metadata_lookup: buildMetadataLookup(releaseName, imdbId),
         tvInfo: parseTvInfo(releaseName),
-        omdb: null,
+        metadata: null,
         fromCache: false,
       };
     })

@@ -33,7 +33,7 @@ export class MovieCardComponent {
 
   protected displayTitle = computed(() => {
     const m = this.movie();
-    return m.omdb?.title || m.omdb_lookup.title;
+    return m.metadata?.title || m.metadata_lookup.title;
   });
 
   protected onSearchTitle(): void {

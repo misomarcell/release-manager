@@ -28,8 +28,8 @@ const VALID_CATEGORIES: NcoreCategoryKey[] = ['all', 'movies', 'tv'];
 
 export interface GroupedMovie {
   key: string;
-  omdb: NcoreResult['omdb'];
-  omdb_lookup: NcoreResult['omdb_lookup'];
+  metadata: NcoreResult['metadata'];
+  metadata_lookup: NcoreResult['metadata_lookup'];
   imdb_id: string;
   releases: NcoreResult[];
 }
@@ -77,18 +77,18 @@ export class HomeComponent implements OnInit {
     const results = this.results();
     const groups = new Map<string, GroupedMovie>();
     for (const r of results) {
-      const key = r.imdb_id || `${r.omdb_lookup.title}::${r.omdb_lookup.year}`;
+      const key = r.imdb_id || `${r.metadata_lookup.title}::${r.metadata_lookup.year}`;
       const existing = groups.get(key);
       if (existing) {
         existing.releases.push(r);
-        if (!existing.omdb && r.omdb) {
-          existing.omdb = r.omdb;
+        if (!existing.metadata && r.metadata) {
+          existing.metadata = r.metadata;
         }
       } else {
         groups.set(key, {
           key,
-          omdb: r.omdb,
-          omdb_lookup: r.omdb_lookup,
+          metadata: r.metadata,
+          metadata_lookup: r.metadata_lookup,
           imdb_id: r.imdb_id,
           releases: [r],
         });

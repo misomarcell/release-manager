@@ -7,8 +7,8 @@
   - `backend/`: Express API server with PostgreSQL
   - `shared/`: shared TypeScript models used by both app and backend
 - Frontend serves Angular SSR and proxies `/api/*` requests to the backend.
-- Backend handles nCore search, OMDB enrichment, caching, Passkey authentication, and qBittorrent integration.
-- PostgreSQL stores OMDB cache, user credentials, and sessions.
+- Backend handles nCore search, TMDB enrichment, caching, Passkey authentication, and qBittorrent integration.
+- PostgreSQL stores metadata cache, user credentials, and sessions.
 
 ## Workflow
 
@@ -39,16 +39,16 @@ backend/src/
   middleware/auth.ts     # Session authentication middleware
   routes/
     auth.routes.ts      # Passkey registration/login endpoints
-    search.routes.ts    # nCore search + OMDB enrichment + download
+    search.routes.ts    # nCore search + TMDB enrichment + download
     version.routes.ts   # App version endpoint (latest GitHub commit)
   services/
     auth.service.ts     # WebAuthn/Passkey logic
     github.service.ts   # GitHub API integration (latest commit info)
     ncore.service.ts    # nCore API: search, NFO, torrent file download
-    omdb.service.ts     # OMDB API + PostgreSQL caching
+    tmdb.service.ts     # TMDB API + PostgreSQL caching
     qbittorrent.service.ts # qBittorrent Web API integration
   repositories/
-    cache.repository.ts # OMDB cache database operations
+    cache.repository.ts # Metadata cache database operations
     user.repository.ts  # User/credential/session database operations
   utils/
     coerce.ts           # Type coercion helpers
@@ -88,7 +88,7 @@ backend/src/
 | `NCORE_BASE_URL`       | nCore base URL (default: `https://ncore.pro`)                         |
 | `NCORE_USERNAME`       | nCore account username                                                |
 | `NCORE_COOKIE_PASS`    | nCore cookie passkey                                                  |
-| `OMDB_API_KEY`         | OMDB API key                                                          |
+| `TMDB_ACCESS_TOKEN`    | TMDB API read access token                                            |
 | `GITHUB_REPO`          | GitHub repo for version check (default: `misomarcell/movie-releases`) |
 | `GITHUB_TOKEN`         | GitHub personal access token                                          |
 | `RP_ID`                | WebAuthn relying party ID (default: `localhost`)                      |

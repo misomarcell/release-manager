@@ -1,12 +1,12 @@
 # MovieReleases
 
-A self-hosted web app for browsing and searching Hungarian nCore torrents, enriched with movie metadata from OMDB.
+A self-hosted web app for browsing and searching Hungarian nCore torrents, enriched with movie metadata from TMDB.
 
 ## Features
 
 - **nCore integration**: Search torrents by category or keyword, sorted by seeders
-- **OMDB enrichment**: Movie posters, ratings, genres, plots via OMDB API
-- **PostgreSQL caching**: OMDB data cached for 1 week to respect API limits
+- **TMDB enrichment**: Movie posters, ratings, genres, plots via TMDB API
+- **PostgreSQL caching**: TMDB data cached for 1 week to reduce API calls
 - **Passkey authentication**: WebAuthn/FIDO2 login — no passwords
 - **Dark theme**: Angular Material 3 dark mode
 - **Pagination**: 15 results per page
@@ -27,7 +27,7 @@ A self-hosted web app for browsing and searching Hungarian nCore torrents, enric
 ```bash
 # 1. Clone and configure
 cp .env.example .env
-# Edit .env with your nCore credentials and OMDB API key
+# Edit .env with your nCore credentials and TMDB access token
 
 # 2. Start everything
 docker compose up -d
@@ -82,7 +82,7 @@ To connect to the database, register a new server in pgAdmin:
 | `NCORE_BASE_URL`    | nCore base URL               | `https://ncore.pro`                             |
 | `NCORE_USERNAME`    | nCore cookie username        | —                                               |
 | `NCORE_COOKIE_PASS` | nCore cookie password        | —                                               |
-| `OMDB_API_KEY`      | OMDB API key                 | —                                               |
+| `TMDB_ACCESS_TOKEN` | TMDB API read access token   | —                                               |
 | `DATABASE_URL`      | PostgreSQL connection string | `postgres://movieapp:movieapp@db:5432/movieapp` |
 | `SESSION_SECRET`    | Session signing secret       | `change-me-to-a-random-string`                  |
 | `RP_ID`             | WebAuthn Relying Party ID    | `localhost`                                     |

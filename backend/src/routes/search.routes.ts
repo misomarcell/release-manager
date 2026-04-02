@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { searchNcore, fetchNfo } from '../services/ncore.service.js';
-import { fetchOmdbMetadata } from '../services/omdb.service.js';
+import { fetchMetadata } from '../services/tmdb.service.js';
 import { addTorrent } from '../services/qbittorrent.service.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -25,16 +25,16 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
 
     const ncoreResult = await searchNcore({ category, search, page, perPage, uhd });
 
-    // Enrich with OMDB metadata (6 concurrent)
+    // Enrich with TMDB metadata (6 concurrent)
     const enriched = await mapConcurrent(
       ncoreResult.results,
       6,
       async (result): Promise<NcoreResult> => {
-        const omdbResult = await fetchOmdbMetadata(result.omdb_lookup);
+        const metadataResult = await fetchMetadata(result.metadata_lookup);
         return {
           ...result,
-          omdb: omdbResult.metadata,
-          fromCache: omdbResult.fromCache,
+          metadata: metadataResult.metadata,
+          fromCache: metadataResult.fromCache,
         };
       },
     );

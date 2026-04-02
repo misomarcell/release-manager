@@ -8,19 +8,19 @@ export interface TvInfo {
   episode: number | null;
 }
 
-export interface NcoreOmdbLookup {
+export interface MetadataLookup {
   imdbId: string;
   title: string;
   year: string;
 }
 
-export interface OmdbMetadata {
+export interface MovieMetadata {
   title: string;
   year: string;
   poster: string;
   genre: string;
   runtime: string;
-  imdbRating: string;
+  rating: string;
   rated: string;
   plot: string;
 }
@@ -38,9 +38,9 @@ export interface NcoreResult {
   type: string;
   leechers: number;
   seeders: number;
-  omdb_lookup: NcoreOmdbLookup;
+  metadata_lookup: MetadataLookup;
   tvInfo: TvInfo | null;
-  omdb: OmdbMetadata | null;
+  metadata: MovieMetadata | null;
   fromCache: boolean;
 }
 

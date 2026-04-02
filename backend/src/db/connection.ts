@@ -43,20 +43,22 @@ export async function initDatabase(): Promise<void> {
       expires_at  TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '5 minutes')
     );
 
-    CREATE TABLE IF NOT EXISTS omdb_cache (
+    CREATE TABLE IF NOT EXISTS metadata_cache (
       cache_key    VARCHAR(512) PRIMARY KEY,
       title        TEXT,
       year         TEXT,
       poster       TEXT,
       genre        TEXT,
       runtime      TEXT,
-      imdb_rating  TEXT,
+      rating       TEXT,
       rated        TEXT,
       plot         TEXT,
       cached_at    TIMESTAMPTZ DEFAULT NOW(),
       expires_at   TIMESTAMPTZ NOT NULL
     );
   `);
+
+  await pool.query(`DROP TABLE IF EXISTS omdb_cache`);
 
   await pool.query(`
     ALTER TABLE challenges

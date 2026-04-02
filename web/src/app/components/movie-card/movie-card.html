@@ -3,8 +3,12 @@
   <mat-expansion-panel-header>
     <div class="card-summary">
       <div class="poster-thumb">
-        @if (m.omdb?.poster) {
-          <img [src]="m.omdb?.poster" [alt]="m.omdb?.title || m.omdb_lookup.title" loading="lazy" />
+        @if (m.metadata?.poster) {
+          <img
+            [src]="m.metadata?.poster"
+            [alt]="m.metadata?.title || m.metadata_lookup.title"
+            loading="lazy"
+          />
         } @else {
           <div class="no-poster">
             <mat-icon>movie</mat-icon>
@@ -12,16 +16,16 @@
         }
       </div>
       <div class="card-info">
-        <span class="title">{{ m.omdb?.title || m.omdb_lookup.title }}</span>
+        <span class="title">{{ m.metadata?.title || m.metadata_lookup.title }}</span>
         <span class="meta">
-          @if (m.omdb?.year) {
-            {{ m.omdb?.year }}
+          @if (m.metadata?.year) {
+            {{ m.metadata?.year }}
           }
-          @if (m.omdb?.imdbRating) {
-            · ⭐ {{ m.omdb?.imdbRating }}
+          @if (m.metadata?.rating) {
+            · ⭐ {{ m.metadata?.rating }}
           }
-          @if (m.omdb?.genre) {
-            · {{ m.omdb?.genre }}
+          @if (m.metadata?.genre) {
+            · {{ m.metadata?.genre }}
           }
         </span>
       </div>
@@ -31,21 +35,21 @@
   <mat-divider />
 
   <div class="card-details">
-    @if (m.omdb?.plot) {
-      <p class="plot">{{ m.omdb?.plot }}</p>
+    @if (m.metadata?.plot) {
+      <p class="plot">{{ m.metadata?.plot }}</p>
     }
 
     <div class="detail-table">
-      @if (m.omdb?.rated) {
+      @if (m.metadata?.rated) {
         <div class="detail-row">
           <span class="detail-label">Rating</span>
-          <span class="detail-value">{{ m.omdb?.rated }}</span>
+          <span class="detail-value">{{ m.metadata?.rated }}</span>
         </div>
       }
-      @if (m.omdb?.runtime) {
+      @if (m.metadata?.runtime) {
         <div class="detail-row">
           <span class="detail-label">Runtime</span>
-          <span class="detail-value">{{ m.omdb?.runtime }}</span>
+          <span class="detail-value">{{ m.metadata?.runtime }}</span>
         </div>
       }
       @if (m.imdb_id) {

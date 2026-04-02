@@ -12,8 +12,8 @@ export const config = {
     username: process.env['NCORE_USERNAME']?.trim() || '',
     cookiePass: process.env['NCORE_COOKIE_PASS']?.trim() || '',
   },
-  omdb: {
-    apiKey: process.env['OMDB_API_KEY']?.trim() || '',
+  tmdb: {
+    accessToken: process.env['TMDB_ACCESS_TOKEN']?.trim() || '',
   },
   github: {
     repo: process.env['GITHUB_REPO']?.trim() || 'misomarcell/movie-releases',
