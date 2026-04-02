@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { searchNcore, fetchNfo } from '../services/ncore.service.js';
-import { fetchMetadata } from '../services/tmdb.service.js';
+import { fetchBasicMetadata, getCacheKey, fetchDetailMetadata } from '../services/tmdb.service.js';
 import { addTorrent } from '../services/qbittorrent.service.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -11,6 +11,7 @@ import {
   type NcoreSearchResponse,
   type DownloadRequest,
   type DownloadResponse,
+  type MetadataLookup,
 } from 'shared/ncore.models';
 
 const router = Router();
@@ -25,19 +26,35 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
 
     const ncoreResult = await searchNcore({ category, search, page, perPage, uhd });
 
-    // Enrich with TMDB metadata (6 concurrent)
-    const enriched = await mapConcurrent(
-      ncoreResult.results,
-      6,
-      async (result): Promise<NcoreResult> => {
-        const metadataResult = await fetchMetadata(result.metadata_lookup);
-        return {
-          ...result,
-          metadata: metadataResult.metadata,
-          fromCache: metadataResult.fromCache,
-        };
-      },
-    );
+    // Deduplicate by metadata lookup key
+    const uniqueLookups = new Map<string, MetadataLookup>();
+    for (const result of ncoreResult.results) {
+      const key = getCacheKey(result.metadata_lookup);
+      if (!uniqueLookups.has(key)) {
+        uniqueLookups.set(key, result.metadata_lookup);
+      }
+    }
+
+    // Fetch basic metadata once per unique key (6 concurrent)
+    const metadataMap = new Map<
+      string,
+      { metadata: NcoreResult['metadata']; fromCache: boolean }
+    >();
+    await mapConcurrent([...uniqueLookups.entries()], 6, async ([key, lookup]) => {
+      const result = await fetchBasicMetadata(lookup);
+      metadataMap.set(key, { metadata: result.metadata, fromCache: result.fromCache });
+    });
+
+    // Apply metadata to all results
+    const enriched: NcoreResult[] = ncoreResult.results.map((result) => {
+      const key = getCacheKey(result.metadata_lookup);
+      const meta = metadataMap.get(key);
+      return {
+        ...result,
+        metadata: meta?.metadata ?? null,
+        fromCache: meta?.fromCache ?? false,
+      };
+    });
 
     const response: NcoreSearchResponse = {
       category: ncoreResult.category,
@@ -50,6 +67,33 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     res.json(response);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Search failed';
+    res.status(502).json({ error: message });
+  }
+});
+
+router.get('/metadata/:tmdbId', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const tmdbId = parseInt(req.params['tmdbId'] as string, 10);
+    const mediaType = req.query['type'] as string;
+
+    if (!tmdbId || isNaN(tmdbId)) {
+      res.status(400).json({ error: 'Invalid TMDB ID' });
+      return;
+    }
+    if (mediaType !== 'movie' && mediaType !== 'tv') {
+      res.status(400).json({ error: 'Invalid type' });
+      return;
+    }
+
+    const detail = await fetchDetailMetadata(tmdbId, mediaType);
+    if (!detail) {
+      res.status(404).json({ error: 'Detail metadata not found' });
+      return;
+    }
+
+    res.json(detail);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Metadata fetch failed';
     res.status(502).json({ error: message });
   }
 });

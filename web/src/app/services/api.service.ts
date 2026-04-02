@@ -6,6 +6,7 @@ import type {
   NcoreSearchResponse,
   DownloadRequest,
   DownloadResponse,
+  MovieDetailMetadata,
   UserInfo,
 } from '../../../../shared/src/ncore.models';
 
@@ -50,6 +51,16 @@ export class ApiService {
   async download(request: DownloadRequest): Promise<DownloadResponse> {
     return firstValueFrom(
       this.http.post<DownloadResponse>('/api/search/download', request, { withCredentials: true }),
+    );
+  }
+
+  async fetchMovieDetail(tmdbId: number, mediaType: string): Promise<MovieDetailMetadata> {
+    const params = new HttpParams().set('type', mediaType);
+    return firstValueFrom(
+      this.http.get<MovieDetailMetadata>(`/api/search/metadata/${tmdbId}`, {
+        params,
+        withCredentials: true,
+      }),
     );
   }
 

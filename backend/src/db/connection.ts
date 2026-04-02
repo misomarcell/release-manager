@@ -85,4 +85,13 @@ export async function initDatabase(): Promise<void> {
       ADD COLUMN IF NOT EXISTS user_agent TEXT,
       ADD COLUMN IF NOT EXISTS last_login TIMESTAMPTZ;
   `);
+
+  await pool.query(`
+    ALTER TABLE metadata_cache
+      ADD COLUMN IF NOT EXISTS tmdb_id INTEGER,
+      ADD COLUMN IF NOT EXISTS media_type TEXT,
+      ADD COLUMN IF NOT EXISTS release_date TEXT DEFAULT '';
+
+    UPDATE metadata_cache SET release_date = '' WHERE release_date IS NULL;
+  `);
 }

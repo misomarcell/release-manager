@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,7 +19,7 @@ import { DownloadDialogComponent } from '../download-dialog/download-dialog';
 import { PosterDialogComponent } from '../poster-dialog/poster-dialog';
 import type { DownloadDialogData } from '../download-dialog/download-dialog';
 import type { GroupedMovie } from '../home/home';
-import type { NcoreResult } from '../../../../../shared/src/ncore.models';
+import type { NcoreResult, MovieDetailMetadata } from '../../../../../shared/src/ncore.models';
 
 const TV_CATEGORIES = new Set(['hdser_hun', 'hdser']);
 const MOVIES_BASE = '/media/Movies';
@@ -32,6 +40,10 @@ export class MovieCardComponent {
   movie = input.required<GroupedMovie>();
   searchTitle = output<string>();
 
+  protected detail = signal<MovieDetailMetadata | null>(null);
+  protected detailLoading = signal(false);
+  private detailLoaded = false;
+
   protected displayTitle = computed(() => {
     const m = this.movie();
     return m.metadata?.title || m.metadata_lookup.title;
@@ -43,6 +55,26 @@ export class MovieCardComponent {
       .replace(/\s+/g, ' ')
       .trim();
     this.searchTitle.emit(clean);
+  }
+
+  protected async onPanelOpened(): Promise<void> {
+    if (this.detailLoaded) return;
+    const m = this.movie();
+    if (!m.metadata?.tmdbId || !m.metadata?.mediaType) {
+      this.detailLoaded = true;
+      return;
+    }
+
+    this.detailLoading.set(true);
+    try {
+      const detail = await this.api.fetchMovieDetail(m.metadata.tmdbId, m.metadata.mediaType);
+      this.detail.set(detail);
+    } catch {
+      // Detail is optional
+    } finally {
+      this.detailLoading.set(false);
+      this.detailLoaded = true;
+    }
   }
 
   protected openPoster(event: MouseEvent): void {

@@ -1,17 +1,27 @@
 import { config } from '../config.js';
 import { asRecord, asString, asNumber } from '../utils/coerce.js';
-import { getCachedMetadata, setCachedMetadata } from '../repositories/cache.repository.js';
-import type { MovieMetadata, MetadataLookup } from 'shared/ncore.models';
+import {
+  getCachedMetadata,
+  setCachedMetadata,
+  getCachedDetailByTmdbId,
+  updateCachedDetail,
+} from '../repositories/cache.repository.js';
+import {
+  TMDB_GENRE_MAP,
+  type MovieMetadata,
+  type MovieDetailMetadata,
+  type MetadataLookup,
+} from 'shared/ncore.models';
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w342';
 
-interface MetadataFetchResult {
+interface BasicFetchResult {
   metadata: MovieMetadata | null;
   fromCache: boolean;
 }
 
-function getCacheKey(lookup: MetadataLookup): string {
+export function getCacheKey(lookup: MetadataLookup): string {
   if (lookup.imdbId) return `id:${lookup.imdbId}`;
   return `title:${lookup.title.trim().toLowerCase()}|year:${lookup.year}`;
 }
@@ -45,63 +55,139 @@ async function tmdbGet(
   }
 }
 
-interface TmdbItem {
+interface FindResult {
   id: number;
   type: 'movie' | 'tv';
+  data: Record<string, unknown>;
 }
 
-async function findByImdbId(imdbId: string): Promise<TmdbItem | null> {
-  const data = await tmdbGet(`/find/${encodeURIComponent(imdbId)}`, {
-    external_source: 'imdb_id',
-  });
-  if (!data) return null;
-
+function extractFromFindResponse(data: Record<string, unknown>): FindResult | null {
   const movieResults = Array.isArray(data['movie_results']) ? data['movie_results'] : [];
   if (movieResults.length > 0) {
-    const id = asNumber(asRecord(movieResults[0])['id']);
-    if (id) return { id, type: 'movie' };
+    const rec = asRecord(movieResults[0]);
+    const id = asNumber(rec['id']);
+    if (id) return { id, type: 'movie', data: rec };
   }
 
   const tvResults = Array.isArray(data['tv_results']) ? data['tv_results'] : [];
   if (tvResults.length > 0) {
-    const id = asNumber(asRecord(tvResults[0])['id']);
-    if (id) return { id, type: 'tv' };
+    const rec = asRecord(tvResults[0]);
+    const id = asNumber(rec['id']);
+    if (id) return { id, type: 'tv', data: rec };
   }
 
   return null;
 }
 
-async function searchByTitle(title: string, year: string): Promise<TmdbItem | null> {
-  const params: Record<string, string> = { query: title };
-  if (year) params['year'] = year;
-
-  const movieData = await tmdbGet('/search/movie', params);
-  if (movieData) {
-    const results = Array.isArray(movieData['results']) ? movieData['results'] : [];
-    if (results.length > 0) {
-      const id = asNumber(asRecord(results[0])['id']);
-      if (id) return { id, type: 'movie' };
-    }
+function extractFromSearchResponse(
+  data: Record<string, unknown>,
+  type: 'movie' | 'tv',
+): FindResult | null {
+  const results = Array.isArray(data['results']) ? data['results'] : [];
+  if (results.length > 0) {
+    const rec = asRecord(results[0]);
+    const id = asNumber(rec['id']);
+    if (id) return { id, type, data: rec };
   }
-
-  const tvParams: Record<string, string> = { query: title };
-  if (year) tvParams['first_air_date_year'] = year;
-
-  const tvData = await tmdbGet('/search/tv', tvParams);
-  if (tvData) {
-    const results = Array.isArray(tvData['results']) ? tvData['results'] : [];
-    if (results.length > 0) {
-      const id = asNumber(asRecord(results[0])['id']);
-      if (id) return { id, type: 'tv' };
-    }
-  }
-
   return null;
 }
 
 function extractYear(dateStr: string): string {
   const match = dateStr.match(/^(\d{4})/);
   return match ? match[1] : '';
+}
+
+function resolveGenres(genreIds: unknown[]): string {
+  return genreIds
+    .map((id) => TMDB_GENRE_MAP[asNumber(id) ?? 0])
+    .filter(Boolean)
+    .join(', ');
+}
+
+function buildBasicMetadata(item: FindResult, lookup: MetadataLookup): MovieMetadata {
+  const d = item.data;
+  const title = asString(d[item.type === 'movie' ? 'title' : 'name']) || lookup.title;
+  const dateField = item.type === 'movie' ? 'release_date' : 'first_air_date';
+  const year = extractYear(asString(d[dateField])) || lookup.year;
+
+  const posterPath = asString(d['poster_path']);
+  const poster = posterPath ? `${IMAGE_BASE}${posterPath}` : '';
+
+  const genreIds = Array.isArray(d['genre_ids']) ? d['genre_ids'] : [];
+  const genre = resolveGenres(genreIds);
+
+  const voteAverage = asNumber(d['vote_average']);
+  const rating = voteAverage ? String(Math.round(voteAverage * 10) / 10) : '';
+
+  return {
+    tmdbId: item.id,
+    mediaType: item.type,
+    title,
+    year,
+    poster,
+    genre,
+    rating,
+    plot: '',
+    runtime: '',
+    rated: '',
+  };
+}
+
+// In-flight deduplication for basic metadata
+const inflightBasic = new Map<string, Promise<BasicFetchResult>>();
+
+export async function fetchBasicMetadata(lookup: MetadataLookup): Promise<BasicFetchResult> {
+  const cacheKey = getCacheKey(lookup);
+
+  const existing = inflightBasic.get(cacheKey);
+  if (existing) return existing;
+
+  const promise = doFetchBasicMetadata(lookup, cacheKey).finally(() => {
+    inflightBasic.delete(cacheKey);
+  });
+
+  inflightBasic.set(cacheKey, promise);
+  return promise;
+}
+
+async function doFetchBasicMetadata(
+  lookup: MetadataLookup,
+  cacheKey: string,
+): Promise<BasicFetchResult> {
+  const cached = await getCachedMetadata(cacheKey);
+  if (cached) return { metadata: cached, fromCache: true };
+
+  if (!config.tmdb.accessToken) return { metadata: null, fromCache: false };
+
+  let item: FindResult | null = null;
+
+  if (lookup.imdbId) {
+    const data = await tmdbGet(`/find/${encodeURIComponent(lookup.imdbId)}`, {
+      external_source: 'imdb_id',
+    });
+    if (data) item = extractFromFindResponse(data);
+  }
+
+  if (!item && lookup.title) {
+    const params: Record<string, string> = { query: lookup.title };
+    if (lookup.year) params['year'] = lookup.year;
+
+    const movieData = await tmdbGet('/search/movie', params);
+    if (movieData) item = extractFromSearchResponse(movieData, 'movie');
+
+    if (!item) {
+      const tvParams: Record<string, string> = { query: lookup.title };
+      if (lookup.year) tvParams['first_air_date_year'] = lookup.year;
+      const tvData = await tmdbGet('/search/tv', tvParams);
+      if (tvData) item = extractFromSearchResponse(tvData, 'tv');
+    }
+  }
+
+  if (!item) return { metadata: null, fromCache: false };
+
+  const metadata = buildBasicMetadata(item, lookup);
+  await setCachedMetadata(cacheKey, metadata);
+  return { metadata, fromCache: false };
 }
 
 function extractCertification(data: Record<string, unknown>, type: 'movie' | 'tv'): string {
@@ -132,48 +218,43 @@ function extractCertification(data: Record<string, unknown>, type: 'movie' | 'tv
   return '';
 }
 
-export async function fetchMetadata(lookup: MetadataLookup): Promise<MetadataFetchResult> {
-  const cacheKey = getCacheKey(lookup);
+// In-flight deduplication for detail metadata
+const inflightDetail = new Map<string, Promise<MovieDetailMetadata | null>>();
 
-  const cached = await getCachedMetadata(cacheKey);
-  if (cached) return { metadata: cached, fromCache: true };
+export async function fetchDetailMetadata(
+  tmdbId: number,
+  mediaType: 'movie' | 'tv',
+): Promise<MovieDetailMetadata | null> {
+  const key = `${mediaType}:${tmdbId}`;
 
-  if (!config.tmdb.accessToken) return { metadata: null, fromCache: false };
+  const existing = inflightDetail.get(key);
+  if (existing) return existing;
 
-  let item: TmdbItem | null = null;
+  const promise = doFetchDetailMetadata(tmdbId, mediaType).finally(() => {
+    inflightDetail.delete(key);
+  });
 
-  if (lookup.imdbId) {
-    item = await findByImdbId(lookup.imdbId);
-  }
+  inflightDetail.set(key, promise);
+  return promise;
+}
 
-  if (!item && lookup.title) {
-    item = await searchByTitle(lookup.title, lookup.year);
-  }
+async function doFetchDetailMetadata(
+  tmdbId: number,
+  mediaType: 'movie' | 'tv',
+): Promise<MovieDetailMetadata | null> {
+  const cached = await getCachedDetailByTmdbId(tmdbId);
+  if (cached) return cached;
 
-  if (!item) return { metadata: null, fromCache: false };
+  if (!config.tmdb.accessToken) return null;
 
-  const appendParam = item.type === 'movie' ? 'release_dates' : 'content_ratings';
-  const details = await tmdbGet(`/${item.type}/${item.id}`, {
+  const appendParam = mediaType === 'movie' ? 'release_dates' : 'content_ratings';
+  const details = await tmdbGet(`/${mediaType}/${tmdbId}`, {
     append_to_response: appendParam,
   });
-  if (!details) return { metadata: null, fromCache: false };
-
-  const title = asString(details[item.type === 'movie' ? 'title' : 'name']) || lookup.title;
-  const dateField = item.type === 'movie' ? 'release_date' : 'first_air_date';
-  const year = extractYear(asString(details[dateField])) || lookup.year;
-
-  const posterPath = asString(details['poster_path']);
-  const poster = posterPath ? `${IMAGE_BASE}${posterPath}` : '';
-
-  const genres = Array.isArray(details['genres'])
-    ? (details['genres'] as unknown[])
-        .map((g) => asString(asRecord(g)['name']))
-        .filter(Boolean)
-        .join(', ')
-    : '';
+  if (!details) return null;
 
   let runtime = '';
-  if (item.type === 'movie') {
+  if (mediaType === 'movie') {
     const rt = asNumber(details['runtime']);
     if (rt) runtime = `${rt} min`;
   } else {
@@ -184,23 +265,12 @@ export async function fetchMetadata(lookup: MetadataLookup): Promise<MetadataFet
     }
   }
 
-  const voteAverage = asNumber(details['vote_average']);
-  const rating = voteAverage ? String(Math.round(voteAverage * 10) / 10) : '';
-
   const plot = asString(details['overview']);
-  const rated = extractCertification(details, item.type);
+  const rated = extractCertification(details, mediaType);
+  const dateField = mediaType === 'movie' ? 'release_date' : 'first_air_date';
+  const releaseDate = asString(details[dateField]);
 
-  const metadata: MovieMetadata = {
-    title,
-    year,
-    poster,
-    genre: genres,
-    runtime,
-    rating,
-    rated,
-    plot,
-  };
-
-  await setCachedMetadata(cacheKey, metadata);
-  return { metadata, fromCache: false };
+  const detail: MovieDetailMetadata = { plot, runtime, rated, releaseDate };
+  await updateCachedDetail(tmdbId, detail);
+  return detail;
 }
