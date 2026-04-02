@@ -8,6 +8,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../services/api.service';
 import { NfoDialogComponent } from '../nfo-dialog/nfo-dialog';
 import { DownloadDialogComponent } from '../download-dialog/download-dialog';
+import { PosterDialogComponent } from '../poster-dialog/poster-dialog';
 import type { DownloadDialogData } from '../download-dialog/download-dialog';
 import type { GroupedMovie } from '../home/home';
 import type { NcoreResult } from '../../../../../shared/src/ncore.models';
@@ -42,6 +43,17 @@ export class MovieCardComponent {
       .replace(/\s+/g, ' ')
       .trim();
     this.searchTitle.emit(clean);
+  }
+
+  protected openPoster(event: MouseEvent): void {
+    event.stopPropagation();
+    const m = this.movie();
+    const url = m.metadata?.poster;
+    if (!url) return;
+    this.dialog.open(PosterDialogComponent, {
+      data: { url, alt: this.displayTitle() },
+      panelClass: 'poster-overlay',
+    });
   }
 
   protected async showNfo(torrentId: string): Promise<void> {

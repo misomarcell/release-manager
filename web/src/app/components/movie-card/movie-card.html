@@ -8,6 +8,7 @@
             [src]="m.metadata?.poster"
             [alt]="m.metadata?.title || m.metadata_lookup.title"
             loading="lazy"
+            (click)="openPoster($event)"
           />
         } @else {
           <div class="no-poster">

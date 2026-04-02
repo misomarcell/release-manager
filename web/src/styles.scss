@@ -22,3 +22,10 @@ body {
   margin: 0;
   height: 100%;
 }
+
+.poster-overlay .mat-mdc-dialog-container .mat-mdc-dialog-surface {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  overflow: visible;
+}
