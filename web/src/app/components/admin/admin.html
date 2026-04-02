@@ -1,0 +1,85 @@
+<mat-toolbar class="toolbar">
+  <button mat-icon-button (click)="goBack()" aria-label="Back">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+  <span class="toolbar-title">Administration</span>
+</mat-toolbar>
+
+<main class="container">
+  <div class="admin-actions">
+    <mat-card class="action-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="action-icon">delete_sweep</mat-icon>
+        <mat-card-title>Clear metadata cache</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="action-description">
+          Deletes all TMDB data stored in the cache. The next search will re-fetch fresh metadata
+          from TMDB for each result.
+        </p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-stroked-button (click)="clearMetadataCache()" [disabled]="clearing() !== null">
+          @if (clearing() === 'metadata') {
+            Clearing…
+          } @else {
+            <ng-container>
+              <mat-icon>play_arrow</mat-icon>
+              Execute action
+            </ng-container>
+          }
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="action-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="action-icon">auto_delete</mat-icon>
+        <mat-card-title>Clear expired data</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="action-description">
+          Purges authentication challenges and sessions that have already expired. This frees up
+          database space without affecting active users.
+        </p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-stroked-button (click)="clearExpiredData()" [disabled]="clearing() !== null">
+          @if (clearing() === 'expired') {
+            Clearing…
+          } @else {
+            <ng-container>
+              <mat-icon>play_arrow</mat-icon>
+              Execute action
+            </ng-container>
+          }
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="action-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="action-icon">lan</mat-icon>
+        <mat-card-title>Test qBittorrent connection</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="action-description">
+          Checks whether the backend can reach the configured qBittorrent instance and authenticate
+          successfully.
+        </p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-stroked-button (click)="testQbittorrent()" [disabled]="clearing() !== null">
+          @if (clearing() === 'qbittorrent') {
+            Testing…
+          } @else {
+            <ng-container>
+              <mat-icon>play_arrow</mat-icon>
+              Execute action
+            </ng-container>
+          }
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</main>

@@ -165,6 +165,10 @@ export class HomeComponent implements OnInit {
     this.router.navigate(['/users']);
   }
 
+  protected navigateToAdmin(): void {
+    this.router.navigate(['/admin']);
+  }
+
   private async loadResults(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);

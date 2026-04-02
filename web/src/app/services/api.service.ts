@@ -77,4 +77,28 @@ export class ApiService {
   async deleteUser(userId: number): Promise<void> {
     await firstValueFrom(this.http.delete(`/api/users/${userId}`, { withCredentials: true }));
   }
+
+  async clearMetadataCache(): Promise<{ deleted: number }> {
+    return firstValueFrom(
+      this.http.delete<{ deleted: number }>('/api/admin/metadata-cache', {
+        withCredentials: true,
+      }),
+    );
+  }
+
+  async clearExpiredData(): Promise<{ challenges: number; sessions: number }> {
+    return firstValueFrom(
+      this.http.delete<{ challenges: number; sessions: number }>('/api/admin/expired-data', {
+        withCredentials: true,
+      }),
+    );
+  }
+
+  async testQbittorrent(): Promise<{ version: string }> {
+    return firstValueFrom(
+      this.http.get<{ version: string }>('/api/admin/qbittorrent-test', {
+        withCredentials: true,
+      }),
+    );
+  }
 }

@@ -84,3 +84,18 @@ export async function addTorrent(
     throw new Error(`qBittorrent add failed: ${response.status} ${responseText}`);
   }
 }
+
+export async function testConnection(): Promise<{ version: string }> {
+  const { url } = config.qbittorrent;
+  if (!url) {
+    throw new Error('qBittorrent is not configured. Set QBITTORRENT_URL.');
+  }
+
+  const response = await qbtFetch('/api/v2/app/version', { method: 'GET' });
+  if (!response.ok) {
+    throw new Error(`qBittorrent returned ${response.status}`);
+  }
+
+  const version = await response.text();
+  return { version };
+}
