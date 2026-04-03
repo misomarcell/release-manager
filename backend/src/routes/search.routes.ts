@@ -18,7 +18,7 @@ const router = Router();
 
 router.get('/', requireAuth, async (req: Request, res: Response) => {
   try {
-    const category = (req.query['category'] as string) ?? 'movies';
+    const category = (req.query['category'] as string) ?? 'all';
     const search = (req.query['search'] as string) ?? '';
     const page = parseInt((req.query['page'] as string) ?? '1', 10);
     const perPage = parseInt((req.query['perPage'] as string) ?? '100', 10);

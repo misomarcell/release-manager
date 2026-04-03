@@ -69,7 +69,7 @@ export class HomeComponent implements OnInit {
   protected readonly pageSize = 100;
 
   private searchQuery = '';
-  private selectedCategory = signal<NcoreCategoryKey>('movies');
+  private selectedCategory = signal<NcoreCategoryKey>('all');
   private uhdOnly = signal(true);
   private lastSearchTerm = signal('');
 

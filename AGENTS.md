@@ -106,6 +106,7 @@ backend/src/
   2. `npm run build`
   3. `npm run knip`
 - `npm run validate` runs all checks and should pass before pushing.
+- Always run `npm run validate` at the end of every task to catch errors early.
 
 ## Pre-commit Hook
 

@@ -49,6 +49,12 @@
       }
 
       <div class="detail-table">
+        @if (m.metadata?.mediaType) {
+          <div class="detail-row">
+            <span class="detail-label">Type</span>
+            <span class="detail-value">{{ m.metadata!.mediaType === 'tv' ? 'TV Show' : 'Movie' }}</span>
+          </div>
+        }
         @if (detail()?.rated) {
           <div class="detail-row">
             <span class="detail-label">Rating</span>
