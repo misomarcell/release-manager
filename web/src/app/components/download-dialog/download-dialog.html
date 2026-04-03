@@ -2,7 +2,7 @@
 <mat-dialog-content>
   <p class="release-name">{{ data.release.release_name }}</p>
 
-  <div class="info-row">
+  <div class="info-block">
     <span class="info-label">Type</span>
     <span class="info-value">
       @if (data.isTV && data.release.tvInfo) {
@@ -13,9 +13,13 @@
     </span>
   </div>
 
-  <div class="info-row">
+  <div class="info-block">
     <span class="info-label">Category</span>
-    <span class="info-value">{{ data.category }}</span>
+    <mat-chip-listbox [value]="category()" (change)="category.set($event.value)">
+      @for (cat of categories; track cat) {
+        <mat-chip-option [value]="cat">{{ cat }}</mat-chip-option>
+      }
+    </mat-chip-listbox>
   </div>
 
   <mat-form-field appearance="outline" subscriptSizing="dynamic" class="path-field">

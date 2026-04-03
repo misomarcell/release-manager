@@ -15,21 +15,27 @@
   margin: 0 0 1rem;
 }
 
-.info-row {
-  display: flex;
-  gap: 0.75rem;
-  font-size: 0.9rem;
-  margin-bottom: 0.35rem;
+.info-block {
+  margin-bottom: 0.75rem;
 
   .info-label {
-    min-width: 5rem;
+    display: block;
+    font-size: 0.85rem;
     font-weight: 500;
     color: var(--mat-sys-on-surface-variant);
+    margin-bottom: 0.25rem;
   }
 
   .info-value {
+    display: block;
+    font-size: 0.9rem;
     color: var(--mat-sys-on-surface);
+    padding-left: 1rem;
   }
+}
+
+.mat-mdc-chip-set {
+  padding-left: 1rem;
 }
 
 .path-field {

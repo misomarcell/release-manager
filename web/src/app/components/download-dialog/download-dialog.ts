@@ -6,8 +6,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatChipsModule } from '@angular/material/chips';
 import { ApiService } from '../../services/api.service';
-import type { NcoreResult, TvInfo, DownloadCategory } from '../../../../../shared/src/ncore.models';
+import {
+  DOWNLOAD_CATEGORIES,
+  type NcoreResult,
+  type TvInfo,
+  type DownloadCategory,
+} from '../../../../../shared/src/ncore.models';
 
 export interface DownloadDialogData {
   release: NcoreResult;
@@ -27,6 +33,7 @@ export interface DownloadDialogData {
     MatInputModule,
     MatIconModule,
     MatProgressBarModule,
+    MatChipsModule,
   ],
   templateUrl: './download-dialog.html',
   styleUrl: './download-dialog.scss',
@@ -37,6 +44,8 @@ export class DownloadDialogComponent {
   private dialogRef = inject(MatDialogRef<DownloadDialogComponent>);
   protected data = inject<DownloadDialogData>(MAT_DIALOG_DATA);
 
+  protected categories = DOWNLOAD_CATEGORIES;
+  protected category = signal<DownloadCategory>(this.data.category);
   protected savePath = this.data.suggestedPath;
   protected sending = signal(false);
   protected error = signal('');
@@ -60,7 +69,7 @@ export class DownloadDialogComponent {
       const result = await this.api.download({
         downloadUrl: this.data.release.download_url,
         savePath: this.savePath,
-        category: this.data.category,
+        category: this.category(),
       });
       this.dialogRef.close(result.success);
     } catch (e: unknown) {

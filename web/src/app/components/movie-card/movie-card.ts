@@ -119,6 +119,7 @@ export class MovieCardComponent {
       data: { release, title, isTV, suggestedPath, category } satisfies DownloadDialogData,
       width: '90vw',
       maxWidth: '560px',
+      autoFocus: false,
     });
 
     dialogRef.afterClosed().subscribe((success: boolean | undefined) => {
