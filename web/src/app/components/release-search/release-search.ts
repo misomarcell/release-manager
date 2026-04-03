@@ -37,7 +37,7 @@ export class ReleaseSearchComponent {
   searchSubmit = output<SearchParams>();
 
   protected searchQuery = '';
-  protected selectedCategory = signal<NcoreCategoryKey>('movies');
+  protected selectedCategory = signal<NcoreCategoryKey>('all');
   protected uhdOnly = signal(true);
 
   protected activeFilterCount = computed(() => {
