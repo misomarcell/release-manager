@@ -9,7 +9,6 @@ A self-hosted web app for browsing and searching Hungarian nCore torrents, enric
 - **PostgreSQL caching**: TMDB data cached for 1 week to reduce API calls
 - **Passkey authentication**: WebAuthn/FIDO2 login — no passwords
 - **Dark theme**: Angular Material 3 dark mode
-- **Pagination**: 15 results per page
 - **Docker**: One-command deployment with `docker compose up`
 
 ## Tech Stack

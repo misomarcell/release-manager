@@ -81,23 +81,23 @@ backend/src/
 
 ## Environment Variables
 
-| Variable               | Description                                                           |
-| ---------------------- | --------------------------------------------------------------------- |
-| `DATABASE_URL`         | PostgreSQL connection string                                          |
-| `PORT`                 | Backend listen port (default: `3000`)                                 |
-| `NCORE_BASE_URL`       | nCore base URL (default: `https://ncore.pro`)                         |
-| `NCORE_USERNAME`       | nCore account username                                                |
-| `NCORE_COOKIE_PASS`    | nCore cookie passkey                                                  |
-| `TMDB_ACCESS_TOKEN`    | TMDB API read access token                                            |
+| Variable               | Description                                                            |
+| ---------------------- | ---------------------------------------------------------------------- |
+| `DATABASE_URL`         | PostgreSQL connection string                                           |
+| `PORT`                 | Backend listen port (default: `3000`)                                  |
+| `NCORE_BASE_URL`       | nCore base URL (default: `https://ncore.pro`)                          |
+| `NCORE_USERNAME`       | nCore account username                                                 |
+| `NCORE_COOKIE_PASS`    | nCore cookie passkey                                                   |
+| `TMDB_ACCESS_TOKEN`    | TMDB API read access token                                             |
 | `GITHUB_REPO`          | GitHub repo for version check (default: `misomarcell/release-manager`) |
-| `GITHUB_TOKEN`         | GitHub personal access token                                          |
-| `RP_ID`                | WebAuthn relying party ID (default: `localhost`)                      |
-| `RP_ORIGIN`            | Comma-separated allowed origins for WebAuthn                          |
-| `QBITTORRENT_URL`      | qBittorrent Web UI URL (e.g. `http://qbittorrent:8080`)               |
-| `QBITTORRENT_USERNAME` | qBittorrent username (default: `admin`)                               |
-| `QBITTORRENT_PASSWORD` | qBittorrent password                                                  |
-| `DOWNLOAD_PATH_MOVIES` | Save path for movies (default: `/media/Movies`)                       |
-| `DOWNLOAD_PATH_TV`     | Save path for TV shows (default: `/media/TV_Shows`)                   |
+| `GITHUB_TOKEN`         | GitHub personal access token                                           |
+| `RP_ID`                | WebAuthn relying party ID (default: `localhost`)                       |
+| `RP_ORIGIN`            | Comma-separated allowed origins for WebAuthn                           |
+| `QBITTORRENT_URL`      | qBittorrent Web UI URL (e.g. `http://qbittorrent:8080`)                |
+| `QBITTORRENT_USERNAME` | qBittorrent username (default: `admin`)                                |
+| `QBITTORRENT_PASSWORD` | qBittorrent password                                                   |
+| `DOWNLOAD_PATH_MOVIES` | Save path for movies (default: `/media/Movies`)                        |
+| `DOWNLOAD_PATH_TV`     | Save path for TV shows (default: `/media/TV_Shows`)                    |
 
 ## Validation Rules
 
