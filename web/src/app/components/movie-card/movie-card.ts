@@ -82,8 +82,9 @@ export class MovieCardComponent {
     const m = this.movie();
     const url = m.metadata?.poster;
     if (!url) return;
+    const fullSizeUrl = url.replace('/w342/', '/original/');
     this.dialog.open(PosterDialogComponent, {
-      data: { url, alt: this.displayTitle() },
+      data: { thumbnailUrl: url, fullSizeUrl, alt: this.displayTitle() },
       panelClass: 'poster-overlay',
     });
   }

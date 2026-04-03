@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 
 interface PosterDialogData {
-  url: string;
+  thumbnailUrl: string;
+  fullSizeUrl: string;
   alt: string;
 }
 
@@ -13,6 +14,15 @@ interface PosterDialogData {
   styleUrl: './poster-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PosterDialogComponent {
+export class PosterDialogComponent implements OnInit {
   protected data = inject<PosterDialogData>(MAT_DIALOG_DATA);
+  protected currentUrl = signal(this.data.thumbnailUrl);
+
+  ngOnInit(): void {
+    if (this.data.fullSizeUrl && this.data.fullSizeUrl !== this.data.thumbnailUrl) {
+      const img = new Image();
+      img.onload = () => this.currentUrl.set(this.data.fullSizeUrl);
+      img.src = this.data.fullSizeUrl;
+    }
+  }
 }
