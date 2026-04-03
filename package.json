@@ -1,5 +1,5 @@
 {
-  "name": "movie-releases-workspace",
+  "name": "release-manager-workspace",
   "private": true,
   "packageManager": "npm@11.7.0",
   "workspaces": [

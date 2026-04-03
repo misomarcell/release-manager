@@ -44,4 +44,4 @@ COPY --from=build-web /app/shared ./node_modules/shared
 COPY --from=build-web /app/web/dist ./web/dist
 EXPOSE 4000
 ENV PORT=4000
-CMD ["node", "web/dist/movie-releases/server/server.mjs"]
+CMD ["node", "web/dist/release-manager/server/server.mjs"]

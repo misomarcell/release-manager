@@ -28,7 +28,7 @@ export async function fetchLatestCommit(): Promise<VersionInfo> {
 
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github+json',
-    'User-Agent': 'movie-releases-backend',
+    'User-Agent': 'release-manager-backend',
   };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;

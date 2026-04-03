@@ -8,7 +8,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "movie-releases": {
+    "release-manager": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -91,10 +91,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "movie-releases:build:production"
+              "buildTarget": "release-manager:build:production"
             },
             "development": {
-              "buildTarget": "movie-releases:build:development"
+              "buildTarget": "release-manager:build:development"
             }
           },
           "defaultConfiguration": "development"

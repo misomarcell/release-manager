@@ -89,7 +89,7 @@ backend/src/
 | `NCORE_USERNAME`       | nCore account username                                                |
 | `NCORE_COOKIE_PASS`    | nCore cookie passkey                                                  |
 | `TMDB_ACCESS_TOKEN`    | TMDB API read access token                                            |
-| `GITHUB_REPO`          | GitHub repo for version check (default: `misomarcell/movie-releases`) |
+| `GITHUB_REPO`          | GitHub repo for version check (default: `misomarcell/release-manager`) |
 | `GITHUB_TOKEN`         | GitHub personal access token                                          |
 | `RP_ID`                | WebAuthn relying party ID (default: `localhost`)                      |
 | `RP_ORIGIN`            | Comma-separated allowed origins for WebAuthn                          |

@@ -16,7 +16,7 @@ export const config = {
     accessToken: process.env['TMDB_ACCESS_TOKEN']?.trim() || '',
   },
   github: {
-    repo: process.env['GITHUB_REPO']?.trim() || 'misomarcell/movie-releases',
+    repo: process.env['GITHUB_REPO']?.trim() || 'misomarcell/release-manager',
     token: process.env['GITHUB_TOKEN']?.trim() || '',
   },
   rp: {
