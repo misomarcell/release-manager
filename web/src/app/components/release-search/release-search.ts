@@ -8,7 +8,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import type { NcoreCategoryKey } from '../../../../../shared/src/ncore.models';
+import type { NcoreCategoryKey } from '@rm/shared/ncore.models';
 
 export interface SearchParams {
   query: string;

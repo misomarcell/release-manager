@@ -22,7 +22,7 @@ import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { VersionService } from '../../services/version.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import type { NcoreCategoryKey, NcoreResult } from '../../../../../shared/src/ncore.models';
+import type { NcoreCategoryKey, NcoreResult } from '@rm/shared/ncore.models';
 
 const VALID_CATEGORIES: NcoreCategoryKey[] = ['all', 'movies', 'tv'];
 

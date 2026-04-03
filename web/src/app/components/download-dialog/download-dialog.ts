@@ -13,7 +13,7 @@ import {
   type NcoreResult,
   type TvInfo,
   type DownloadCategory,
-} from '../../../../../shared/src/ncore.models';
+} from '@rm/shared/ncore.models';
 
 export interface DownloadDialogData {
   release: NcoreResult;

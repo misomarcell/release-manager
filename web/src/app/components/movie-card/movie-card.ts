@@ -19,7 +19,7 @@ import { DownloadDialogComponent } from '../download-dialog/download-dialog';
 import { PosterDialogComponent } from '../poster-dialog/poster-dialog';
 import type { DownloadDialogData } from '../download-dialog/download-dialog';
 import type { GroupedMovie } from '../home/home';
-import type { NcoreResult, MovieDetailMetadata } from '../../../../../shared/src/ncore.models';
+import type { NcoreResult, MovieDetailMetadata } from '@rm/shared/ncore.models';
 
 const TV_CATEGORIES = new Set(['hdser_hun', 'hdser']);
 const MOVIES_BASE = '/media/Movies';

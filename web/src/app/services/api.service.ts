@@ -8,7 +8,7 @@ import type {
   DownloadResponse,
   MovieDetailMetadata,
   UserInfo,
-} from '../../../../shared/src/ncore.models';
+} from '@rm/shared/ncore.models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {

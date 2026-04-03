@@ -12,7 +12,7 @@ import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { extractHttpError } from '../../utils/http-error';
-import type { UserInfo } from '../../../../../shared/src/ncore.models';
+import type { UserInfo } from '@rm/shared/ncore.models';
 
 @Component({
   selector: 'app-users',
