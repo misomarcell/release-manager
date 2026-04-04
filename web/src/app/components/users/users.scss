@@ -79,7 +79,7 @@ mat-card-actions {
     flex: 1;
   }
 
-  .mat-warn {
+  .mat-warn:not([disabled]) {
     --mat-icon-color: var(--mat-sys-error);
   }
 }
