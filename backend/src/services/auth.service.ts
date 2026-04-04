@@ -96,7 +96,7 @@ export async function finishAuthentication(response: AuthenticationResponseJSON)
 
   const user = await findUserById(cred.user_id);
   if (!user) throw new Error('User not found');
-  if (!user.valid) throw new Error('Account not activated. Set valid=true in the database.');
+  if (!user.valid) throw new Error('Account not activated. Please try again later.');
 
   const verification = await verifyAuthenticationResponse({
     response,
