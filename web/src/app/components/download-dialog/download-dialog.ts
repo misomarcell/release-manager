@@ -8,12 +8,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { ApiService } from '../../services/api.service';
-import {
-  DOWNLOAD_CATEGORIES,
-  type NcoreResult,
-  type TvInfo,
-  type DownloadCategory,
-} from '@rm/shared/ncore.models';
+import { DOWNLOAD_CATEGORIES, type DownloadCategory } from '@rm/shared/constants';
+import type { NcoreResult, TvInfo } from '@rm/shared/ncore.models';
 
 export interface DownloadDialogData {
   release: NcoreResult;

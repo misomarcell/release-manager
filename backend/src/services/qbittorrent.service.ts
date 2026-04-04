@@ -1,6 +1,6 @@
 import { config } from '../config.js';
 import { downloadTorrentFile } from './ncore.service.js';
-import type { DownloadCategory } from 'shared/ncore.models';
+import type { DownloadCategory } from 'shared/constants';
 
 let sessionCookie = '';
 

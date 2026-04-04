@@ -14,12 +14,14 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../services/api.service';
+import { AuthService } from '../../services/auth.service';
 import { NfoDialogComponent } from '../nfo-dialog/nfo-dialog';
 import { DownloadDialogComponent } from '../download-dialog/download-dialog';
 import { PosterDialogComponent } from '../poster-dialog/poster-dialog';
 import type { DownloadDialogData } from '../download-dialog/download-dialog';
 import type { GroupedMovie } from '../home/home';
-import type { NcoreResult, MovieDetailMetadata } from '@rm/shared/ncore.models';
+import type { NcoreResult } from '@rm/shared/ncore.models';
+import type { MovieDetailMetadata } from '@rm/shared/tmdb.models';
 
 const TV_CATEGORIES = new Set(['hdser_hun', 'hdser']);
 const MOVIES_BASE = '/media/Movies';
@@ -36,6 +38,7 @@ export class MovieCardComponent {
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
   private api = inject(ApiService);
+  protected auth = inject(AuthService);
 
   movie = input.required<GroupedMovie>();
   searchTitle = output<string>();

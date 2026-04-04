@@ -16,15 +16,17 @@
     <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
   </button>
   <mat-menu #userMenu="matMenu">
-    <button mat-menu-item (click)="navigateToUsers()">
-      <mat-icon>group</mat-icon>
-      <span>Manage users</span>
-    </button>
-    <button mat-menu-item (click)="navigateToAdmin()">
-      <mat-icon>admin_panel_settings</mat-icon>
-      <span>Administration</span>
-    </button>
-    <mat-divider />
+    @if (auth.admin()) {
+      <button mat-menu-item (click)="navigateToUsers()">
+        <mat-icon>group</mat-icon>
+        <span>Manage users</span>
+      </button>
+      <button mat-menu-item (click)="navigateToAdmin()">
+        <mat-icon>admin_panel_settings</mat-icon>
+        <span>Administration</span>
+      </button>
+      <mat-divider />
+    }
     <button mat-menu-item (click)="logout()">
       <mat-icon>logout</mat-icon>
       <span>Sign out</span>

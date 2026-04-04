@@ -1,7 +1,8 @@
 import { config } from '../config.js';
 import { asRecord, asString, asNumber, asBoolean } from '../utils/coerce.js';
 import { parseReleaseName, sanitizeImdbId, parseTvInfo } from '../utils/release-parser.js';
-import type { NcoreCategoryKey, NcoreResult, MetadataLookup } from 'shared/ncore.models';
+import type { NcoreCategoryKey, NcoreResult } from 'shared/ncore.models';
+import type { MetadataLookup } from 'shared/tmdb.models';
 
 function getCookieHeader(): string {
   const { username, cookiePass } = config.ncore;

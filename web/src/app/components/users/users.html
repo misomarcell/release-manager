@@ -49,14 +49,23 @@
           </mat-card-content>
           <mat-card-actions>
             <button
-              mat-stroked-button
+              mat-icon-button
               color="warn"
               [disabled]="isSelf(user)"
               (click)="deleteUser(user)"
               [attr.aria-label]="'Delete ' + user.username"
             >
               <mat-icon>delete</mat-icon>
-              Delete
+            </button>
+            <button
+              mat-icon-button
+              [disabled]="isSelf(user)"
+              (click)="toggleAdmin(user)"
+              [attr.aria-label]="
+                (user.admin ? 'Revoke admin from' : 'Make admin') + ' ' + user.username
+              "
+            >
+              <mat-icon>{{ user.admin ? 'remove_moderator' : 'shield' }}</mat-icon>
             </button>
             <button
               mat-stroked-button

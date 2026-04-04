@@ -6,12 +6,8 @@ import {
   getCachedDetailByTmdbId,
   updateCachedDetail,
 } from '../repositories/cache.repository.js';
-import {
-  TMDB_GENRE_MAP,
-  type MovieMetadata,
-  type MovieDetailMetadata,
-  type MetadataLookup,
-} from 'shared/ncore.models';
+import { TMDB_GENRE_MAP } from 'shared/constants';
+import type { MovieMetadata, MovieDetailMetadata, MetadataLookup } from 'shared/tmdb.models';
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w342';

@@ -1,6 +1,6 @@
 import { query } from '../db/connection.js';
 import { config } from '../config.js';
-import type { MovieMetadata, MovieDetailMetadata } from 'shared/ncore.models';
+import type { MovieMetadata, MovieDetailMetadata } from 'shared/tmdb.models';
 
 interface MetadataCacheRow {
   cache_key: string;

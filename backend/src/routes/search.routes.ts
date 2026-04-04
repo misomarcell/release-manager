@@ -4,15 +4,11 @@ import { searchNcore, fetchNfo } from '../services/ncore.service.js';
 import { fetchBasicMetadata, getCacheKey, fetchDetailMetadata } from '../services/tmdb.service.js';
 import { addTorrent } from '../services/qbittorrent.service.js';
 import { mapConcurrent } from '../utils/concurrent.js';
-import { requireAuth } from '../middleware/auth.js';
-import {
-  DOWNLOAD_CATEGORIES,
-  type NcoreResult,
-  type NcoreSearchResponse,
-  type DownloadRequest,
-  type DownloadResponse,
-  type MetadataLookup,
-} from 'shared/ncore.models';
+import { requireAuth, requireAdmin } from '../middleware/auth.js';
+import { DOWNLOAD_CATEGORIES } from 'shared/constants';
+import type { NcoreResult, NcoreSearchResponse } from 'shared/ncore.models';
+import type { DownloadRequest, DownloadResponse } from 'shared/download.models';
+import type { MetadataLookup } from 'shared/tmdb.models';
 
 const router = Router();
 
@@ -108,7 +104,7 @@ router.get('/nfo/:id', requireAuth, async (req: Request, res: Response) => {
   }
 });
 
-router.post('/download', requireAuth, async (req: Request, res: Response) => {
+router.post('/download', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
     const { downloadUrl, savePath, category } = req.body as DownloadRequest;
     if (!downloadUrl || !savePath || !category) {

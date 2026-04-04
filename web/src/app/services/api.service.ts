@@ -1,14 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import type {
-  NcoreCategoryKey,
-  NcoreSearchResponse,
-  DownloadRequest,
-  DownloadResponse,
-  MovieDetailMetadata,
-  UserInfo,
-} from '@rm/shared/ncore.models';
+import type { NcoreCategoryKey, NcoreSearchResponse } from '@rm/shared/ncore.models';
+import type { DownloadRequest, DownloadResponse } from '@rm/shared/download.models';
+import type { MovieDetailMetadata } from '@rm/shared/tmdb.models';
+import type { UserInfo } from '@rm/shared/user.models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -76,6 +72,12 @@ export class ApiService {
 
   async deleteUser(userId: number): Promise<void> {
     await firstValueFrom(this.http.delete(`/api/users/${userId}`, { withCredentials: true }));
+  }
+
+  async setUserAdmin(userId: number, admin: boolean): Promise<void> {
+    await firstValueFrom(
+      this.http.patch(`/api/users/${userId}/admin`, { admin }, { withCredentials: true }),
+    );
   }
 
   async clearMetadataCache(): Promise<{ deleted: number }> {

@@ -12,7 +12,7 @@ import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { extractHttpError } from '../../utils/http-error';
-import type { UserInfo } from '@rm/shared/ncore.models';
+import type { UserInfo } from '@rm/shared/user.models';
 
 @Component({
   selector: 'app-users',
@@ -77,6 +77,25 @@ export class UsersComponent implements OnInit {
       this.users.update((users) => users.filter((u) => u.id !== user.id));
     } catch (e: unknown) {
       this.error.set(extractHttpError(e, 'Failed to delete user'));
+    }
+  }
+
+  protected async toggleAdmin(user: UserInfo): Promise<void> {
+    const newAdmin = !user.admin;
+    const action = newAdmin ? 'grant admin to' : 'revoke admin from';
+    const confirmed = await this.confirm(
+      `${newAdmin ? 'Grant' : 'Revoke'} admin`,
+      `Are you sure you want to ${action} ${user.username}?`,
+    );
+    if (!confirmed) return;
+
+    try {
+      await this.api.setUserAdmin(user.id, newAdmin);
+      this.users.update((users) =>
+        users.map((u) => (u.id === user.id ? { ...u, admin: newAdmin } : u)),
+      );
+    } catch (e: unknown) {
+      this.error.set(extractHttpError(e, 'Failed to update user'));
     }
   }
 

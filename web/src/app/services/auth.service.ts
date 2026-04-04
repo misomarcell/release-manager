@@ -13,16 +13,21 @@ export class AuthService {
   private http = inject(HttpClient);
 
   username = signal<string | null>(null);
+  admin = signal(false);
 
   async checkSession(): Promise<boolean> {
     try {
       const result = await firstValueFrom(
-        this.http.get<{ username: string }>('/api/auth/me', { withCredentials: true }),
+        this.http.get<{ username: string; admin: boolean }>('/api/auth/me', {
+          withCredentials: true,
+        }),
       );
       this.username.set(result.username);
+      this.admin.set(result.admin);
       return true;
     } catch {
       this.username.set(null);
+      this.admin.set(false);
       return false;
     }
   }
@@ -59,17 +64,19 @@ export class AuthService {
     const response = await startAuthentication({ optionsJSON: options });
 
     const result = await firstValueFrom(
-      this.http.post<{ username: string }>(
+      this.http.post<{ username: string; admin: boolean }>(
         '/api/auth/login/finish',
         { response },
         { withCredentials: true },
       ),
     );
     this.username.set(result.username);
+    this.admin.set(result.admin);
   }
 
   async logout(): Promise<void> {
     await firstValueFrom(this.http.post('/api/auth/logout', {}, { withCredentials: true }));
     this.username.set(null);
+    this.admin.set(false);
   }
 }

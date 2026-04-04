@@ -4,12 +4,14 @@ interface UserRow {
   id: number;
   username: string;
   valid: boolean;
+  admin: boolean;
 }
 
 interface UserDetailRow {
   id: number;
   username: string;
   valid: boolean;
+  admin: boolean;
   created_at: Date;
   ip_address: string | null;
   user_agent: string | null;
@@ -26,14 +28,18 @@ interface CredentialRow {
 }
 
 export async function findUserByUsername(username: string): Promise<UserRow | null> {
-  const result = await query<UserRow>('SELECT id, username, valid FROM users WHERE username = $1', [
-    username,
-  ]);
+  const result = await query<UserRow>(
+    'SELECT id, username, valid, admin FROM users WHERE username = $1',
+    [username],
+  );
   return result.rows[0] ?? null;
 }
 
 export async function findUserById(id: number): Promise<UserRow | null> {
-  const result = await query<UserRow>('SELECT id, username, valid FROM users WHERE id = $1', [id]);
+  const result = await query<UserRow>(
+    'SELECT id, username, valid, admin FROM users WHERE id = $1',
+    [id],
+  );
   return result.rows[0] ?? null;
 }
 
@@ -43,7 +49,7 @@ export async function createUser(
   userAgent?: string,
 ): Promise<UserRow> {
   const result = await query<UserRow>(
-    'INSERT INTO users (username, valid, ip_address, user_agent) VALUES ($1, FALSE, $2, $3) RETURNING id, username, valid',
+    'INSERT INTO users (username, valid, ip_address, user_agent) VALUES ($1, FALSE, $2, $3) RETURNING id, username, valid, admin',
     [username, ipAddress ?? null, userAgent ?? null],
   );
   return result.rows[0];
@@ -123,7 +129,7 @@ export async function deleteSession(token: string): Promise<void> {
 
 export async function getAllUsers(): Promise<UserDetailRow[]> {
   const result = await query<UserDetailRow>(
-    `SELECT u.id, u.username, u.valid, u.created_at, u.ip_address, u.user_agent, u.last_login,
+    `SELECT u.id, u.username, u.valid, u.admin, u.created_at, u.ip_address, u.user_agent, u.last_login,
             COUNT(c.id)::int AS credential_count
      FROM users u
      LEFT JOIN credentials c ON c.user_id = u.id
@@ -148,5 +154,13 @@ export async function updateLastLogin(userId: number): Promise<void> {
 
 export async function deleteUser(userId: number): Promise<boolean> {
   const result = await query('DELETE FROM users WHERE id = $1 RETURNING id', [userId]);
+  return result.rowCount !== null && result.rowCount > 0;
+}
+
+export async function setUserAdmin(userId: number, admin: boolean): Promise<boolean> {
+  const result = await query('UPDATE users SET admin = $1 WHERE id = $2 RETURNING id', [
+    admin,
+    userId,
+  ]);
   return result.rowCount !== null && result.rowCount > 0;
 }

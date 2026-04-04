@@ -23,10 +23,12 @@
 
 ## Shared Models
 
-- `shared/src/ncore.models.ts` is the single source of truth for types shared between frontend and backend.
-- `DOWNLOAD_CATEGORIES = ['Movies', 'TV Shows'] as const` — canonical list of download categories.
-- `DownloadCategory` type is derived from `DOWNLOAD_CATEGORIES`.
-- `DownloadRequest` contains `downloadUrl`, `savePath`, and `category`.
+- `shared/src/` contains shared TypeScript models and constants used by both frontend and backend.
+- `shared/src/ncore.models.ts` — nCore-specific types: `NcoreCategoryKey`, `TvType`, `TvInfo`, `NcoreResult`, `NcoreSearchResponse`.
+- `shared/src/tmdb.models.ts` — TMDB metadata types: `MetadataLookup`, `MovieMetadata`, `MovieDetailMetadata`.
+- `shared/src/download.models.ts` — Download types: `DownloadRequest`, `DownloadResponse`.
+- `shared/src/user.models.ts` — User types: `UserInfo`.
+- `shared/src/constants.ts` — Shared constants: `TMDB_GENRE_MAP`, `DOWNLOAD_CATEGORIES`, `DownloadCategory`.
 - Both frontend and backend import from `shared` — never duplicate these types.
 
 ## Backend Structure

@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { query } from '../db/connection.js';
 import { testConnection } from '../services/qbittorrent.service.js';
 
 const router = Router();
 
 router.use(requireAuth);
+router.use(requireAdmin);
 
 router.delete('/metadata-cache', async (_req: Request, res: Response) => {
   try {

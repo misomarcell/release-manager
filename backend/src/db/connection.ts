@@ -87,6 +87,11 @@ export async function initDatabase(): Promise<void> {
   `);
 
   await pool.query(`
+    ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS admin BOOLEAN DEFAULT FALSE;
+  `);
+
+  await pool.query(`
     ALTER TABLE metadata_cache
       ADD COLUMN IF NOT EXISTS tmdb_id INTEGER,
       ADD COLUMN IF NOT EXISTS media_type TEXT,

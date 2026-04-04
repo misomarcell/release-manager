@@ -52,7 +52,9 @@
         @if (m.metadata?.mediaType) {
           <div class="detail-row">
             <span class="detail-label">Type</span>
-            <span class="detail-value">{{ m.metadata!.mediaType === 'tv' ? 'TV Show' : 'Movie' }}</span>
+            <span class="detail-value">{{
+              m.metadata!.mediaType === 'tv' ? 'TV Show' : 'Movie'
+            }}</span>
           </div>
         }
         @if (detail()?.rated) {
@@ -111,9 +113,11 @@
               <span class="freeleech">FL</span>
             }
             <div class="spacer"></div>
-            <button mat-icon-button aria-label="Send to qBittorrent" (click)="download(r)">
-              <mat-icon>download</mat-icon>
-            </button>
+            @if (auth.admin()) {
+              <button mat-icon-button aria-label="Send to qBittorrent" (click)="download(r)">
+                <mat-icon>download</mat-icon>
+              </button>
+            }
             <button mat-icon-button aria-label="Show NFO" (click)="showNfo(r.torrent_id)">
               <mat-icon>info_outline</mat-icon>
             </button>

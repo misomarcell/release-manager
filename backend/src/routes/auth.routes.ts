@@ -85,7 +85,7 @@ router.post('/login/finish', async (req: Request, res: Response) => {
       expires: result.expiresAt,
       path: '/',
     });
-    res.json({ username: result.username });
+    res.json({ username: result.username, admin: result.admin });
   } catch (error: unknown) {
     res.status(401).json({ error: error instanceof Error ? error.message : 'Login failed' });
   }
@@ -109,7 +109,7 @@ router.get('/me', async (req: Request, res: Response) => {
     res.status(401).json({ error: 'Session expired' });
     return;
   }
-  res.json({ username: session.username });
+  res.json({ username: session.username, admin: session.admin });
 });
 
 export default router;

@@ -123,7 +123,7 @@ export async function finishAuthentication(response: AuthenticationResponseJSON)
   const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
   await createSession(token, user.id, expiresAt);
 
-  return { token, expiresAt, username: user.username };
+  return { token, expiresAt, username: user.username, admin: user.admin };
 }
 
 export async function validateSession(token: string) {
@@ -133,7 +133,7 @@ export async function validateSession(token: string) {
   const user = await findUserById(session.user_id);
   if (!user || !user.valid) return null;
 
-  return { userId: user.id, username: user.username };
+  return { userId: user.id, username: user.username, admin: user.admin };
 }
 
 export async function logout(token: string) {
