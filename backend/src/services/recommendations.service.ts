@@ -19,6 +19,7 @@ interface AiSuggestion {
   title: string;
   year: string;
   mediaType: 'movie' | 'tv';
+  reason: string;
 }
 
 async function fetchAiSuggestions(feedbackContext: string, filter: 'movie' | 'tv' | null): Promise<AiSuggestion[]> {
@@ -34,7 +35,7 @@ Based on their taste, recommend ${RECOMMEND_COUNT} great movies and TV shows the
 Prioritize critically acclaimed and beloved titles. Avoid generic blockbusters unless truly fitting.
 ${typeConstraint}
 Respond ONLY with a valid JSON array, no explanation, no markdown.
-Each object: { "title": "...", "year": "YYYY", "mediaType": "movie" | "tv" }`;
+Each object: { "title": "...", "year": "YYYY", "mediaType": "movie" | "tv", "reason": "one short sentence why this fits the user's taste" }`;
 
   const userMessage = `My ratings:
 
@@ -66,8 +67,9 @@ Recommend ${RECOMMEND_COUNT} titles I would enjoy.`;
         const year = typeof r['year'] === 'string' ? r['year'] : '';
         const rawType = typeof r['mediaType'] === 'string' ? r['mediaType'] : '';
         const mediaType = rawType === 'tv' ? 'tv' : 'movie';
+        const reason = typeof r['reason'] === 'string' ? r['reason'].trim() : '';
         if (!title) return null;
-        return { title, year, mediaType } satisfies AiSuggestion;
+        return { title, year, mediaType, reason } satisfies AiSuggestion;
       })
       .filter((x): x is AiSuggestion => x !== null);
   } catch {
@@ -79,7 +81,7 @@ async function enrichSuggestions(suggestions: AiSuggestion[]): Promise<Recommend
   const results: Recommendation[] = [];
   for (const s of suggestions) {
     const rec = await searchRecommendation(s.title, s.year, s.mediaType);
-    if (rec) results.push(rec);
+    if (rec) results.push(s.reason ? { ...rec, reason: s.reason } : rec);
   }
   return results;
 }

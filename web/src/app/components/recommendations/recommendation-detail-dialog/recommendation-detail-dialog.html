@@ -27,6 +27,12 @@
 @if (rec.plot) {
   <p class="dialog-plot">{{ rec.plot }}</p>
 }
+@if (rec.reason) {
+  <p class="dialog-reason">
+    <mat-icon class="reason-icon">auto_awesome</mat-icon>
+    {{ rec.reason }}
+  </p>
+}
 <div class="dialog-actions">
   <div class="dialog-feedback-row">
     <button

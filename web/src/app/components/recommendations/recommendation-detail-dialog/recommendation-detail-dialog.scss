@@ -78,6 +78,25 @@
   margin: 0.75rem 1rem 0;
 }
 
+.dialog-reason {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--mat-sys-primary);
+  margin: 0.5rem 1rem 0;
+  line-height: 1.5;
+
+  .reason-icon {
+    font-size: 0.95rem;
+    width: 0.95rem;
+    height: 0.95rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+}
+
 .dialog-actions {
   display: flex;
   flex-direction: column;
