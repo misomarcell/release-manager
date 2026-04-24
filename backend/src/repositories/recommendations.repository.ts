@@ -7,7 +7,6 @@ interface FeedbackRow {
   tmdb_id: number;
   media_type: string;
   title: string;
-  summary: string;
   feedback: string;
 }
 
@@ -27,12 +26,12 @@ export async function hasFeedback(userId: number): Promise<boolean> {
 
 export async function getRandomFeedbackSample(limit: number, userId: number): Promise<FeedbackRow[]> {
   const result = await query<FeedbackRow>(
-    `SELECT tmdb_id, media_type, title, summary, feedback
+    `SELECT tmdb_id, media_type, title, feedback
      FROM recommendation_feedback
-     WHERE user_id = $2
+     WHERE user_id = $1
      ORDER BY random()
-     LIMIT $1`,
-    [limit, userId],
+     LIMIT $2`,
+    [userId, limit],
   );
   return result.rows;
 }
