@@ -12,7 +12,6 @@
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../services/api.service';
 import { RecommendationDetailDialogComponent } from './recommendation-detail-dialog/recommendation-detail-dialog';
@@ -20,7 +19,7 @@ import type { Recommendation, FeedbackValue } from '@rm/shared/recommendations.m
 
 @Component({
   selector: 'app-recommendations',
-  imports: [MatButtonModule, MatButtonToggleModule, MatIconModule, MatProgressBarModule],
+  imports: [MatButtonModule, MatButtonToggleModule, MatIconModule],
   templateUrl: './recommendations.html',
   styleUrl: './recommendations.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,6 +39,7 @@ export class RecommendationsComponent {
   protected filter = signal<'all' | 'movie' | 'tv'>('all');
   protected feedback = signal<Record<string, FeedbackValue>>({});
   protected submitting = signal<Record<string, boolean>>({});
+  protected readonly skeletonItems = [0, 1, 2, 3, 4];
 
   protected toggleOpen(): void {
     const next = !this.open();
