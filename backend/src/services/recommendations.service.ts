@@ -36,7 +36,11 @@ ${typeConstraint}
 Respond ONLY with a valid JSON array, no explanation, no markdown.
 Each object: { "title": "...", "year": "YYYY", "mediaType": "movie" | "tv" }`;
 
-  const userMessage = `Here are my ratings:\n${feedbackContext}\n\nPlease give me ${RECOMMEND_COUNT} recommendations I haven't seen yet.`;
+  const userMessage = `My ratings:
+
+${feedbackContext}
+
+Recommend ${RECOMMEND_COUNT} titles I would enjoy.`;
 
   const content = await chatCompletion(
     [
@@ -94,7 +98,20 @@ export async function getRecommendations(
   if (feedback.length === 0 || !isOpenAiAvailable()) {
     recommendations = await fetchTopRatedRecommendations(RECOMMEND_COUNT, filter);
   } else {
-    const feedbackContext = feedback.map((f) => `"${f.title}" · ${f.summary} · ${f.feedback}d`).join('\n');
+    const liked = feedback.filter((f) => f.feedback === 'like');
+    const disliked = feedback.filter((f) => f.feedback === 'dislike');
+
+    const formatEntry = (f: { title: string; media_type: string }) =>
+      `  • "${f.title}" (${f.media_type === 'tv' ? 'TV Show' : 'Movie'})`;
+
+    const parts: string[] = [];
+    if (liked.length > 0) {
+      parts.push(`👍 Liked (${liked.length}):\n${liked.map(formatEntry).join('\n')}`);
+    }
+    if (disliked.length > 0) {
+      parts.push(`👎 Disliked (${disliked.length}):\n${disliked.map(formatEntry).join('\n')}`);
+    }
+    const feedbackContext = parts.join('\n\n');
 
     const suggestions = await fetchAiSuggestions(feedbackContext, filter);
 
