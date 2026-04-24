@@ -6,18 +6,31 @@
   </button>
   @if (open()) {
     <div class="rec-panel-body">
-      <mat-button-toggle-group
-        class="filter-toggle"
-        [value]="filter()"
-        (change)="changeFilter($event.value)"
-        hideSingleSelectionIndicator
-      >
-        <mat-button-toggle value="all">All</mat-button-toggle>
-        <mat-button-toggle value="movie">Movies</mat-button-toggle>
-        <mat-button-toggle value="tv">TV Shows</mat-button-toggle>
-      </mat-button-toggle-group>
+      <div class="filter-toggle-row">
+        <mat-button-toggle-group
+          class="filter-toggle"
+          [value]="filter()"
+          (change)="changeFilter($event.value)"
+          hideSingleSelectionIndicator
+        >
+          <mat-button-toggle value="all">All</mat-button-toggle>
+          <mat-button-toggle value="movie">Movies</mat-button-toggle>
+          <mat-button-toggle value="tv">TV Shows</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
       @if (loading()) {
-        <mat-progress-bar mode="indeterminate" />
+        <div class="ribbon">
+          @for (i of skeletonItems; track i) {
+            <div class="rec-card skeleton-card">
+              <div class="skeleton poster-skel"></div>
+              <div class="rec-info">
+                <div class="skeleton skel-line skel-title"></div>
+                <div class="skeleton skel-line skel-meta"></div>
+              </div>
+              <div class="skeleton-actions"></div>
+            </div>
+          }
+        </div>
       } @else if (recommendations().length > 0) {
         <div class="ribbon">
           @for (rec of recommendations(); track trackByTmdb($index, rec); let i = $index) {
