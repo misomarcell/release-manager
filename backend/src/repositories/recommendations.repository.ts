@@ -1,8 +1,6 @@
 import { query } from '../db/connection.js';
 import type { Recommendation, RecommendationFeedbackRequest } from 'shared/recommendations.models';
 
-const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
-
 interface FeedbackRow {
   tmdb_id: number;
   media_type: string;
@@ -51,7 +49,7 @@ export async function getFreshCache(userId: number, filter: 'movie' | 'tv' | nul
     `SELECT id, recommendations, generated_at FROM recommendation_cache
      WHERE user_id = $1
      AND (($2::TEXT IS NULL AND media_type_filter IS NULL) OR media_type_filter = $2)
-     AND generated_at > NOW() - INTERVAL '${Math.floor(CACHE_TTL_MS / 1000)} seconds'
+     AND generated_at > NOW() - INTERVAL '12 hours'
      ORDER BY id DESC LIMIT 1`,
     [userId, filter],
   );
