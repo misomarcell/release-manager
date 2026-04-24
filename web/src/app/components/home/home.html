@@ -38,7 +38,17 @@
   <app-recommendations (searchTitle)="onSearchByTitle($event)" />
 
   @if (loading()) {
-    <mat-progress-bar mode="indeterminate" />
+    <div class="release-skeletons">
+      @for (i of skeletonItems; track i) {
+        <div class="skeleton-card-row">
+          <div class="skeleton skel-poster"></div>
+          <div class="skel-text">
+            <div class="skeleton skel-title"></div>
+            <div class="skeleton skel-meta"></div>
+          </div>
+        </div>
+      }
+    </div>
   }
 
   @if (error(); as err) {

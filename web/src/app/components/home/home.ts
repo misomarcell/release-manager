@@ -6,7 +6,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatAccordion } from '@angular/material/expansion';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MovieCardComponent } from '../movie-card/movie-card';
 import { ReleaseSearchComponent, SearchParams } from '../release-search/release-search';
@@ -37,7 +36,6 @@ export interface GroupedMovie {
     MatDividerModule,
     MatAccordion,
     MatToolbarModule,
-    MatProgressBarModule,
     MatPaginatorModule,
     MovieCardComponent,
     ReleaseSearchComponent,
@@ -58,6 +56,7 @@ export class HomeComponent implements OnInit {
   protected loading = signal(false);
   protected error = signal<string | null>(null);
   private results = signal<NcoreResult[]>([]);
+  protected readonly skeletonItems = [0, 1, 2, 3, 4, 5];
   protected totalResults = signal(0);
   protected currentPage = signal(1);
   protected readonly pageSize = 100;
