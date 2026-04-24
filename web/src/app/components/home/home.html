@@ -1,9 +1,7 @@
 <mat-toolbar class="toolbar">
   @if (version.commitHash()) {
     <span class="version-info">
-      <a [href]="version.commitUrl()" target="_blank" rel="noopener" class="commit-link">{{
-        version.commitHash()
-      }}</a>
+      <a [href]="version.commitUrl()" target="_blank" rel="noopener" class="commit-link">{{ version.commitHash() }}</a>
       @if (version.commitDate(); as date) {
         <span class="commit-date">{{ date | date: 'yyyy-MM-dd HH:mm' }}</span>
       }
@@ -37,8 +35,20 @@
 <main class="container">
   <app-release-search (searchSubmit)="onSearch($event)" />
 
+  <app-recommendations (searchTitle)="onSearchByTitle($event)" />
+
   @if (loading()) {
-    <mat-progress-bar mode="indeterminate" />
+    <div class="release-skeletons">
+      @for (i of skeletonItems; track i) {
+        <div class="skeleton-card-row">
+          <div class="skeleton skel-poster"></div>
+          <div class="skel-text">
+            <div class="skeleton skel-title"></div>
+            <div class="skeleton skel-meta"></div>
+          </div>
+        </div>
+      }
+    </div>
   }
 
   @if (error(); as err) {
@@ -46,7 +56,10 @@
   }
 
   @if (!loading() && groupedMovies().length > 0) {
-    <h2 class="list-title">{{ listTitle() }}</h2>
+    <h2 class="list-title">
+      <mat-icon class="list-title-icon">{{ listTitleIcon() }}</mat-icon>
+      {{ listTitle() }}
+    </h2>
     <mat-accordion class="results">
       @for (movie of groupedMovies(); track movie.key; let i = $index) {
         <app-movie-card [movie]="movie" (searchTitle)="onSearchByTitle($event)" />

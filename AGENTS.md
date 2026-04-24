@@ -28,6 +28,7 @@
 - `shared/src/tmdb.models.ts` — TMDB metadata types: `MetadataLookup`, `MovieMetadata`, `MovieDetailMetadata`.
 - `shared/src/download.models.ts` — Download types: `DownloadRequest`, `DownloadResponse`.
 - `shared/src/user.models.ts` — User types: `UserInfo`.
+- `shared/src/recommendations.models.ts` — Recommendation types: `Recommendation`, `FeedbackValue`, `RecommendationFeedbackRequest`.
 - `shared/src/constants.ts` — Shared constants: `TMDB_GENRE_MAP`, `DOWNLOAD_CATEGORIES`, `DownloadCategory`.
 - Both frontend and backend import from `shared` — never duplicate these types.
 
@@ -43,15 +44,18 @@ backend/src/
     auth.routes.ts      # Passkey registration/login endpoints
     search.routes.ts    # nCore search + TMDB enrichment + download
     version.routes.ts   # App version endpoint (latest GitHub commit)
+    recommendations.routes.ts # AI-powered recommendations + feedback
   services/
     auth.service.ts     # WebAuthn/Passkey logic
     github.service.ts   # GitHub API integration (latest commit info)
     ncore.service.ts    # nCore API: search, NFO, torrent file download
     tmdb.service.ts     # TMDB API + PostgreSQL caching
     qbittorrent.service.ts # qBittorrent Web API integration
+    recommendations.service.ts # OpenAI + TMDB top-rated recommendations
   repositories/
     cache.repository.ts # Metadata cache database operations
     user.repository.ts  # User/credential/session database operations
+    recommendations.repository.ts # Feedback and recommendation cache DB operations
   utils/
     coerce.ts           # Type coercion helpers
     concurrent.ts       # Concurrent promise mapper
@@ -100,6 +104,7 @@ backend/src/
 | `QBITTORRENT_PASSWORD` | qBittorrent password                                                   |
 | `DOWNLOAD_PATH_MOVIES` | Save path for movies (default: `/media/Movies`)                        |
 | `DOWNLOAD_PATH_TV`     | Save path for TV shows (default: `/media/TV_Shows`)                    |
+| `OPENAI_API_KEY`       | OpenAI API key for AI-powered recommendations (optional)               |
 
 ## Validation Rules
 

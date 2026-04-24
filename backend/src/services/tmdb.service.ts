@@ -1,5 +1,6 @@
 import { config } from '../config.js';
 import { asRecord, asString, asNumber } from '../utils/coerce.js';
+import { mapConcurrent } from '../utils/concurrent.js';
 import {
   getCachedMetadata,
   setCachedMetadata,
@@ -8,6 +9,7 @@ import {
 } from '../repositories/cache.repository.js';
 import { TMDB_GENRE_MAP } from 'shared/constants';
 import type { MovieMetadata, MovieDetailMetadata, MetadataLookup } from 'shared/tmdb.models';
+import type { Recommendation } from 'shared/recommendations.models';
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w342';
@@ -29,10 +31,7 @@ function authHeaders(): Record<string, string> {
   };
 }
 
-async function tmdbGet(
-  path: string,
-  params?: Record<string, string>,
-): Promise<Record<string, unknown> | null> {
+async function tmdbGet(path: string, params?: Record<string, string>): Promise<Record<string, unknown> | null> {
   const url = new URL(`${TMDB_BASE}${path}`);
   if (params) {
     for (const [k, v] of Object.entries(params)) {
@@ -75,10 +74,7 @@ function extractFromFindResponse(data: Record<string, unknown>): FindResult | nu
   return null;
 }
 
-function extractFromSearchResponse(
-  data: Record<string, unknown>,
-  type: 'movie' | 'tv',
-): FindResult | null {
+function extractFromSearchResponse(data: Record<string, unknown>, type: 'movie' | 'tv'): FindResult | null {
   const results = Array.isArray(data['results']) ? data['results'] : [];
   if (results.length > 0) {
     const rec = asRecord(results[0]);
@@ -146,10 +142,7 @@ export async function fetchBasicMetadata(lookup: MetadataLookup): Promise<BasicF
   return promise;
 }
 
-async function doFetchBasicMetadata(
-  lookup: MetadataLookup,
-  cacheKey: string,
-): Promise<BasicFetchResult> {
+async function doFetchBasicMetadata(lookup: MetadataLookup, cacheKey: string): Promise<BasicFetchResult> {
   const cached = await getCachedMetadata(cacheKey);
   if (cached) return { metadata: cached, fromCache: true };
 
@@ -234,10 +227,7 @@ export async function fetchDetailMetadata(
   return promise;
 }
 
-async function doFetchDetailMetadata(
-  tmdbId: number,
-  mediaType: 'movie' | 'tv',
-): Promise<MovieDetailMetadata | null> {
+async function doFetchDetailMetadata(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<MovieDetailMetadata | null> {
   const cached = await getCachedDetailByTmdbId(tmdbId);
   if (cached) return cached;
 
@@ -269,4 +259,105 @@ async function doFetchDetailMetadata(
   const detail: MovieDetailMetadata = { plot, runtime, rated, releaseDate };
   await updateCachedDetail(tmdbId, detail);
   return detail;
+}
+
+function buildRecommendation(item: Record<string, unknown>, mediaType: 'movie' | 'tv'): Recommendation | null {
+  const id = asNumber(item['id']);
+  if (!id) return null;
+
+  const title = asString(item[mediaType === 'movie' ? 'title' : 'name']) || '';
+  const dateField = mediaType === 'movie' ? 'release_date' : 'first_air_date';
+  const dateStr = asString(item[dateField]) || '';
+  const year = dateStr.match(/^(\d{4})/)?.[1] ?? '';
+  const posterPath = asString(item['poster_path']);
+  const poster = posterPath ? `${IMAGE_BASE}${posterPath}` : '';
+  const genreIds = Array.isArray(item['genre_ids']) ? item['genre_ids'] : [];
+  const genre = resolveGenres(genreIds);
+  const voteAverage = asNumber(item['vote_average']);
+  const rating = voteAverage ? String(Math.round(voteAverage * 10) / 10) : '';
+  const plot = asString(item['overview']) || '';
+
+  return { tmdbId: id, mediaType, title, year, poster, genre, rating, plot };
+}
+
+async function fetchImdbId(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<string | null> {
+  const data = await tmdbGet(`/${mediaType}/${tmdbId}/external_ids`, {});
+  if (!data) return null;
+  return asString(data['imdb_id']) || null;
+}
+
+export async function enrichRecommendationsWithImdbIds(recs: Recommendation[]): Promise<Recommendation[]> {
+  return mapConcurrent(recs, 4, async (rec) => {
+    const imdbId = await fetchImdbId(rec.tmdbId, rec.mediaType);
+    return imdbId ? { ...rec, imdbId } : rec;
+  });
+}
+
+async function fetchTopRatedByType(type: 'movie' | 'tv', count: number): Promise<Recommendation[]> {
+  const data = await tmdbGet(`/${type}/top_rated`, { language: 'en-US', page: '1' });
+  if (!data) return [];
+  const results = Array.isArray(data['results']) ? data['results'] : [];
+  return results
+    .slice(0, count)
+    .map((item) => buildRecommendation(asRecord(item), type))
+    .filter((r): r is Recommendation => r !== null);
+}
+
+export async function fetchTopRatedRecommendations(
+  count: number,
+  filter: 'movie' | 'tv' | null = null,
+): Promise<Recommendation[]> {
+  if (filter !== null) {
+    return fetchTopRatedByType(filter, count);
+  }
+
+  const [movies, tvShows] = await Promise.all([fetchTopRatedByType('movie', count), fetchTopRatedByType('tv', count)]);
+
+  const combined: Recommendation[] = [];
+  const maxLen = Math.max(movies.length, tvShows.length);
+  for (let i = 0; i < maxLen && combined.length < count; i++) {
+    if (movies[i]) combined.push(movies[i]);
+    if (combined.length < count && tvShows[i]) combined.push(tvShows[i]);
+  }
+  return combined;
+}
+
+export async function searchRecommendation(
+  title: string,
+  year: string,
+  mediaType: 'movie' | 'tv',
+): Promise<Recommendation | null> {
+  const lookup: MetadataLookup = { title, year, imdbId: '' };
+  const cacheKey = getCacheKey(lookup);
+
+  const cached = await getCachedMetadata(cacheKey);
+  if (cached && cached.tmdbId) {
+    return {
+      tmdbId: cached.tmdbId,
+      mediaType: (cached.mediaType as 'movie' | 'tv') || mediaType,
+      title: cached.title,
+      year: cached.year,
+      poster: cached.poster,
+      genre: cached.genre,
+      rating: cached.rating,
+      plot: cached.plot,
+    };
+  }
+
+  if (!config.tmdb.accessToken) return null;
+
+  const params: Record<string, string> = { query: title, language: 'en-US' };
+  if (year) params[mediaType === 'movie' ? 'year' : 'first_air_date_year'] = year;
+
+  const data = await tmdbGet(`/search/${mediaType}`, params);
+  if (!data) return null;
+
+  const items = Array.isArray(data['results']) ? data['results'] : [];
+  if (items.length === 0) return null;
+
+  const rec = buildRecommendation(asRecord(items[0]), mediaType);
+  if (!rec) return null;
+
+  await setCachedMetadata(cacheKey, { ...rec, runtime: '', rated: '' });
+  return rec;
 }

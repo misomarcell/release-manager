@@ -5,6 +5,7 @@ import type { NcoreCategoryKey, NcoreSearchResponse } from '@rm/shared/ncore.mod
 import type { DownloadRequest, DownloadResponse } from '@rm/shared/download.models';
 import type { MovieDetailMetadata } from '@rm/shared/tmdb.models';
 import type { UserInfo } from '@rm/shared/user.models';
+import type { RecommendationFeedbackRequest, RecommendationsResponse } from '@rm/shared/recommendations.models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -30,9 +31,7 @@ export class ApiService {
       params = params.set('uhd', 'true');
     }
 
-    return firstValueFrom(
-      this.http.get<NcoreSearchResponse>('/api/search', { params, withCredentials: true }),
-    );
+    return firstValueFrom(this.http.get<NcoreSearchResponse>('/api/search', { params, withCredentials: true }));
   }
 
   async fetchNfo(torrentId: string): Promise<string> {
@@ -45,9 +44,7 @@ export class ApiService {
   }
 
   async download(request: DownloadRequest): Promise<DownloadResponse> {
-    return firstValueFrom(
-      this.http.post<DownloadResponse>('/api/search/download', request, { withCredentials: true }),
-    );
+    return firstValueFrom(this.http.post<DownloadResponse>('/api/search/download', request, { withCredentials: true }));
   }
 
   async fetchMovieDetail(tmdbId: number, mediaType: string): Promise<MovieDetailMetadata> {
@@ -65,9 +62,7 @@ export class ApiService {
   }
 
   async setUserValid(userId: number, valid: boolean): Promise<void> {
-    await firstValueFrom(
-      this.http.patch(`/api/users/${userId}/valid`, { valid }, { withCredentials: true }),
-    );
+    await firstValueFrom(this.http.patch(`/api/users/${userId}/valid`, { valid }, { withCredentials: true }));
   }
 
   async deleteUser(userId: number): Promise<void> {
@@ -75,9 +70,7 @@ export class ApiService {
   }
 
   async setUserAdmin(userId: number, admin: boolean): Promise<void> {
-    await firstValueFrom(
-      this.http.patch(`/api/users/${userId}/admin`, { admin }, { withCredentials: true }),
-    );
+    await firstValueFrom(this.http.patch(`/api/users/${userId}/admin`, { admin }, { withCredentials: true }));
   }
 
   async clearMetadataCache(): Promise<{ deleted: number }> {
@@ -110,5 +103,25 @@ export class ApiService {
         withCredentials: true,
       }),
     );
+  }
+
+  async getRecommendations(mediaType?: 'movie' | 'tv'): Promise<RecommendationsResponse> {
+    let params = new HttpParams();
+    if (mediaType) params = params.set('mediaType', mediaType);
+    return firstValueFrom(
+      this.http.get<RecommendationsResponse>('/api/recommendations', { params, withCredentials: true }),
+    );
+  }
+
+  async refreshRecommendations(mediaType?: 'movie' | 'tv'): Promise<RecommendationsResponse> {
+    let params = new HttpParams();
+    if (mediaType) params = params.set('mediaType', mediaType);
+    return firstValueFrom(
+      this.http.post<RecommendationsResponse>('/api/recommendations/refresh', {}, { params, withCredentials: true }),
+    );
+  }
+
+  async submitRecommendationFeedback(request: RecommendationFeedbackRequest): Promise<void> {
+    await firstValueFrom(this.http.post('/api/recommendations/feedback', request, { withCredentials: true }));
   }
 }

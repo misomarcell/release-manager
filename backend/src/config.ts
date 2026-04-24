@@ -34,4 +34,7 @@ export const config = {
     savePathTv: process.env['DOWNLOAD_PATH_TV']?.trim() || '/media/TV_Shows',
   },
   cacheExpiryMs: 7 * 24 * 60 * 60 * 1000, // 1 week
+  openai: {
+    apiKey: process.env['OPENAI_API_KEY']?.trim() || '',
+  },
 };

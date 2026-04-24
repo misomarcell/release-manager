@@ -1,0 +1,62 @@
+<div class="dialog-layout">
+  @if (rec.poster) {
+    <img class="dialog-poster" [src]="rec.poster" [alt]="rec.title" />
+  }
+  <div class="dialog-info">
+    <h2 mat-dialog-title class="dialog-title">{{ rec.title }}</h2>
+    <span class="dialog-badge">{{ rec.mediaType === 'tv' ? 'TV Show' : 'Movie' }}</span>
+    <p class="dialog-meta">
+      @if (rec.year) {
+        {{ rec.year }}
+      }
+      @if (rec.rating) {
+        · ⭐ {{ rec.rating }}
+      }
+    </p>
+    @if (rec.genre) {
+      <p class="dialog-genre">{{ rec.genre }}</p>
+    }
+    @if (rec.imdbId) {
+      <a class="imdb-link" [href]="'https://www.imdb.com/title/' + rec.imdbId" target="_blank" rel="noopener">
+        <mat-icon>open_in_new</mat-icon>
+        IMDb
+      </a>
+    }
+  </div>
+</div>
+@if (rec.plot) {
+  <p class="dialog-plot">{{ rec.plot }}</p>
+}
+@if (rec.reason) {
+  <p class="dialog-reason">
+    <mat-icon class="reason-icon">auto_awesome</mat-icon>
+    {{ rec.reason }}
+  </p>
+}
+<div class="dialog-actions">
+  <div class="dialog-feedback-row">
+    <button
+      class="feedback-btn like"
+      [class.active]="feedback() === 'like'"
+      [disabled]="submitting()"
+      (click)="sendFeedback('like')"
+      aria-label="Like"
+    >
+      <mat-icon>thumb_up</mat-icon>
+    </button>
+    <button
+      class="feedback-btn dislike"
+      [class.active]="feedback() === 'dislike'"
+      [disabled]="submitting()"
+      (click)="sendFeedback('dislike')"
+      aria-label="Dislike"
+    >
+      <mat-icon>thumb_down</mat-icon>
+    </button>
+  </div>
+  <button mat-button class="search-btn" (click)="searchAndClose()">
+    <mat-icon>search</mat-icon>
+    Search for "{{ rec.title }}"
+  </button>
+  <button mat-button mat-dialog-close class="close-btn">Close</button>
+</div>

@@ -1,12 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-  signal,
-  computed,
-  viewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal, computed, viewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,10 +6,10 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatAccordion } from '@angular/material/expansion';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MovieCardComponent } from '../movie-card/movie-card';
 import { ReleaseSearchComponent, SearchParams } from '../release-search/release-search';
+import { RecommendationsComponent } from '../recommendations/recommendations';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { VersionService } from '../../services/version.service';
@@ -44,10 +36,10 @@ export interface GroupedMovie {
     MatDividerModule,
     MatAccordion,
     MatToolbarModule,
-    MatProgressBarModule,
     MatPaginatorModule,
     MovieCardComponent,
     ReleaseSearchComponent,
+    RecommendationsComponent,
   ],
   templateUrl: './home.html',
   styleUrl: './home.scss',
@@ -64,6 +56,7 @@ export class HomeComponent implements OnInit {
   protected loading = signal(false);
   protected error = signal<string | null>(null);
   private results = signal<NcoreResult[]>([]);
+  protected readonly skeletonItems = [0, 1, 2, 3, 4, 5];
   protected totalResults = signal(0);
   protected currentPage = signal(1);
   protected readonly pageSize = 100;
@@ -104,6 +97,15 @@ export class HomeComponent implements OnInit {
     if (cat === 'movies') return 'Top Movies';
     if (cat === 'tv') return 'Top TV Shows';
     return 'Top Releases';
+  });
+
+  protected listTitleIcon = computed(() => {
+    const term = this.lastSearchTerm();
+    if (term) return 'search';
+    const cat = this.selectedCategory();
+    if (cat === 'movies') return 'movie';
+    if (cat === 'tv') return 'tv';
+    return 'new_releases';
   });
 
   ngOnInit(): void {

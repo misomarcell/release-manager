@@ -1,0 +1,168 @@
+:host ::ng-deep .mat-mdc-dialog-title::before {
+  height: 0;
+}
+
+.dialog-layout {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 1rem 0;
+}
+
+.dialog-poster {
+  width: 120px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  object-fit: cover;
+  align-self: flex-start;
+}
+
+.dialog-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+
+  .dialog-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.3;
+    padding: 0;
+  }
+
+  .dialog-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--mat-sys-primary);
+  }
+
+  .dialog-meta {
+    font-size: 0.85rem;
+    color: var(--mat-sys-on-surface-variant);
+    margin: 0;
+  }
+
+  .dialog-genre {
+    font-size: 0.8rem;
+    color: var(--mat-sys-on-surface-variant);
+    margin: 0;
+  }
+
+  .imdb-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--mat-sys-primary);
+    text-decoration: none;
+
+    mat-icon {
+      font-size: 0.85rem;
+      width: 0.85rem;
+      height: 0.85rem;
+    }
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.dialog-plot {
+  font-size: 0.875rem;
+  color: var(--mat-sys-on-surface-variant);
+  line-height: 1.5;
+  margin: 0.75rem 1rem 0;
+}
+
+.dialog-reason {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--mat-sys-primary);
+  margin: 1rem;
+  line-height: 1.5;
+
+  .reason-icon {
+    font-size: 0.95rem;
+    width: 0.95rem;
+    height: 0.95rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+}
+
+.dialog-actions {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 1rem 1rem;
+  gap: 0.5rem;
+}
+
+.dialog-feedback-row {
+  display: flex;
+}
+
+.feedback-btn {
+  flex: 1;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 0.6rem;
+  color: var(--mat-sys-on-surface-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.15s,
+    color 0.15s;
+
+  &:first-child {
+    border-radius: 4px 0 0 4px;
+  }
+
+  &:last-child {
+    border-radius: 0 4px 4px 0;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.like {
+    background: rgba(46, 125, 50, 0.15);
+    color: #2e7d32;
+  }
+
+  &.like:hover:not(:disabled),
+  &.like.active {
+    background: #2e7d32;
+    color: #fff;
+  }
+
+  &.dislike {
+    background: rgba(var(--mat-sys-error-rgb, 179, 38, 30), 0.12);
+    color: var(--mat-sys-error);
+  }
+
+  &.dislike:hover:not(:disabled),
+  &.dislike.active {
+    background: var(--mat-sys-error);
+    color: var(--mat-sys-on-error);
+  }
+}
+
+.search-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.close-btn {
+  width: 100%;
+}
