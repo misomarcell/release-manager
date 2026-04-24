@@ -13,7 +13,7 @@ import {
 import type { Recommendation, RecommendationsResponse } from 'shared/recommendations.models';
 
 const RECOMMEND_COUNT = 10;
-const FEEDBACK_SAMPLE_SIZE = 25;
+const FEEDBACK_SAMPLE_SIZE = 50;
 
 interface AiSuggestion {
   title: string;
