@@ -18,12 +18,22 @@
   min-width: 0;
   padding: 0.5rem;
 
+  @media (min-width: 960px) {
+    gap: 1.25rem;
+    padding: 0.75rem;
+  }
+
   .poster-thumb {
     width: 56px;
     height: 84px;
     flex-shrink: 0;
     border-radius: 6px;
     overflow: hidden;
+
+    @media (min-width: 960px) {
+      width: 90px;
+      height: 135px;
+    }
 
     img {
       width: 100%;
@@ -60,6 +70,10 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+
+      @media (min-width: 960px) {
+        font-size: 1.1rem;
+      }
     }
 
     .meta {
@@ -68,6 +82,10 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+
+      @media (min-width: 960px) {
+        font-size: 0.9rem;
+      }
     }
   }
 }
