@@ -1,26 +1,22 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../services/api.service';
+import { RecommendationDetailDialogComponent } from './recommendation-detail-dialog/recommendation-detail-dialog';
 import type { Recommendation, FeedbackValue } from '@rm/shared/recommendations.models';
 
 @Component({
   selector: 'app-recommendations',
-  imports: [MatButtonModule, MatIconModule, MatProgressBarModule, MatTooltipModule],
+  imports: [MatButtonModule, MatIconModule, MatProgressBarModule],
   templateUrl: './recommendations.html',
   styleUrl: './recommendations.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RecommendationsComponent implements OnInit {
   private api = inject(ApiService);
+  private dialog = inject(MatDialog);
 
   protected recommendations = signal<Recommendation[]>([]);
   protected loading = signal(true);
@@ -42,6 +38,14 @@ export class RecommendationsComponent implements OnInit {
     return `${rec.mediaType}:${rec.tmdbId}`;
   }
 
+  protected openDetail(rec: Recommendation): void {
+    this.dialog.open(RecommendationDetailDialogComponent, {
+      data: rec,
+      maxWidth: '480px',
+      width: '90vw',
+    });
+  }
+
   protected currentFeedback(rec: Recommendation): FeedbackValue | null {
     return this.feedback()[`${rec.mediaType}:${rec.tmdbId}`] ?? null;
   }
@@ -58,13 +62,7 @@ export class RecommendationsComponent implements OnInit {
 
     this.submitting.update((s) => ({ ...s, [key]: true }));
 
-    const summary = [
-      rec.genre,
-      rec.year,
-      rec.plot ? rec.plot.slice(0, 120) : '',
-    ]
-      .filter(Boolean)
-      .join(', ');
+    const summary = [rec.genre, rec.year, rec.plot ? rec.plot.slice(0, 120) : ''].filter(Boolean).join(', ');
 
     try {
       await this.api.submitRecommendationFeedback({

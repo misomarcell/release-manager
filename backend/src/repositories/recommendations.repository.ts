@@ -17,9 +17,13 @@ interface CacheRow {
   generated_at: Date;
 }
 
-export async function getAllFeedback(): Promise<FeedbackRow[]> {
+export async function getRandomFeedbackSample(limit: number): Promise<FeedbackRow[]> {
   const result = await query<FeedbackRow>(
-    `SELECT tmdb_id, media_type, title, summary, feedback FROM recommendation_feedback ORDER BY created_at`,
+    `SELECT tmdb_id, media_type, title, summary, feedback
+     FROM recommendation_feedback
+     ORDER BY random()
+     LIMIT $1`,
+    [limit],
   );
   return result.rows;
 }
@@ -46,10 +50,9 @@ export async function getFreshCache(): Promise<Recommendation[] | null> {
 
 export async function setCache(recommendations: Recommendation[]): Promise<void> {
   await query(`DELETE FROM recommendation_cache`);
-  await query(
-    `INSERT INTO recommendation_cache (recommendations, generated_at) VALUES ($1, NOW())`,
-    [JSON.stringify(recommendations)],
-  );
+  await query(`INSERT INTO recommendation_cache (recommendations, generated_at) VALUES ($1, NOW())`, [
+    JSON.stringify(recommendations),
+  ]);
 }
 
 export async function invalidateCache(): Promise<void> {

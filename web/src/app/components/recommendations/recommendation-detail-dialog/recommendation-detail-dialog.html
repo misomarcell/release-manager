@@ -1,0 +1,26 @@
+<div class="dialog-layout">
+  @if (rec.poster) {
+    <img class="dialog-poster" [src]="rec.poster" [alt]="rec.title" />
+  }
+  <div class="dialog-info">
+    <h2 mat-dialog-title class="dialog-title">{{ rec.title }}</h2>
+    <span class="dialog-badge">{{ rec.mediaType === 'tv' ? 'TV Show' : 'Movie' }}</span>
+    <p class="dialog-meta">
+      @if (rec.year) {
+        {{ rec.year }}
+      }
+      @if (rec.rating) {
+        · ⭐ {{ rec.rating }}
+      }
+    </p>
+    @if (rec.genre) {
+      <p class="dialog-genre">{{ rec.genre }}</p>
+    }
+    @if (rec.plot) {
+      <p class="dialog-plot">{{ rec.plot }}</p>
+    }
+  </div>
+</div>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Close</button>
+</mat-dialog-actions>

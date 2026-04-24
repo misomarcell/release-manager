@@ -5,7 +5,10 @@ import type { NcoreCategoryKey, NcoreSearchResponse } from '@rm/shared/ncore.mod
 import type { DownloadRequest, DownloadResponse } from '@rm/shared/download.models';
 import type { MovieDetailMetadata } from '@rm/shared/tmdb.models';
 import type { UserInfo } from '@rm/shared/user.models';
-import type { Recommendation, RecommendationFeedbackRequest } from '@rm/shared/recommendations.models';
+import type {
+  Recommendation,
+  RecommendationFeedbackRequest,
+} from '@rm/shared/recommendations.models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {

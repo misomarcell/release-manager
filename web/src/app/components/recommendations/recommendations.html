@@ -9,7 +9,7 @@
     <div class="ribbon">
       @for (rec of recommendations(); track trackByTmdb($index, rec)) {
         <div class="rec-card">
-          <div class="poster-wrap">
+          <div class="poster-wrap" (click)="openDetail(rec)">
             @if (rec.poster) {
               <img [src]="rec.poster" [alt]="rec.title" loading="lazy" />
             } @else {
@@ -19,37 +19,34 @@
             }
             <span class="media-badge">{{ rec.mediaType === 'tv' ? 'TV' : 'Movie' }}</span>
           </div>
-          <div class="rec-info">
-            <span class="rec-title" [title]="rec.title">{{ rec.title }}</span>
+          <div class="rec-info" (click)="openDetail(rec)">
+            <span class="rec-title">{{ rec.title }}</span>
             <span class="rec-meta">
-              @if (rec.year) { {{ rec.year }} }
-              @if (rec.rating) { · ⭐ {{ rec.rating }} }
+              @if (rec.year) {
+                {{ rec.year }}
+              }
+              @if (rec.rating) {
+                · ⭐ {{ rec.rating }}
+              }
             </span>
             @if (rec.genre) {
               <span class="rec-genre">{{ rec.genre }}</span>
             }
-            @if (rec.plot) {
-              <p class="rec-plot">{{ rec.plot }}</p>
-            }
           </div>
           <div class="rec-actions">
             <button
-              mat-icon-button
               class="feedback-btn like"
               [class.active]="currentFeedback(rec) === 'like'"
-              [disabled]="submitting()[$index]"
-              matTooltip="I'd watch this"
+              [disabled]="submitting()[trackByTmdb($index, rec)]"
               (click)="sendFeedback(rec, 'like')"
               aria-label="Like"
             >
               <mat-icon>thumb_up</mat-icon>
             </button>
             <button
-              mat-icon-button
               class="feedback-btn dislike"
               [class.active]="currentFeedback(rec) === 'dislike'"
-              [disabled]="submitting()[$index]"
-              matTooltip="Not for me"
+              [disabled]="submitting()[trackByTmdb($index, rec)]"
               (click)="sendFeedback(rec, 'dislike')"
               aria-label="Dislike"
             >

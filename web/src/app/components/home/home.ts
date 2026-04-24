@@ -1,12 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-  signal,
-  computed,
-  viewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal, computed, viewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -106,6 +98,15 @@ export class HomeComponent implements OnInit {
     if (cat === 'movies') return 'Top Movies';
     if (cat === 'tv') return 'Top TV Shows';
     return 'Top Releases';
+  });
+
+  protected listTitleIcon = computed(() => {
+    const term = this.lastSearchTerm();
+    if (term) return 'search';
+    const cat = this.selectedCategory();
+    if (cat === 'movies') return 'movie';
+    if (cat === 'tv') return 'tv';
+    return 'new_releases';
   });
 
   ngOnInit(): void {
