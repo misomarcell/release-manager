@@ -36,7 +36,7 @@ export class RecommendationsComponent {
   protected recommendations = signal<Recommendation[]>([]);
   protected loading = signal(false);
   protected canRefresh = signal(false);
-  protected filter = signal<'all' | 'movie' | 'tv'>('all');
+  protected filter = signal<'all' | 'movie' | 'tv'>('movie');
   protected feedback = signal<Record<string, FeedbackValue>>({});
   protected submitting = signal<Record<string, boolean>>({});
   protected readonly skeletonItems = [0, 1, 2, 3, 4];
