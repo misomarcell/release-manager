@@ -7,6 +7,7 @@ export interface Recommendation {
   genre: string;
   rating: string;
   plot: string;
+  imdbId?: string;
 }
 
 export type FeedbackValue = 'like' | 'dislike';

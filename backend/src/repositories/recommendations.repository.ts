@@ -47,24 +47,32 @@ export async function upsertFeedback(req: RecommendationFeedbackRequest, userId:
   );
 }
 
-export async function getFreshCache(userId: number): Promise<Recommendation[] | null> {
+export async function getFreshCache(userId: number, filter: 'movie' | 'tv' | null): Promise<Recommendation[] | null> {
   const result = await query<CacheRow>(
     `SELECT id, recommendations, generated_at FROM recommendation_cache
      WHERE user_id = $1
+     AND (($2::TEXT IS NULL AND media_type_filter IS NULL) OR media_type_filter = $2)
      AND generated_at > NOW() - INTERVAL '${Math.floor(CACHE_TTL_MS / 1000)} seconds'
      ORDER BY id DESC LIMIT 1`,
-    [userId],
+    [userId, filter],
   );
   if (result.rows.length === 0) return null;
   return result.rows[0].recommendations;
 }
 
-export async function setCache(recommendations: Recommendation[], userId: number): Promise<void> {
-  await query(`DELETE FROM recommendation_cache WHERE user_id = $1`, [userId]);
-  await query(`INSERT INTO recommendation_cache (user_id, recommendations, generated_at) VALUES ($1, $2, NOW())`, [
-    userId,
-    JSON.stringify(recommendations),
-  ]);
+export async function setCache(
+  recommendations: Recommendation[],
+  userId: number,
+  filter: 'movie' | 'tv' | null,
+): Promise<void> {
+  await query(
+    `DELETE FROM recommendation_cache WHERE user_id = $1 AND (($2::TEXT IS NULL AND media_type_filter IS NULL) OR media_type_filter = $2)`,
+    [userId, filter],
+  );
+  await query(
+    `INSERT INTO recommendation_cache (user_id, recommendations, generated_at, media_type_filter) VALUES ($1, $2, NOW(), $3)`,
+    [userId, JSON.stringify(recommendations), filter],
+  );
 }
 
 export async function invalidateCache(userId: number): Promise<void> {

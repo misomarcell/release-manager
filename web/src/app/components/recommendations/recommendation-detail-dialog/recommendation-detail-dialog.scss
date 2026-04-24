@@ -50,6 +50,25 @@
     color: var(--mat-sys-on-surface-variant);
     margin: 0;
   }
+
+  .imdb-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--mat-sys-primary);
+    text-decoration: none;
+
+    mat-icon {
+      font-size: 0.85rem;
+      width: 0.85rem;
+      height: 0.85rem;
+    }
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }
 
 .dialog-plot {
@@ -122,7 +141,7 @@
 
 .search-btn {
   width: 100%;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .close-btn {

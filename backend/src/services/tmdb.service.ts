@@ -1,5 +1,6 @@
 import { config } from '../config.js';
 import { asRecord, asString, asNumber } from '../utils/coerce.js';
+import { mapConcurrent } from '../utils/concurrent.js';
 import {
   getCachedMetadata,
   setCachedMetadata,
@@ -279,7 +280,41 @@ function buildRecommendation(item: Record<string, unknown>, mediaType: 'movie' |
   return { tmdbId: id, mediaType, title, year, poster, genre, rating, plot };
 }
 
-export async function fetchTopRatedRecommendations(count: number): Promise<Recommendation[]> {
+async function fetchImdbId(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<string | null> {
+  const data = await tmdbGet(`/${mediaType}/${tmdbId}/external_ids`, {});
+  if (!data) return null;
+  return asString(data['imdb_id']) || null;
+}
+
+export async function enrichRecommendationsWithImdbIds(recs: Recommendation[]): Promise<Recommendation[]> {
+  return mapConcurrent(recs, 4, async (rec) => {
+    const imdbId = await fetchImdbId(rec.tmdbId, rec.mediaType);
+    return imdbId ? { ...rec, imdbId } : rec;
+  });
+}
+
+export async function fetchTopRatedRecommendations(
+  count: number,
+  filter: 'movie' | 'tv' | null = null,
+): Promise<Recommendation[]> {
+  if (filter === 'movie') {
+    const data = await tmdbGet('/movie/top_rated', { language: 'en-US', page: '1' });
+    if (!data) return [];
+    const results = Array.isArray(data['results']) ? data['results'] : [];
+    return results
+      .slice(0, count)
+      .map((item) => buildRecommendation(asRecord(item), 'movie'))
+      .filter((r): r is Recommendation => r !== null);
+  }
+  if (filter === 'tv') {
+    const data = await tmdbGet('/tv/top_rated', { language: 'en-US', page: '1' });
+    if (!data) return [];
+    const results = Array.isArray(data['results']) ? data['results'] : [];
+    return results
+      .slice(0, count)
+      .map((item) => buildRecommendation(asRecord(item), 'tv'))
+      .filter((r): r is Recommendation => r !== null);
+  }
   const [movieData, tvData] = await Promise.all([
     tmdbGet('/movie/top_rated', { language: 'en-US', page: '1' }),
     tmdbGet('/tv/top_rated', { language: 'en-US', page: '1' }),

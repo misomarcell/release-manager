@@ -133,4 +133,9 @@ export async function initDatabase(): Promise<void> {
     CREATE UNIQUE INDEX IF NOT EXISTS recommendation_feedback_user_tmdb_media_idx
       ON recommendation_feedback (user_id, tmdb_id, media_type);
   `);
+
+  await pool.query(`
+    ALTER TABLE recommendation_cache
+      ADD COLUMN IF NOT EXISTS media_type_filter TEXT;
+  `);
 }

@@ -105,13 +105,19 @@ export class ApiService {
     );
   }
 
-  async getRecommendations(): Promise<RecommendationsResponse> {
-    return firstValueFrom(this.http.get<RecommendationsResponse>('/api/recommendations', { withCredentials: true }));
+  async getRecommendations(mediaType?: 'movie' | 'tv'): Promise<RecommendationsResponse> {
+    let params = new HttpParams();
+    if (mediaType) params = params.set('mediaType', mediaType);
+    return firstValueFrom(
+      this.http.get<RecommendationsResponse>('/api/recommendations', { params, withCredentials: true }),
+    );
   }
 
-  async refreshRecommendations(): Promise<RecommendationsResponse> {
+  async refreshRecommendations(mediaType?: 'movie' | 'tv'): Promise<RecommendationsResponse> {
+    let params = new HttpParams();
+    if (mediaType) params = params.set('mediaType', mediaType);
     return firstValueFrom(
-      this.http.post<RecommendationsResponse>('/api/recommendations/refresh', {}, { withCredentials: true }),
+      this.http.post<RecommendationsResponse>('/api/recommendations/refresh', {}, { params, withCredentials: true }),
     );
   }
 

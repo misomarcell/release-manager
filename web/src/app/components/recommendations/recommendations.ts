@@ -1,5 +1,16 @@
-import { ChangeDetectionStrategy, Component, Output, EventEmitter, inject, signal } from '@angular/core';
+﻿import {
+  ChangeDetectionStrategy,
+  Component,
+  Output,
+  EventEmitter,
+  ElementRef,
+  QueryList,
+  ViewChildren,
+  inject,
+  signal,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatDialog } from '@angular/material/dialog';
@@ -9,7 +20,7 @@ import type { Recommendation, FeedbackValue } from '@rm/shared/recommendations.m
 
 @Component({
   selector: 'app-recommendations',
-  imports: [MatButtonModule, MatIconModule, MatProgressBarModule],
+  imports: [MatButtonModule, MatButtonToggleModule, MatIconModule, MatProgressBarModule],
   templateUrl: './recommendations.html',
   styleUrl: './recommendations.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -19,13 +30,14 @@ export class RecommendationsComponent {
   private dialog = inject(MatDialog);
 
   @Output() searchTitle = new EventEmitter<string>();
+  @ViewChildren('recCard') recCards!: QueryList<ElementRef<HTMLElement>>;
 
   protected open = signal(false);
   private loaded = signal(false);
   protected recommendations = signal<Recommendation[]>([]);
   protected loading = signal(false);
   protected canRefresh = signal(false);
-  protected refreshing = signal(false);
+  protected filter = signal<'all' | 'movie' | 'tv'>('all');
   protected feedback = signal<Record<string, FeedbackValue>>({});
   protected submitting = signal<Record<string, boolean>>({});
 
@@ -37,10 +49,25 @@ export class RecommendationsComponent {
     }
   }
 
+  protected changeFilter(f: 'all' | 'movie' | 'tv'): void {
+    if (this.filter() === f) return;
+    this.filter.set(f);
+    this.recommendations.set([]);
+    this.loaded.set(false);
+    if (this.open()) {
+      void this.loadRecommendations();
+    }
+  }
+
+  private filterParam(): 'movie' | 'tv' | undefined {
+    const f = this.filter();
+    return f === 'all' ? undefined : f;
+  }
+
   private async loadRecommendations(): Promise<void> {
     this.loading.set(true);
     try {
-      const response = await this.api.getRecommendations();
+      const response = await this.api.getRecommendations(this.filterParam());
       this.recommendations.set(response.recommendations);
       this.canRefresh.set(response.canRefresh);
       this.loaded.set(true);
@@ -52,17 +79,18 @@ export class RecommendationsComponent {
   }
 
   protected async refresh(): Promise<void> {
-    if (this.refreshing()) return;
-    this.refreshing.set(true);
+    if (this.loading()) return;
+    this.recommendations.set([]);
+    this.loading.set(true);
     try {
-      const response = await this.api.refreshRecommendations();
+      const response = await this.api.refreshRecommendations(this.filterParam());
       this.recommendations.set(response.recommendations);
       this.canRefresh.set(response.canRefresh);
       this.feedback.set({});
     } catch {
       // Fail silently
     } finally {
-      this.refreshing.set(false);
+      this.loading.set(false);
     }
   }
 
@@ -81,7 +109,10 @@ export class RecommendationsComponent {
       width: '90vw',
     });
     ref.afterClosed().subscribe((result: string | null | undefined) => {
-      if (result) this.searchTitle.emit(result);
+      if (result) {
+        this.open.set(false);
+        this.searchTitle.emit(result);
+      }
     });
   }
 
@@ -89,14 +120,11 @@ export class RecommendationsComponent {
     return this.feedback()[`${rec.mediaType}:${rec.tmdbId}`] ?? null;
   }
 
-  protected async sendFeedback(rec: Recommendation, value: FeedbackValue): Promise<void> {
+  protected async sendFeedback(rec: Recommendation, value: FeedbackValue, ribbonIndex?: number): Promise<void> {
     const key = `${rec.mediaType}:${rec.tmdbId}`;
 
     if (this.submitting()[key]) return;
-
-    if (this.currentFeedback(rec) === value) {
-      return;
-    }
+    if (this.currentFeedback(rec) === value) return;
 
     this.submitting.update((s) => ({ ...s, [key]: true }));
 
@@ -112,8 +140,19 @@ export class RecommendationsComponent {
       });
       this.feedback.update((f) => ({ ...f, [key]: value }));
       this.canRefresh.set(true);
+      if (ribbonIndex !== undefined) {
+        this.scrollToCard(ribbonIndex + 1);
+      }
     } finally {
       this.submitting.update((s) => ({ ...s, [key]: false }));
+    }
+  }
+
+  private scrollToCard(index: number): void {
+    const cards = this.recCards.toArray();
+    const card = cards[index];
+    if (card) {
+      card.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
     }
   }
 }

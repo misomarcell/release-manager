@@ -16,6 +16,12 @@
     @if (rec.genre) {
       <p class="dialog-genre">{{ rec.genre }}</p>
     }
+    @if (rec.imdbId) {
+      <a class="imdb-link" [href]="'https://www.imdb.com/title/' + rec.imdbId" target="_blank" rel="noopener">
+        <mat-icon>open_in_new</mat-icon>
+        IMDb
+      </a>
+    }
   </div>
 </div>
 @if (rec.plot) {

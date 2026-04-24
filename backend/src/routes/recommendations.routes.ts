@@ -10,8 +10,10 @@ const router = Router();
 
 router.get('/', requireAuth, async (req: Request, res: Response) => {
   const { userId } = (req as AuthenticatedRequest).user;
+  const rawFilter = req.query['mediaType'];
+  const filter = rawFilter === 'movie' || rawFilter === 'tv' ? rawFilter : null;
   try {
-    const recommendations = await getRecommendations(userId);
+    const recommendations = await getRecommendations(userId, filter);
     res.json(recommendations);
   } catch (err) {
     console.error('[Recommendations] GET error:', err);
@@ -48,9 +50,11 @@ router.post('/feedback', requireAuth, async (req: Request, res: Response) => {
 
 router.post('/refresh', requireAuth, async (req: Request, res: Response) => {
   const { userId } = (req as AuthenticatedRequest).user;
+  const rawFilter = req.query['mediaType'];
+  const filter = rawFilter === 'movie' || rawFilter === 'tv' ? rawFilter : null;
   try {
     await invalidateCache(userId);
-    const recommendations = await getRecommendations(userId);
+    const recommendations = await getRecommendations(userId, filter);
     res.json(recommendations);
   } catch (err) {
     console.error('[Recommendations] refresh error:', err);

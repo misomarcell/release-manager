@@ -11,13 +11,13 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0;
   background: transparent;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   color: var(--mat-sys-on-surface);
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 500;
 
   .panel-title {
@@ -41,8 +41,16 @@
   }
 }
 
+.filter-toggle {
+  margin-bottom: 0.75rem;
+
+  ::ng-deep .mat-button-toggle {
+    font-size: 0.8rem;
+  }
+}
+
 .rec-panel-body {
-  padding: 0.75rem 0 0;
+  padding: 0.5rem 0 0;
 }
 
 .ribbon {
@@ -219,19 +227,10 @@
   transition:
     border-color 0.15s,
     color 0.15s;
-  position: relative;
-  overflow: hidden;
 
-  &:hover:not(.loading) {
+  &:hover {
     border-color: var(--mat-sys-primary);
     color: var(--mat-sys-primary);
-  }
-
-  mat-progress-bar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
   }
 
   .refresh-icon {

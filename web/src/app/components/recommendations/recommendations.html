@@ -1,4 +1,4 @@
-<div class="rec-panel">
+﻿<div class="rec-panel">
   <button class="rec-panel-header" (click)="toggleOpen()" [attr.aria-expanded]="open()">
     <mat-icon class="title-icon">auto_awesome</mat-icon>
     <span class="panel-title">Recommended for You</span>
@@ -6,12 +6,22 @@
   </button>
   @if (open()) {
     <div class="rec-panel-body">
+      <mat-button-toggle-group
+        class="filter-toggle"
+        [value]="filter()"
+        (change)="changeFilter($event.value)"
+        hideSingleSelectionIndicator
+      >
+        <mat-button-toggle value="all">All</mat-button-toggle>
+        <mat-button-toggle value="movie">Movies</mat-button-toggle>
+        <mat-button-toggle value="tv">TV Shows</mat-button-toggle>
+      </mat-button-toggle-group>
       @if (loading()) {
         <mat-progress-bar mode="indeterminate" />
       } @else if (recommendations().length > 0) {
         <div class="ribbon">
-          @for (rec of recommendations(); track trackByTmdb($index, rec)) {
-            <div class="rec-card">
+          @for (rec of recommendations(); track trackByTmdb($index, rec); let i = $index) {
+            <div class="rec-card" #recCard>
               <div class="poster-wrap" (click)="openDetail(rec)">
                 @if (rec.poster) {
                   <img [src]="rec.poster" [alt]="rec.title" loading="lazy" />
@@ -29,7 +39,7 @@
                     {{ rec.year }}
                   }
                   @if (rec.rating) {
-                    · ⭐ {{ rec.rating }}
+                    &middot; &#11088; {{ rec.rating }}
                   }
                 </span>
                 @if (rec.genre) {
@@ -41,7 +51,7 @@
                   class="feedback-btn like"
                   [class.active]="currentFeedback(rec) === 'like'"
                   [disabled]="submitting()[trackByTmdb($index, rec)]"
-                  (click)="sendFeedback(rec, 'like')"
+                  (click)="sendFeedback(rec, 'like', i)"
                   aria-label="Like"
                 >
                   <mat-icon>thumb_up</mat-icon>
@@ -50,7 +60,7 @@
                   class="feedback-btn dislike"
                   [class.active]="currentFeedback(rec) === 'dislike'"
                   [disabled]="submitting()[trackByTmdb($index, rec)]"
-                  (click)="sendFeedback(rec, 'dislike')"
+                  (click)="sendFeedback(rec, 'dislike', i)"
                   aria-label="Dislike"
                 >
                   <mat-icon>thumb_down</mat-icon>
@@ -59,10 +69,7 @@
             </div>
           }
           @if (canRefresh()) {
-            <div class="rec-card refresh-card" (click)="refresh()" [class.loading]="refreshing()">
-              @if (refreshing()) {
-                <mat-progress-bar mode="indeterminate" />
-              }
+            <div class="rec-card refresh-card" (click)="refresh()">
               <mat-icon class="refresh-icon">refresh</mat-icon>
               <span class="refresh-label">Get new recommendations</span>
             </div>
