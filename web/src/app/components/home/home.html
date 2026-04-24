@@ -37,6 +37,8 @@
 <main class="container">
   <app-release-search (searchSubmit)="onSearch($event)" />
 
+  <app-recommendations />
+
   @if (loading()) {
     <mat-progress-bar mode="indeterminate" />
   }

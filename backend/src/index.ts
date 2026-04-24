@@ -8,6 +8,7 @@ import searchRoutes from './routes/search.routes.js';
 import userRoutes from './routes/user.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import versionRoutes from './routes/version.routes.js';
+import recommendationsRoutes from './routes/recommendations.routes.js';
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/api/search', searchRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/version', versionRoutes);
+app.use('/api/recommendations', recommendationsRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });

@@ -1,0 +1,20 @@
+export interface Recommendation {
+  tmdbId: number;
+  mediaType: 'movie' | 'tv';
+  title: string;
+  year: string;
+  poster: string;
+  genre: string;
+  rating: string;
+  plot: string;
+}
+
+export type FeedbackValue = 'like' | 'dislike';
+
+export interface RecommendationFeedbackRequest {
+  tmdbId: number;
+  mediaType: 'movie' | 'tv';
+  title: string;
+  summary: string;
+  feedback: FeedbackValue;
+}

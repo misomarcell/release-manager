@@ -18,6 +18,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MovieCardComponent } from '../movie-card/movie-card';
 import { ReleaseSearchComponent, SearchParams } from '../release-search/release-search';
+import { RecommendationsComponent } from '../recommendations/recommendations';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { VersionService } from '../../services/version.service';
@@ -48,6 +49,7 @@ export interface GroupedMovie {
     MatPaginatorModule,
     MovieCardComponent,
     ReleaseSearchComponent,
+    RecommendationsComponent,
   ],
   templateUrl: './home.html',
   styleUrl: './home.scss',

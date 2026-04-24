@@ -99,4 +99,23 @@ export async function initDatabase(): Promise<void> {
 
     UPDATE metadata_cache SET release_date = '' WHERE release_date IS NULL;
   `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS recommendation_feedback (
+      id          SERIAL PRIMARY KEY,
+      tmdb_id     INTEGER NOT NULL,
+      media_type  VARCHAR(10) NOT NULL,
+      title       TEXT NOT NULL,
+      summary     TEXT NOT NULL,
+      feedback    VARCHAR(10) NOT NULL CHECK (feedback IN ('like', 'dislike')),
+      created_at  TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE (tmdb_id, media_type)
+    );
+
+    CREATE TABLE IF NOT EXISTS recommendation_cache (
+      id                SERIAL PRIMARY KEY,
+      recommendations   JSONB NOT NULL,
+      generated_at      TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
 }
