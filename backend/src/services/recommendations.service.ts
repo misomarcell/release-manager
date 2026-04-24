@@ -100,6 +100,10 @@ export async function getRecommendations(
 
     if (suggestions.length >= 3) {
       recommendations = await enrichSuggestions(suggestions);
+      // Post-AI guard: remove any items with wrong media type
+      if (filter !== null) {
+        recommendations = recommendations.filter((r) => r.mediaType === filter);
+      }
     } else {
       recommendations = await fetchTopRatedRecommendations(RECOMMEND_COUNT, filter);
     }
