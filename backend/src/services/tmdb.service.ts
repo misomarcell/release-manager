@@ -353,6 +353,25 @@ export async function searchRecommendation(
   year: string,
   mediaType: 'movie' | 'tv',
 ): Promise<Recommendation | null> {
+  const lookup: MetadataLookup = { title, year, imdbId: '' };
+  const cacheKey = getCacheKey(lookup);
+
+  const cached = await getCachedMetadata(cacheKey);
+  if (cached && cached.tmdbId) {
+    return {
+      tmdbId: cached.tmdbId,
+      mediaType: (cached.mediaType as 'movie' | 'tv') || mediaType,
+      title: cached.title,
+      year: cached.year,
+      poster: cached.poster,
+      genre: cached.genre,
+      rating: cached.rating,
+      plot: cached.plot,
+    };
+  }
+
+  if (!config.tmdb.accessToken) return null;
+
   const params: Record<string, string> = { query: title, language: 'en-US' };
   if (year) params[mediaType === 'movie' ? 'year' : 'first_air_date_year'] = year;
 
@@ -362,5 +381,9 @@ export async function searchRecommendation(
   const items = Array.isArray(data['results']) ? data['results'] : [];
   if (items.length === 0) return null;
 
-  return buildRecommendation(asRecord(items[0]), mediaType);
+  const rec = buildRecommendation(asRecord(items[0]), mediaType);
+  if (!rec) return null;
+
+  await setCachedMetadata(cacheKey, { ...rec, runtime: '', rated: '' });
+  return rec;
 }
