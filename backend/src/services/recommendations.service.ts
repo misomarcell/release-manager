@@ -10,6 +10,7 @@ import {
   getFreshCache,
   setCache,
 } from '../repositories/recommendations.repository.js';
+import { mapConcurrent } from '../utils/concurrent.js';
 import type { Recommendation, RecommendationsResponse } from 'shared/recommendations.models';
 
 const RECOMMEND_COUNT = 10;
@@ -78,12 +79,12 @@ Recommend ${RECOMMEND_COUNT} titles I would enjoy.`;
 }
 
 async function enrichSuggestions(suggestions: AiSuggestion[]): Promise<Recommendation[]> {
-  const results: Recommendation[] = [];
-  for (const s of suggestions) {
+  const results = await mapConcurrent(suggestions, 4, async (s) => {
     const rec = await searchRecommendation(s.title, s.year, s.mediaType);
-    if (rec) results.push(s.reason ? { ...rec, reason: s.reason } : rec);
-  }
-  return results;
+    if (!rec) return null;
+    return s.reason ? { ...rec, reason: s.reason } : rec;
+  });
+  return results.filter((r): r is Recommendation => r !== null);
 }
 
 export async function getRecommendations(

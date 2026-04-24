@@ -87,6 +87,7 @@ export class RecommendationsComponent {
       this.recommendations.set(response.recommendations);
       this.canRefresh.set(response.canRefresh);
       this.feedback.set({});
+      this.loaded.set(true);
     } catch {
       // Fail silently
     } finally {
