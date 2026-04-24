@@ -18,3 +18,8 @@ export interface RecommendationFeedbackRequest {
   summary: string;
   feedback: FeedbackValue;
 }
+
+export interface RecommendationsResponse {
+  recommendations: Recommendation[];
+  canRefresh: boolean;
+}

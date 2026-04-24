@@ -2,23 +2,47 @@
   display: block;
 }
 
-.recommendations {
-  .section-title {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1.1rem;
-    font-weight: 500;
-    margin: 0 0 0.75rem;
-    color: var(--mat-sys-on-surface);
+.rec-panel {
+  overflow: hidden;
+}
 
-    .title-icon {
-      color: var(--mat-sys-primary);
-      font-size: 1.2rem;
-      width: 1.2rem;
-      height: 1.2rem;
-    }
+.rec-panel-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--mat-sys-on-surface);
+  font-size: 1rem;
+  font-weight: 500;
+
+  .panel-title {
+    flex: 1;
+    text-align: left;
   }
+
+  .title-icon {
+    color: var(--mat-sys-primary);
+    font-size: 1.2rem;
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+
+  .chevron {
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &:hover {
+    background: var(--mat-sys-surface-container-lowest);
+  }
+}
+
+.rec-panel-body {
+  padding: 0.75rem 0 0;
 }
 
 .ribbon {
@@ -160,10 +184,20 @@
       cursor: default;
     }
 
+    &.like {
+      background: rgba(46, 125, 50, 0.15);
+      color: #2e7d32;
+    }
+
     &.like:hover:not(:disabled),
     &.like.active {
       background: #2e7d32;
       color: #fff;
+    }
+
+    &.dislike {
+      background: rgba(var(--mat-sys-error-rgb, 179, 38, 30), 0.12);
+      color: var(--mat-sys-error);
     }
 
     &.dislike:hover:not(:disabled),
@@ -171,5 +205,46 @@
       background: var(--mat-sys-error);
       color: #fff;
     }
+  }
+}
+
+.refresh-card {
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: var(--mat-sys-on-surface-variant);
+  border: 2px dashed var(--mat-sys-outline-variant);
+  background: transparent;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+  position: relative;
+  overflow: hidden;
+
+  &:hover:not(.loading) {
+    border-color: var(--mat-sys-primary);
+    color: var(--mat-sys-primary);
+  }
+
+  mat-progress-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .refresh-icon {
+    font-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .refresh-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-align: center;
+    padding: 0 0.5rem;
+    line-height: 1.3;
   }
 }

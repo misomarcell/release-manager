@@ -3,10 +3,7 @@ import { config } from '../config.js';
 
 const pool = new pg.Pool({ connectionString: config.databaseUrl });
 
-export async function query<T extends pg.QueryResultRow>(
-  text: string,
-  params?: unknown[],
-): Promise<pg.QueryResult<T>> {
+export async function query<T extends pg.QueryResultRow>(text: string, params?: unknown[]): Promise<pg.QueryResult<T>> {
   return pool.query<T>(text, params);
 }
 
@@ -117,5 +114,23 @@ export async function initDatabase(): Promise<void> {
       recommendations   JSONB NOT NULL,
       generated_at      TIMESTAMPTZ DEFAULT NOW()
     );
+  `);
+
+  await pool.query(`
+    ALTER TABLE recommendation_feedback
+      ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+
+    ALTER TABLE recommendation_cache
+      ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+  `);
+
+  await pool.query(`
+    ALTER TABLE recommendation_feedback
+      DROP CONSTRAINT IF EXISTS recommendation_feedback_tmdb_id_media_type_key;
+  `);
+
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS recommendation_feedback_user_tmdb_media_idx
+      ON recommendation_feedback (user_id, tmdb_id, media_type);
   `);
 }

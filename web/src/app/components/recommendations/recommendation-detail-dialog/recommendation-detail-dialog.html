@@ -16,11 +16,35 @@
     @if (rec.genre) {
       <p class="dialog-genre">{{ rec.genre }}</p>
     }
-    @if (rec.plot) {
-      <p class="dialog-plot">{{ rec.plot }}</p>
-    }
   </div>
 </div>
-<mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Close</button>
-</mat-dialog-actions>
+@if (rec.plot) {
+  <p class="dialog-plot">{{ rec.plot }}</p>
+}
+<div class="dialog-actions">
+  <div class="dialog-feedback-row">
+    <button
+      class="feedback-btn like"
+      [class.active]="feedback() === 'like'"
+      [disabled]="submitting()"
+      (click)="sendFeedback('like')"
+      aria-label="Like"
+    >
+      <mat-icon>thumb_up</mat-icon>
+    </button>
+    <button
+      class="feedback-btn dislike"
+      [class.active]="feedback() === 'dislike'"
+      [disabled]="submitting()"
+      (click)="sendFeedback('dislike')"
+      aria-label="Dislike"
+    >
+      <mat-icon>thumb_down</mat-icon>
+    </button>
+  </div>
+  <button mat-button class="search-btn" (click)="searchAndClose()">
+    <mat-icon>search</mat-icon>
+    Search for "{{ rec.title }}"
+  </button>
+  <button mat-button mat-dialog-close class="close-btn">Close</button>
+</div>

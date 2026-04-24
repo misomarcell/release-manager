@@ -17,44 +17,56 @@ interface CacheRow {
   generated_at: Date;
 }
 
-export async function getRandomFeedbackSample(limit: number): Promise<FeedbackRow[]> {
+export async function hasFeedback(userId: number): Promise<boolean> {
+  const result = await query<{ exists: boolean }>(
+    `SELECT EXISTS(SELECT 1 FROM recommendation_feedback WHERE user_id = $1) AS exists`,
+    [userId],
+  );
+  return result.rows[0].exists;
+}
+
+export async function getRandomFeedbackSample(limit: number, userId: number): Promise<FeedbackRow[]> {
   const result = await query<FeedbackRow>(
     `SELECT tmdb_id, media_type, title, summary, feedback
      FROM recommendation_feedback
+     WHERE user_id = $2
      ORDER BY random()
      LIMIT $1`,
-    [limit],
+    [limit, userId],
   );
   return result.rows;
 }
 
-export async function upsertFeedback(req: RecommendationFeedbackRequest): Promise<void> {
+export async function upsertFeedback(req: RecommendationFeedbackRequest, userId: number): Promise<void> {
   await query(
-    `INSERT INTO recommendation_feedback (tmdb_id, media_type, title, summary, feedback)
-     VALUES ($1, $2, $3, $4, $5)
-     ON CONFLICT (tmdb_id, media_type)
-     DO UPDATE SET summary=$4, feedback=$5, created_at=NOW()`,
-    [req.tmdbId, req.mediaType, req.title, req.summary, req.feedback],
+    `INSERT INTO recommendation_feedback (user_id, tmdb_id, media_type, title, summary, feedback)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (user_id, tmdb_id, media_type)
+     DO UPDATE SET summary=$5, feedback=$6, created_at=NOW()`,
+    [userId, req.tmdbId, req.mediaType, req.title, req.summary, req.feedback],
   );
 }
 
-export async function getFreshCache(): Promise<Recommendation[] | null> {
+export async function getFreshCache(userId: number): Promise<Recommendation[] | null> {
   const result = await query<CacheRow>(
     `SELECT id, recommendations, generated_at FROM recommendation_cache
-     WHERE generated_at > NOW() - INTERVAL '${Math.floor(CACHE_TTL_MS / 1000)} seconds'
+     WHERE user_id = $1
+     AND generated_at > NOW() - INTERVAL '${Math.floor(CACHE_TTL_MS / 1000)} seconds'
      ORDER BY id DESC LIMIT 1`,
+    [userId],
   );
   if (result.rows.length === 0) return null;
   return result.rows[0].recommendations;
 }
 
-export async function setCache(recommendations: Recommendation[]): Promise<void> {
-  await query(`DELETE FROM recommendation_cache`);
-  await query(`INSERT INTO recommendation_cache (recommendations, generated_at) VALUES ($1, NOW())`, [
+export async function setCache(recommendations: Recommendation[], userId: number): Promise<void> {
+  await query(`DELETE FROM recommendation_cache WHERE user_id = $1`, [userId]);
+  await query(`INSERT INTO recommendation_cache (user_id, recommendations, generated_at) VALUES ($1, $2, NOW())`, [
+    userId,
     JSON.stringify(recommendations),
   ]);
 }
 
-export async function invalidateCache(): Promise<void> {
-  await query(`DELETE FROM recommendation_cache`);
+export async function invalidateCache(userId: number): Promise<void> {
+  await query(`DELETE FROM recommendation_cache WHERE user_id = $1`, [userId]);
 }
