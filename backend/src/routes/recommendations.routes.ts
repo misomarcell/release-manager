@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
 import { getRecommendations } from '../services/recommendations.service.js';
 import { upsertFeedback, invalidateCache } from '../repositories/recommendations.repository.js';
@@ -9,12 +9,12 @@ import type { RecommendationFeedbackRequest } from 'shared/recommendations.model
 const router = Router();
 
 router.get('/', requireAuth, async (req: Request, res: Response) => {
-  const { userId } = (req as AuthenticatedRequest).user;
+  const authUser = (req as AuthenticatedRequest).user;
   const rawFilter = req.query['mediaType'];
   const filter = rawFilter === 'movie' || rawFilter === 'tv' ? rawFilter : null;
   try {
-    const recommendations = await getRecommendations(userId, filter);
-    res.json(recommendations);
+    const response = await getRecommendations(authUser.userId, filter);
+    res.json({ ...response, canRefresh: authUser.admin ? response.canRefresh : false });
   } catch (err) {
     console.error('[Recommendations] GET error:', err);
     res.status(500).json({ error: 'Failed to fetch recommendations' });
@@ -48,7 +48,7 @@ router.post('/feedback', requireAuth, async (req: Request, res: Response) => {
   }
 });
 
-router.post('/refresh', requireAuth, async (req: Request, res: Response) => {
+router.post('/refresh', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   const { userId } = (req as AuthenticatedRequest).user;
   const rawFilter = req.query['mediaType'];
   const filter = rawFilter === 'movie' || rawFilter === 'tv' ? rawFilter : null;
