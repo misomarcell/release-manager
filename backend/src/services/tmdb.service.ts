@@ -293,51 +293,25 @@ export async function enrichRecommendationsWithImdbIds(recs: Recommendation[]): 
   });
 }
 
+async function fetchTopRatedByType(type: 'movie' | 'tv', count: number): Promise<Recommendation[]> {
+  const data = await tmdbGet(`/${type}/top_rated`, { language: 'en-US', page: '1' });
+  if (!data) return [];
+  const results = Array.isArray(data['results']) ? data['results'] : [];
+  return results
+    .slice(0, count)
+    .map((item) => buildRecommendation(asRecord(item), type))
+    .filter((r): r is Recommendation => r !== null);
+}
+
 export async function fetchTopRatedRecommendations(
   count: number,
   filter: 'movie' | 'tv' | null = null,
 ): Promise<Recommendation[]> {
-  if (filter === 'movie') {
-    const data = await tmdbGet('/movie/top_rated', { language: 'en-US', page: '1' });
-    if (!data) return [];
-    const results = Array.isArray(data['results']) ? data['results'] : [];
-    return results
-      .slice(0, count)
-      .map((item) => buildRecommendation(asRecord(item), 'movie'))
-      .filter((r): r is Recommendation => r !== null);
-  }
-  if (filter === 'tv') {
-    const data = await tmdbGet('/tv/top_rated', { language: 'en-US', page: '1' });
-    if (!data) return [];
-    const results = Array.isArray(data['results']) ? data['results'] : [];
-    return results
-      .slice(0, count)
-      .map((item) => buildRecommendation(asRecord(item), 'tv'))
-      .filter((r): r is Recommendation => r !== null);
-  }
-  const [movieData, tvData] = await Promise.all([
-    tmdbGet('/movie/top_rated', { language: 'en-US', page: '1' }),
-    tmdbGet('/tv/top_rated', { language: 'en-US', page: '1' }),
-  ]);
-
-  const movies: Recommendation[] = [];
-  const tvShows: Recommendation[] = [];
-
-  if (movieData) {
-    const results = Array.isArray(movieData['results']) ? movieData['results'] : [];
-    for (const item of results.slice(0, count)) {
-      const rec = buildRecommendation(asRecord(item), 'movie');
-      if (rec) movies.push(rec);
-    }
+  if (filter !== null) {
+    return fetchTopRatedByType(filter, count);
   }
 
-  if (tvData) {
-    const results = Array.isArray(tvData['results']) ? tvData['results'] : [];
-    for (const item of results.slice(0, count)) {
-      const rec = buildRecommendation(asRecord(item), 'tv');
-      if (rec) tvShows.push(rec);
-    }
-  }
+  const [movies, tvShows] = await Promise.all([fetchTopRatedByType('movie', count), fetchTopRatedByType('tv', count)]);
 
   const combined: Recommendation[] = [];
   const maxLen = Math.max(movies.length, tvShows.length);
