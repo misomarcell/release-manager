@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal }
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { BreakpointObserver } from '@angular/cdk/layout';
+import { A11yModule } from '@angular/cdk/a11y';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
@@ -21,6 +22,7 @@ const DESKTOP_BREAKPOINT = '(min-width: 960px)';
     RouterLink,
     RouterLinkActive,
     DatePipe,
+    A11yModule,
     MatToolbarModule,
     MatSidenavModule,
     MatListModule,

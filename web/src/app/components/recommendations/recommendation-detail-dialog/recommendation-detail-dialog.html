@@ -1,6 +1,6 @@
 <div class="dialog-layout">
   @if (rec.poster) {
-    <img class="dialog-poster" [src]="rec.poster" [alt]="rec.title" />
+    <img class="dialog-poster" [src]="rec.poster" [alt]="rec.title" (click)="openPoster()" />
   }
   <div class="dialog-info">
     <h2 mat-dialog-title class="dialog-title">{{ rec.title }}</h2>

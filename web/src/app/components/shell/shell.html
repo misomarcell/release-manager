@@ -23,18 +23,13 @@
     (closedStart)="closeSidenav()"
   >
     <div class="sidenav-inner">
+      <span class="focus-sink" cdkFocusInitial tabindex="-1" aria-hidden="true"></span>
       <div class="sidenav-user">
         <mat-icon class="user-icon">person</mat-icon>
         <span class="username">{{ auth.username() }}</span>
       </div>
       <mat-nav-list class="sidenav-nav">
-        <a
-          mat-list-item
-          routerLink="/"
-          routerLinkActive="active-link"
-          [routerLinkActiveOptions]="{ exact: true }"
-          (click)="closeSidenav()"
-        >
+        <a mat-list-item routerLink="/releases" routerLinkActive="active-link" (click)="closeSidenav()">
           <mat-icon matListItemIcon>new_releases</mat-icon>
           <span matListItemTitle>Releases</span>
         </a>

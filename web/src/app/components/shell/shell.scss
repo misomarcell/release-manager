@@ -52,6 +52,13 @@ mat-sidenav {
   flex-direction: column;
   height: 100%;
 
+  .focus-sink {
+    display: block;
+    height: 0;
+    overflow: hidden;
+    outline: none;
+  }
+
   .sidenav-user {
     display: flex;
     align-items: center;

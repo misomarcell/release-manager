@@ -14,6 +14,12 @@
   border-radius: 6px;
   object-fit: cover;
   align-self: flex-start;
+  cursor: pointer;
+  transition: opacity 0.15s;
+
+  &:hover {
+    opacity: 0.85;
+  }
 }
 
 .dialog-info {

@@ -1,12 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,9 +7,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
+import { PosterService } from '../../services/poster.service';
 import { NfoDialogComponent } from '../nfo-dialog/nfo-dialog';
 import { DownloadDialogComponent } from '../download-dialog/download-dialog';
-import { PosterDialogComponent } from '../poster-dialog/poster-dialog';
 import type { DownloadDialogData } from '../download-dialog/download-dialog';
 import type { GroupedMovie } from '../home/home';
 import type { NcoreResult } from '@rm/shared/ncore.models';
@@ -38,6 +30,7 @@ export class MovieCardComponent {
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
   private api = inject(ApiService);
+  private poster = inject(PosterService);
   protected auth = inject(AuthService);
 
   movie = input.required<GroupedMovie>();
@@ -82,14 +75,9 @@ export class MovieCardComponent {
 
   protected openPoster(event: MouseEvent): void {
     event.stopPropagation();
-    const m = this.movie();
-    const url = m.metadata?.poster;
+    const url = this.movie().metadata?.poster;
     if (!url) return;
-    const fullSizeUrl = url.replace('/w342/', '/original/');
-    this.dialog.open(PosterDialogComponent, {
-      data: { thumbnailUrl: url, fullSizeUrl, alt: this.displayTitle() },
-      panelClass: 'poster-overlay',
-    });
+    this.poster.open(url, this.displayTitle());
   }
 
   protected async showNfo(torrentId: string): Promise<void> {
