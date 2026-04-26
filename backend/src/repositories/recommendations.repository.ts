@@ -22,14 +22,12 @@ export async function hasFeedback(userId: number): Promise<boolean> {
   return result.rows[0].exists;
 }
 
-export async function getRandomFeedbackSample(limit: number, userId: number): Promise<FeedbackRow[]> {
+export async function getAllFeedback(userId: number): Promise<FeedbackRow[]> {
   const result = await query<FeedbackRow>(
     `SELECT tmdb_id, media_type, title, feedback
      FROM recommendation_feedback
-     WHERE user_id = $1
-     ORDER BY random()
-     LIMIT $2`,
-    [userId, limit],
+     WHERE user_id = $1`,
+    [userId],
   );
   return result.rows;
 }
