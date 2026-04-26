@@ -1,4 +1,4 @@
-﻿import { chatCompletion, isOpenAiAvailable } from './openai.service.js';
+﻿import { getAiRecommendations, isOpenAiAvailable } from './openai.service.js';
 import {
   fetchTopRatedRecommendations,
   searchRecommendation,
@@ -7,87 +7,38 @@ import {
 import { hasFeedback, getAllFeedback, getFreshCache, setCache } from '../repositories/recommendations.repository.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import type { Recommendation, RecommendationsResponse } from 'shared/recommendations.models';
+import type { AiSuggestion } from './openai.service.js';
+import type { FeedbackRow } from '../repositories/recommendations.repository.js';
 
 const RECOMMEND_COUNT = 10;
-const FEEDBACK_SAMPLE_SIZE = 50;
+const FEEDBACK_SAMPLE_SIZE = 100;
 
-interface AiSuggestion {
-  title: string;
-  year: string;
-  mediaType: 'movie' | 'tv';
-  reason: string;
-}
-
-async function fetchAiSuggestions(
-  feedbackContext: string,
-  filter: 'movie' | 'tv' | null,
-  excludeTitles: string[],
-): Promise<AiSuggestion[]> {
-  const typeConstraint =
-    filter === 'movie'
-      ? 'Only recommend movies, no TV shows. All entries must have mediaType "movie".'
-      : filter === 'tv'
-        ? 'Only recommend TV shows, no movies. All entries must have mediaType "tv".'
-        : 'Mix movies and TV shows freely.';
-  const exclusionSection =
-    excludeTitles.length > 0
-      ? `\nDo NOT recommend any of these titles the user has already rated:\n${excludeTitles.map((t) => `  - ${t}`).join('\n')}\n`
-      : '';
-  const systemPrompt = `You are a movie and TV show recommendation assistant.
-The user will share a list of titles they liked or disliked.
-Based on their taste, recommend ${RECOMMEND_COUNT} great movies and TV shows they would enjoy — from any era, any country.
-Prioritize critically acclaimed and beloved titles. Avoid generic blockbusters unless truly fitting.
-${typeConstraint}${exclusionSection}
-Respond ONLY with a valid JSON array, no explanation, no markdown.
-Each object: { "title": "...", "year": "YYYY", "mediaType": "movie" | "tv", "reason": "one short sentence why this fits the user's taste" }`;
-
-  const userMessage = `My ratings:
-
-${feedbackContext}
-
-Recommend ${RECOMMEND_COUNT} titles I would enjoy.`;
-
-  const content = await chatCompletion(
-    [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userMessage },
-    ],
-    { temperature: 0.8, maxTokens: 1024 },
-  );
-
-  if (!content) return [];
-
-  const jsonMatch = content.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) return [];
-
-  try {
-    const parsed: unknown = JSON.parse(jsonMatch[0]);
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed
-      .map((item) => {
-        const r = item as Record<string, unknown>;
-        const title = typeof r['title'] === 'string' ? r['title'] : '';
-        const year = typeof r['year'] === 'string' ? r['year'] : '';
-        const rawType = typeof r['mediaType'] === 'string' ? r['mediaType'] : '';
-        const mediaType = rawType === 'tv' ? 'tv' : 'movie';
-        const reason = typeof r['reason'] === 'string' ? r['reason'].trim() : '';
-        if (!title) return null;
-        return { title, year, mediaType, reason } satisfies AiSuggestion;
-      })
-      .filter((x): x is AiSuggestion => x !== null);
-  } catch {
-    return [];
-  }
-}
-
-async function enrichSuggestions(suggestions: AiSuggestion[]): Promise<Recommendation[]> {
+async function enrichSuggestions(suggestions: AiSuggestion[], mediaType: 'movie' | 'tv'): Promise<Recommendation[]> {
   const results = await mapConcurrent(suggestions, 4, async (s) => {
-    const rec = await searchRecommendation(s.title, s.year, s.mediaType);
+    const rec = await searchRecommendation(s.title, s.year, mediaType);
     if (!rec) return null;
     return s.reason ? { ...rec, reason: s.reason } : rec;
   });
   return results.filter((r): r is Recommendation => r !== null);
+}
+
+function buildFeedbackContext(feedback: FeedbackRow[]): string {
+  const liked = feedback.filter((f) => f.feedback === 'like');
+  const disliked = feedback.filter((f) => f.feedback === 'dislike');
+
+  const formatEntry = (f: FeedbackRow): string => {
+    const type = f.media_type === 'tv' ? 'TV Show' : 'Movie';
+    return f.summary ? `  - "${f.title}" (${type}) - ${f.summary}` : `  - "${f.title}" (${type})`;
+  };
+
+  const parts: string[] = [];
+  if (liked.length > 0) {
+    parts.push(`LIKED (${liked.length}):\n${liked.map(formatEntry).join('\n')}`);
+  }
+  if (disliked.length > 0) {
+    parts.push(`DISLIKED (${disliked.length}):\n${disliked.map(formatEntry).join('\n')}`);
+  }
+  return parts.join('\n\n');
 }
 
 export async function getRecommendations(
@@ -98,52 +49,58 @@ export async function getRecommendations(
   if (cached) return { recommendations: cached, canRefresh };
 
   const allFeedback = await getAllFeedback(userId);
+
+  if (allFeedback.length === 0 || !isOpenAiAvailable()) {
+    const recs = await fetchTopRatedRecommendations(RECOMMEND_COUNT, filter);
+    return { recommendations: await enrichRecommendationsWithImdbIds(recs), canRefresh: false };
+  }
+
   const ratedTmdbIds = new Set(allFeedback.map((r) => r.tmdb_id));
   const ratedTitles = allFeedback.map((r) => r.title);
-  const feedback =
+  const feedbackSample =
     allFeedback.length <= FEEDBACK_SAMPLE_SIZE
       ? allFeedback
       : allFeedback.sort(() => Math.random() - 0.5).slice(0, FEEDBACK_SAMPLE_SIZE);
 
-  let recommendations: Recommendation[];
+  const feedbackContext = buildFeedbackContext(feedbackSample);
 
-  if (allFeedback.length === 0 || !isOpenAiAvailable()) {
-    recommendations = await fetchTopRatedRecommendations(RECOMMEND_COUNT, filter);
-  } else {
-    const liked = feedback.filter((f) => f.feedback === 'like');
-    const disliked = feedback.filter((f) => f.feedback === 'dislike');
+  // Single AI call generates recommendations for both types at once
+  const { movies: movieSuggestions, tvShows: tvSuggestions } = await getAiRecommendations(
+    feedbackContext,
+    ratedTitles,
+    RECOMMEND_COUNT,
+  );
 
-    const formatEntry = (f: { title: string; media_type: string }) =>
-      `  • "${f.title}" (${f.media_type === 'tv' ? 'TV Show' : 'Movie'})`;
+  // Enrich both in parallel, falling back to TMDB top-rated if AI returned too few
+  const [movies, tvShows] = await Promise.all([
+    movieSuggestions.length >= 3
+      ? enrichSuggestions(movieSuggestions, 'movie').then((recs) =>
+          enrichRecommendationsWithImdbIds(recs.filter((r) => !ratedTmdbIds.has(r.tmdbId))),
+        )
+      : fetchTopRatedRecommendations(RECOMMEND_COUNT, 'movie').then(enrichRecommendationsWithImdbIds),
+    tvSuggestions.length >= 3
+      ? enrichSuggestions(tvSuggestions, 'tv').then((recs) =>
+          enrichRecommendationsWithImdbIds(recs.filter((r) => !ratedTmdbIds.has(r.tmdbId))),
+        )
+      : fetchTopRatedRecommendations(RECOMMEND_COUNT, 'tv').then(enrichRecommendationsWithImdbIds),
+  ]);
 
-    const parts: string[] = [];
-    if (liked.length > 0) {
-      parts.push(`👍 Liked (${liked.length}):\n${liked.map(formatEntry).join('\n')}`);
-    }
-    if (disliked.length > 0) {
-      parts.push(`👎 Disliked (${disliked.length}):\n${disliked.map(formatEntry).join('\n')}`);
-    }
-    const feedbackContext = parts.join('\n\n');
+  // Cache both types independently so either cached request benefits
+  await Promise.all([
+    movies.length > 0 ? setCache(movies, userId, 'movie') : Promise.resolve(),
+    tvShows.length > 0 ? setCache(tvShows, userId, 'tv') : Promise.resolve(),
+  ]);
 
-    const suggestions = await fetchAiSuggestions(feedbackContext, filter, ratedTitles);
+  if (filter === 'movie') return { recommendations: movies, canRefresh: true };
+  if (filter === 'tv') return { recommendations: tvShows, canRefresh: true };
 
-    if (suggestions.length >= 3) {
-      recommendations = await enrichSuggestions(suggestions);
-      // Post-AI guard: remove rated items and any items with wrong media type
-      recommendations = recommendations.filter((r) => !ratedTmdbIds.has(r.tmdbId));
-      if (filter !== null) {
-        recommendations = recommendations.filter((r) => r.mediaType === filter);
-      }
-    } else {
-      recommendations = await fetchTopRatedRecommendations(RECOMMEND_COUNT, filter);
-    }
+  // null filter: interleave both for a combined view and cache it too
+  const combined: Recommendation[] = [];
+  const maxLen = Math.max(movies.length, tvShows.length);
+  for (let i = 0; i < maxLen; i++) {
+    if (movies[i]) combined.push(movies[i]);
+    if (tvShows[i]) combined.push(tvShows[i]);
   }
-
-  recommendations = await enrichRecommendationsWithImdbIds(recommendations);
-
-  if (recommendations.length > 0) {
-    await setCache(recommendations, userId, filter);
-  }
-
-  return { recommendations, canRefresh: allFeedback.length > 0 };
+  if (combined.length > 0) await setCache(combined, userId, null);
+  return { recommendations: combined, canRefresh: true };
 }

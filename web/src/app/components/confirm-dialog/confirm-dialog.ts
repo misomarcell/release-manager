@@ -15,5 +15,5 @@ interface ConfirmDialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfirmDialogComponent {
-  protected data = inject<ConfirmDialogData>(MAT_DIALOG_DATA);
+  protected data = inject(MAT_DIALOG_DATA) as ConfirmDialogData;
 }

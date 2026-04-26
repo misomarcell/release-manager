@@ -19,8 +19,10 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "express-rate-limit": "^8.3.2",
+    "openai": "^6.34.0",
     "pg": "^8.16.0",
-    "shared": "*"
+    "shared": "*",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.8",

@@ -10,5 +10,5 @@ import { MatButtonModule } from '@angular/material/button';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NfoDialogComponent {
-  protected data = inject<{ html: string }>(MAT_DIALOG_DATA);
+  protected data = inject(MAT_DIALOG_DATA) as { html: string };
 }
