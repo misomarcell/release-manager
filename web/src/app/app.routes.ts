@@ -8,19 +8,30 @@ export const routes: Routes = [
     loadComponent: () => import('./components/login/login').then((m) => m.LoginComponent),
   },
   {
-    path: 'users',
-    loadComponent: () => import('./components/users/users').then((m) => m.UsersComponent),
-    canActivate: [adminGuard],
-  },
-  {
-    path: 'admin',
-    loadComponent: () => import('./components/admin/admin').then((m) => m.AdminComponent),
-    canActivate: [adminGuard],
-  },
-  {
     path: '',
-    loadComponent: () => import('./components/home/home').then((m) => m.HomeComponent),
+    loadComponent: () => import('./components/shell/shell').then((m) => m.ShellComponent),
     canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./components/home/home').then((m) => m.HomeComponent),
+      },
+      {
+        path: 'recommendations',
+        loadComponent: () =>
+          import('./components/recommendations/recommendations').then((m) => m.RecommendationsComponent),
+      },
+      {
+        path: 'users',
+        loadComponent: () => import('./components/users/users').then((m) => m.UsersComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'admin',
+        loadComponent: () => import('./components/admin/admin').then((m) => m.AdminComponent),
+        canActivate: [adminGuard],
+      },
+    ],
   },
   {
     path: '**',

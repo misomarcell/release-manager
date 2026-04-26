@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
@@ -13,7 +12,7 @@ import { extractHttpError } from '../../utils/http-error';
 
 @Component({
   selector: 'app-admin',
-  imports: [MatToolbarModule, MatButtonModule, MatIconModule, MatCardModule],
+  imports: [MatButtonModule, MatIconModule, MatCardModule],
   templateUrl: './admin.html',
   styleUrl: './admin.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -25,10 +24,6 @@ export class AdminComponent {
   private snackBar = inject(MatSnackBar);
 
   protected clearing = signal<string | null>(null);
-
-  protected goBack(): void {
-    this.router.navigate(['/']);
-  }
 
   protected async clearMetadataCache(): Promise<void> {
     const confirmed = await this.confirm(
@@ -106,9 +101,7 @@ export class AdminComponent {
 
   private async confirm(title: string, message: string): Promise<boolean> {
     const result = await firstValueFrom(
-      this.dialog
-        .open(ConfirmDialogComponent, { data: { title, message }, autoFocus: false })
-        .afterClosed(),
+      this.dialog.open(ConfirmDialogComponent, { data: { title, message }, autoFocus: false }).afterClosed(),
     );
     return result === true;
   }

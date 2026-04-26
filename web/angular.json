@@ -61,7 +61,8 @@
             },
             "ssr": {
               "entry": "src/server.ts"
-            }
+            },
+            "serviceWorker": "ngsw-config.json"
           },
           "configurations": {
             "production": {

@@ -1,0 +1,17 @@
+{
+  "name": "Release Manager",
+  "short_name": "Releases",
+  "description": "Browse and download movie & TV show releases",
+  "theme_color": "#1a1a2e",
+  "background_color": "#121212",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

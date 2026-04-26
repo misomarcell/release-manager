@@ -1,41 +1,5 @@
-<mat-toolbar class="toolbar">
-  @if (version.commitHash()) {
-    <span class="version-info">
-      <a [href]="version.commitUrl()" target="_blank" rel="noopener" class="commit-link">{{ version.commitHash() }}</a>
-      @if (version.commitDate(); as date) {
-        <span class="commit-date">{{ date | date: 'yyyy-MM-dd HH:mm' }}</span>
-      }
-    </span>
-  }
-  <span class="spacer"></span>
-  <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-btn">
-    <mat-icon>person</mat-icon>
-    {{ auth.username() }}
-    <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
-  </button>
-  <mat-menu #userMenu="matMenu">
-    @if (auth.admin()) {
-      <button mat-menu-item (click)="navigateToUsers()">
-        <mat-icon>group</mat-icon>
-        <span>Manage users</span>
-      </button>
-      <button mat-menu-item (click)="navigateToAdmin()">
-        <mat-icon>admin_panel_settings</mat-icon>
-        <span>Administration</span>
-      </button>
-      <mat-divider />
-    }
-    <button mat-menu-item (click)="logout()">
-      <mat-icon>logout</mat-icon>
-      <span>Sign out</span>
-    </button>
-  </mat-menu>
-</mat-toolbar>
-
 <main class="container">
   <app-release-search (searchSubmit)="onSearch($event)" />
-
-  <app-recommendations (searchTitle)="onSearchByTitle($event)" />
 
   @if (loading()) {
     <div class="release-skeletons">

@@ -5,8 +5,11 @@ interface FeedbackRow {
   tmdb_id: number;
   media_type: string;
   title: string;
+  summary: string;
   feedback: string;
 }
+
+export type { FeedbackRow };
 
 interface CacheRow {
   id: number;
@@ -24,9 +27,10 @@ export async function hasFeedback(userId: number): Promise<boolean> {
 
 export async function getAllFeedback(userId: number): Promise<FeedbackRow[]> {
   const result = await query<FeedbackRow>(
-    `SELECT tmdb_id, media_type, title, feedback
+    `SELECT tmdb_id, media_type, title, COALESCE(summary, '') AS summary, feedback
      FROM recommendation_feedback
-     WHERE user_id = $1`,
+     WHERE user_id = $1
+     ORDER BY created_at DESC`,
     [userId],
   );
   return result.rows;

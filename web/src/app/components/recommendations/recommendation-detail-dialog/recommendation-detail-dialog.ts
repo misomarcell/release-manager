@@ -18,7 +18,7 @@ interface DialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RecommendationDetailDialogComponent {
-  private data = inject<DialogData>(MAT_DIALOG_DATA);
+  private data = inject(MAT_DIALOG_DATA) as DialogData;
   private dialogRef = inject(MatDialogRef<RecommendationDetailDialogComponent, string | null>);
   protected rec = this.data.rec;
   protected feedback = signal<FeedbackValue | null>(this.data.currentFeedback);

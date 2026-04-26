@@ -1,16 +1,15 @@
 ﻿import {
   ChangeDetectionStrategy,
   Component,
-  Output,
-  EventEmitter,
   ElementRef,
+  OnInit,
   QueryList,
   ViewChildren,
   inject,
   signal,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../services/api.service';
@@ -19,79 +18,87 @@ import type { Recommendation, FeedbackValue } from '@rm/shared/recommendations.m
 
 @Component({
   selector: 'app-recommendations',
-  imports: [MatButtonModule, MatButtonToggleModule, MatIconModule],
+  imports: [MatButtonModule, MatIconModule],
   templateUrl: './recommendations.html',
   styleUrl: './recommendations.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RecommendationsComponent {
+export class RecommendationsComponent implements OnInit {
   private api = inject(ApiService);
   private dialog = inject(MatDialog);
+  private router = inject(Router);
 
-  @Output() searchTitle = new EventEmitter<string>();
-  @ViewChildren('recCard') recCards!: QueryList<ElementRef<HTMLElement>>;
+  @ViewChildren('movieCard') movieCards!: QueryList<ElementRef<HTMLElement>>;
+  @ViewChildren('tvCard') tvCards!: QueryList<ElementRef<HTMLElement>>;
 
-  protected open = signal(false);
-  private loaded = signal(false);
-  protected recommendations = signal<Recommendation[]>([]);
-  protected loading = signal(false);
-  protected canRefresh = signal(false);
-  protected filter = signal<'all' | 'movie' | 'tv'>('movie');
+  protected movies = signal<Recommendation[]>([]);
+  protected tvShows = signal<Recommendation[]>([]);
+  protected loadingMovies = signal(false);
+  protected loadingTv = signal(false);
+  protected canRefreshMovies = signal(false);
+  protected canRefreshTv = signal(false);
   protected feedback = signal<Record<string, FeedbackValue>>({});
   protected submitting = signal<Record<string, boolean>>({});
   protected readonly skeletonItems = [0, 1, 2, 3, 4];
 
-  protected toggleOpen(): void {
-    const next = !this.open();
-    this.open.set(next);
-    if (next && !this.loaded()) {
-      void this.loadRecommendations();
-    }
+  ngOnInit(): void {
+    void this.loadMovies();
+    void this.loadTvShows();
   }
 
-  protected changeFilter(f: 'all' | 'movie' | 'tv'): void {
-    if (this.filter() === f) return;
-    this.filter.set(f);
-    this.recommendations.set([]);
-    this.loaded.set(false);
-    if (this.open()) {
-      void this.loadRecommendations();
-    }
-  }
-
-  private filterParam(): 'movie' | 'tv' | undefined {
-    const f = this.filter();
-    return f === 'all' ? undefined : f;
-  }
-
-  private async loadRecommendations(): Promise<void> {
-    this.loading.set(true);
+  private async loadMovies(): Promise<void> {
+    this.loadingMovies.set(true);
     try {
-      const response = await this.api.getRecommendations(this.filterParam());
-      this.recommendations.set(response.recommendations);
-      this.canRefresh.set(response.canRefresh);
-      this.loaded.set(true);
+      const response = await this.api.getRecommendations('movie');
+      this.movies.set(response.recommendations);
+      this.canRefreshMovies.set(response.canRefresh);
     } catch {
-      // Recommendations are optional — fail silently
+      // fail silently
     } finally {
-      this.loading.set(false);
+      this.loadingMovies.set(false);
     }
   }
 
-  protected async refresh(): Promise<void> {
-    if (this.loading()) return;
-    this.recommendations.set([]);
-    this.loading.set(true);
+  private async loadTvShows(): Promise<void> {
+    this.loadingTv.set(true);
     try {
-      const response = await this.api.refreshRecommendations(this.filterParam());
-      this.recommendations.set(response.recommendations);
-      this.canRefresh.set(response.canRefresh);
-      this.feedback.set({});
-      this.loaded.set(true);
+      const response = await this.api.getRecommendations('tv');
+      this.tvShows.set(response.recommendations);
+      this.canRefreshTv.set(response.canRefresh);
     } catch {
-      // Fail silently
+      // fail silently
     } finally {
-      this.loading.set(false);
+      this.loadingTv.set(false);
+    }
+  }
+
+  protected async refreshMovies(): Promise<void> {
+    if (this.loadingMovies()) return;
+    this.movies.set([]);
+    this.loadingMovies.set(true);
+    try {
+      const response = await this.api.refreshRecommendations('movie');
+      this.movies.set(response.recommendations);
+      this.canRefreshMovies.set(response.canRefresh);
+    } catch {
+      // fail silently
+    } finally {
+      this.loadingMovies.set(false);
+    }
+  }
+
+  protected async refreshTv(): Promise<void> {
+    if (this.loadingTv()) return;
+    this.tvShows.set([]);
+    this.loadingTv.set(true);
+    try {
+      const response = await this.api.refreshRecommendations('tv');
+      this.tvShows.set(response.recommendations);
+      this.canRefreshTv.set(response.canRefresh);
+    } catch {
+      // fail silently
+    } finally {
+      this.loadingTv.set(false);
     }
   }
 
@@ -111,8 +118,7 @@ export class RecommendationsComponent {
     });
     ref.afterClosed().subscribe((result: string | null | undefined) => {
       if (result) {
-        this.open.set(false);
-        this.searchTitle.emit(result);
+        this.router.navigate(['/'], { queryParams: { q: result } });
       }
     });
   }
@@ -121,7 +127,12 @@ export class RecommendationsComponent {
     return this.feedback()[`${rec.mediaType}:${rec.tmdbId}`] ?? null;
   }
 
-  protected async sendFeedback(rec: Recommendation, value: FeedbackValue, ribbonIndex?: number): Promise<void> {
+  protected async sendFeedback(
+    rec: Recommendation,
+    value: FeedbackValue,
+    ribbonIndex?: number,
+    ribbonType?: 'movie' | 'tv',
+  ): Promise<void> {
     const key = `${rec.mediaType}:${rec.tmdbId}`;
 
     if (this.submitting()[key]) return;
@@ -140,17 +151,18 @@ export class RecommendationsComponent {
         feedback: value,
       });
       this.feedback.update((f) => ({ ...f, [key]: value }));
-      this.canRefresh.set(true);
+      if (ribbonType === 'movie') this.canRefreshMovies.set(true);
+      if (ribbonType === 'tv') this.canRefreshTv.set(true);
       if (ribbonIndex !== undefined) {
-        this.scrollToCard(ribbonIndex + 1);
+        this.scrollToCard(ribbonIndex + 1, ribbonType);
       }
     } finally {
       this.submitting.update((s) => ({ ...s, [key]: false }));
     }
   }
 
-  private scrollToCard(index: number): void {
-    const cards = this.recCards.toArray();
+  private scrollToCard(index: number, ribbonType?: 'movie' | 'tv'): void {
+    const cards = (ribbonType === 'tv' ? this.tvCards : this.movieCards).toArray();
     const card = cards[index];
     if (card) {
       card.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });

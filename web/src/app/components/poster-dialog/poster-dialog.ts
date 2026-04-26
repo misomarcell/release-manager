@@ -15,7 +15,7 @@ interface PosterDialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PosterDialogComponent implements OnInit {
-  protected data = inject<PosterDialogData>(MAT_DIALOG_DATA);
+  protected data = inject(MAT_DIALOG_DATA) as PosterDialogData;
   protected currentUrl = signal(this.data.thumbnailUrl);
 
   ngOnInit(): void {

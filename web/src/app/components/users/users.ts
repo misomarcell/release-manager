@@ -1,7 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { Router } from '@angular/router';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -16,14 +14,7 @@ import type { UserInfo } from '@rm/shared/user.models';
 
 @Component({
   selector: 'app-users',
-  imports: [
-    DatePipe,
-    MatToolbarModule,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressBarModule,
-    MatCardModule,
-  ],
+  imports: [DatePipe, MatButtonModule, MatIconModule, MatProgressBarModule, MatCardModule],
   templateUrl: './users.html',
   styleUrl: './users.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,7 +22,6 @@ import type { UserInfo } from '@rm/shared/user.models';
 export class UsersComponent implements OnInit {
   private api = inject(ApiService);
   private auth = inject(AuthService);
-  private router = inject(Router);
   private dialog = inject(MatDialog);
 
   protected users = signal<UserInfo[]>([]);
@@ -57,9 +47,7 @@ export class UsersComponent implements OnInit {
 
     try {
       await this.api.setUserValid(user.id, newValid);
-      this.users.update((users) =>
-        users.map((u) => (u.id === user.id ? { ...u, valid: newValid } : u)),
-      );
+      this.users.update((users) => users.map((u) => (u.id === user.id ? { ...u, valid: newValid } : u)));
     } catch (e: unknown) {
       this.error.set(extractHttpError(e, 'Failed to update user'));
     }
@@ -91,16 +79,10 @@ export class UsersComponent implements OnInit {
 
     try {
       await this.api.setUserAdmin(user.id, newAdmin);
-      this.users.update((users) =>
-        users.map((u) => (u.id === user.id ? { ...u, admin: newAdmin } : u)),
-      );
+      this.users.update((users) => users.map((u) => (u.id === user.id ? { ...u, admin: newAdmin } : u)));
     } catch (e: unknown) {
       this.error.set(extractHttpError(e, 'Failed to update user'));
     }
-  }
-
-  protected goBack(): void {
-    this.router.navigate(['/']);
   }
 
   private async loadUsers(): Promise<void> {
@@ -118,9 +100,7 @@ export class UsersComponent implements OnInit {
 
   private async confirm(title: string, message: string): Promise<boolean> {
     const result = await firstValueFrom(
-      this.dialog
-        .open(ConfirmDialogComponent, { data: { title, message }, autoFocus: false })
-        .afterClosed(),
+      this.dialog.open(ConfirmDialogComponent, { data: { title, message }, autoFocus: false }).afterClosed(),
     );
     return result === true;
   }

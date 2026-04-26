@@ -1,18 +1,11 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal, computed, viewChild } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatAccordion } from '@angular/material/expansion';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MovieCardComponent } from '../movie-card/movie-card';
 import { ReleaseSearchComponent, SearchParams } from '../release-search/release-search';
-import { RecommendationsComponent } from '../recommendations/recommendations';
 import { ApiService } from '../../services/api.service';
-import { AuthService } from '../../services/auth.service';
-import { VersionService } from '../../services/version.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import type { NcoreCategoryKey, NcoreResult } from '@rm/shared/ncore.models';
 
@@ -29,17 +22,12 @@ export interface GroupedMovie {
 @Component({
   selector: 'app-home',
   imports: [
-    DatePipe,
     MatButtonModule,
     MatIconModule,
-    MatMenuModule,
-    MatDividerModule,
     MatAccordion,
-    MatToolbarModule,
     MatPaginatorModule,
     MovieCardComponent,
     ReleaseSearchComponent,
-    RecommendationsComponent,
   ],
   templateUrl: './home.html',
   styleUrl: './home.scss',
@@ -49,8 +37,6 @@ export class HomeComponent implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  protected auth = inject(AuthService);
-  protected version = inject(VersionService);
   private releaseSearch = viewChild(ReleaseSearchComponent);
 
   protected loading = signal(false);
@@ -156,19 +142,6 @@ export class HomeComponent implements OnInit {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     void this.loadResults();
-  }
-
-  protected async logout(): Promise<void> {
-    await this.auth.logout();
-    this.router.navigate(['/login']);
-  }
-
-  protected navigateToUsers(): void {
-    this.router.navigate(['/users']);
-  }
-
-  protected navigateToAdmin(): void {
-    this.router.navigate(['/admin']);
   }
 
   private async loadResults(): Promise<void> {

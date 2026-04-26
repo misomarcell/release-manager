@@ -1,10 +1,3 @@
-<mat-toolbar class="toolbar">
-  <button mat-icon-button (click)="goBack()" aria-label="Back">
-    <mat-icon>arrow_back</mat-icon>
-  </button>
-  <span class="toolbar-title">Administration</span>
-</mat-toolbar>
-
 <main class="container">
   <div class="admin-actions">
     <mat-card class="action-card">
@@ -14,8 +7,8 @@
       </mat-card-header>
       <mat-card-content>
         <p class="action-description">
-          Deletes all TMDB data stored in the cache. The next search will re-fetch fresh metadata
-          from TMDB for each result.
+          Deletes all TMDB data stored in the cache. The next search will re-fetch fresh metadata from TMDB for each
+          result.
         </p>
       </mat-card-content>
       <mat-card-actions>
@@ -39,8 +32,8 @@
       </mat-card-header>
       <mat-card-content>
         <p class="action-description">
-          Purges authentication challenges and sessions that have already expired. This frees up
-          database space without affecting active users.
+          Purges authentication challenges and sessions that have already expired. This frees up database space without
+          affecting active users.
         </p>
       </mat-card-content>
       <mat-card-actions>
@@ -88,8 +81,7 @@
       </mat-card-header>
       <mat-card-content>
         <p class="action-description">
-          Checks whether the backend can reach the configured qBittorrent instance and authenticate
-          successfully.
+          Checks whether the backend can reach the configured qBittorrent instance and authenticate successfully.
         </p>
       </mat-card-content>
       <mat-card-actions>

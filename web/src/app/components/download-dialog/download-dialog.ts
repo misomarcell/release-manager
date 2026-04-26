@@ -38,7 +38,7 @@ export interface DownloadDialogData {
 export class DownloadDialogComponent {
   private api = inject(ApiService);
   private dialogRef = inject(MatDialogRef<DownloadDialogComponent>);
-  protected data = inject<DownloadDialogData>(MAT_DIALOG_DATA);
+  protected data = inject(MAT_DIALOG_DATA) as DownloadDialogData;
 
   protected categories = DOWNLOAD_CATEGORIES;
   protected category = signal<DownloadCategory>(this.data.category);
