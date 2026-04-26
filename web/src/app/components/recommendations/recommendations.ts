@@ -52,6 +52,7 @@ export class RecommendationsComponent implements OnInit {
       const response = await this.api.getRecommendations('movie');
       this.movies.set(response.recommendations);
       this.canRefreshMovies.set(response.canRefresh);
+      this.seedFeedback(response.recommendations);
     } catch {
       // fail silently
     } finally {
@@ -65,6 +66,7 @@ export class RecommendationsComponent implements OnInit {
       const response = await this.api.getRecommendations('tv');
       this.tvShows.set(response.recommendations);
       this.canRefreshTv.set(response.canRefresh);
+      this.seedFeedback(response.recommendations);
     } catch {
       // fail silently
     } finally {
@@ -80,6 +82,7 @@ export class RecommendationsComponent implements OnInit {
       const response = await this.api.refreshRecommendations('movie');
       this.movies.set(response.recommendations);
       this.canRefreshMovies.set(response.canRefresh);
+      this.seedFeedback(response.recommendations);
     } catch {
       // fail silently
     } finally {
@@ -95,6 +98,7 @@ export class RecommendationsComponent implements OnInit {
       const response = await this.api.refreshRecommendations('tv');
       this.tvShows.set(response.recommendations);
       this.canRefreshTv.set(response.canRefresh);
+      this.seedFeedback(response.recommendations);
     } catch {
       // fail silently
     } finally {
@@ -158,6 +162,16 @@ export class RecommendationsComponent implements OnInit {
       }
     } finally {
       this.submitting.update((s) => ({ ...s, [key]: false }));
+    }
+  }
+
+  private seedFeedback(recs: Recommendation[]): void {
+    const updates: Record<string, FeedbackValue> = {};
+    for (const rec of recs) {
+      if (rec.feedback) updates[`${rec.mediaType}:${rec.tmdbId}`] = rec.feedback;
+    }
+    if (Object.keys(updates).length > 0) {
+      this.feedback.update((f) => ({ ...f, ...updates }));
     }
   }
 

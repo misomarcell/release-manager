@@ -85,22 +85,31 @@ export async function getRecommendations(
       : fetchTopRatedRecommendations(RECOMMEND_COUNT, 'tv').then(enrichRecommendationsWithImdbIds),
   ]);
 
-  // Cache both types independently so either cached request benefits
+  // Cache the requested type(s). For specific filters, also opportunistically cache the other
+  // type if its cache is also stale — saves a second AI round-trip when both ribbons load in
+  // parallel on the first visit. We never overwrite a fresh cache on a targeted refresh.
   await Promise.all([
-    movies.length > 0 ? setCache(movies, userId, 'movie') : Promise.resolve(),
-    tvShows.length > 0 ? setCache(tvShows, userId, 'tv') : Promise.resolve(),
+    filter !== 'tv' && movies.length > 0 ? setCache(movies, userId, 'movie') : Promise.resolve(),
+    filter !== 'movie' && tvShows.length > 0 ? setCache(tvShows, userId, 'tv') : Promise.resolve(),
   ]);
+
+  if (filter === 'movie' && tvShows.length > 0) {
+    const tvFresh = await getFreshCache(userId, 'tv');
+    if (!tvFresh) await setCache(tvShows, userId, 'tv');
+  } else if (filter === 'tv' && movies.length > 0) {
+    const movieFresh = await getFreshCache(userId, 'movie');
+    if (!movieFresh) await setCache(movies, userId, 'movie');
+  }
 
   if (filter === 'movie') return { recommendations: movies, canRefresh: true };
   if (filter === 'tv') return { recommendations: tvShows, canRefresh: true };
 
-  // null filter: interleave both for a combined view and cache it too
+  // null filter (no mediaType param): interleave both and return
   const combined: Recommendation[] = [];
   const maxLen = Math.max(movies.length, tvShows.length);
   for (let i = 0; i < maxLen; i++) {
     if (movies[i]) combined.push(movies[i]);
     if (tvShows[i]) combined.push(tvShows[i]);
   }
-  if (combined.length > 0) await setCache(combined, userId, null);
   return { recommendations: combined, canRefresh: true };
 }

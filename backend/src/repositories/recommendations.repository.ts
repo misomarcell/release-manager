@@ -1,5 +1,5 @@
 import { query } from '../db/connection.js';
-import type { Recommendation, RecommendationFeedbackRequest } from 'shared/recommendations.models';
+import type { Recommendation, RecommendationFeedbackRequest, FeedbackValue } from 'shared/recommendations.models';
 
 interface FeedbackRow {
   tmdb_id: number;
@@ -15,6 +15,7 @@ interface CacheRow {
   id: number;
   recommendations: Recommendation[];
   generated_at: Date;
+  feedback_map: Record<string, string> | null;
 }
 
 export async function hasFeedback(userId: number): Promise<boolean> {
@@ -48,15 +49,24 @@ export async function upsertFeedback(req: RecommendationFeedbackRequest, userId:
 
 export async function getFreshCache(userId: number, filter: 'movie' | 'tv' | null): Promise<Recommendation[] | null> {
   const result = await query<CacheRow>(
-    `SELECT id, recommendations, generated_at FROM recommendation_cache
+    `SELECT id, recommendations, generated_at,
+       (SELECT jsonb_object_agg(rf.tmdb_id::text || ':' || rf.media_type, rf.feedback)
+        FROM recommendation_feedback rf
+        WHERE rf.user_id = $1) AS feedback_map
+     FROM recommendation_cache
      WHERE user_id = $1
-     AND (($2::TEXT IS NULL AND media_type_filter IS NULL) OR media_type_filter = $2)
-     AND generated_at > NOW() - INTERVAL '12 hours'
+       AND (($2::TEXT IS NULL AND media_type_filter IS NULL) OR media_type_filter = $2)
+       AND generated_at > NOW() - INTERVAL '12 hours'
      ORDER BY id DESC LIMIT 1`,
     [userId, filter],
   );
   if (result.rows.length === 0) return null;
-  return result.rows[0].recommendations;
+  const row = result.rows[0];
+  const map = row.feedback_map ?? {};
+  return row.recommendations.map((rec) => ({
+    ...rec,
+    feedback: (map[`${rec.tmdbId}:${rec.mediaType}`] as FeedbackValue) || undefined,
+  }));
 }
 
 export async function setCache(
@@ -74,6 +84,9 @@ export async function setCache(
   );
 }
 
-export async function invalidateCache(userId: number): Promise<void> {
-  await query(`DELETE FROM recommendation_cache WHERE user_id = $1`, [userId]);
+export async function invalidateCacheForFilter(userId: number, filter: 'movie' | 'tv' | null): Promise<void> {
+  await query(
+    `DELETE FROM recommendation_cache WHERE user_id = $1 AND (($2::TEXT IS NULL AND media_type_filter IS NULL) OR media_type_filter = $2)`,
+    [userId, filter],
+  );
 }

@@ -9,6 +9,7 @@ export interface Recommendation {
   plot: string;
   imdbId?: string;
   reason?: string;
+  feedback?: FeedbackValue;
 }
 
 export type FeedbackValue = 'like' | 'dislike';

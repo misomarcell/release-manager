@@ -3,7 +3,7 @@ import type { Request, Response } from 'express';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
 import { getRecommendations } from '../services/recommendations.service.js';
-import { upsertFeedback, invalidateCache } from '../repositories/recommendations.repository.js';
+import { upsertFeedback, invalidateCacheForFilter } from '../repositories/recommendations.repository.js';
 import type { RecommendationFeedbackRequest } from 'shared/recommendations.models';
 
 const router = Router();
@@ -40,7 +40,6 @@ router.post('/feedback', requireAuth, async (req: Request, res: Response) => {
 
   try {
     await upsertFeedback(body as RecommendationFeedbackRequest, userId);
-    await invalidateCache(userId);
     res.json({ ok: true });
   } catch (err) {
     console.error('[Recommendations] feedback error:', err);
@@ -53,7 +52,7 @@ router.post('/refresh', requireAuth, requireAdmin, async (req: Request, res: Res
   const rawFilter = req.query['mediaType'];
   const filter = rawFilter === 'movie' || rawFilter === 'tv' ? rawFilter : null;
   try {
-    await invalidateCache(userId);
+    await invalidateCacheForFilter(userId, filter);
     const recommendations = await getRecommendations(userId, filter);
     res.json(recommendations);
   } catch (err) {
