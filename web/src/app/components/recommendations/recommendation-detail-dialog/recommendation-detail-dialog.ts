@@ -1,14 +1,13 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { PosterService } from '../../../services/poster.service';
+import { RecommendationsService } from '../../../services/recommendations.service';
 import type { Recommendation, FeedbackValue } from '@rm/shared/recommendations.models';
 
 interface DialogData {
   rec: Recommendation;
-  currentFeedback: FeedbackValue | null;
-  onFeedback: (value: FeedbackValue) => Promise<void>;
 }
 
 @Component({
@@ -22,9 +21,15 @@ export class RecommendationDetailDialogComponent {
   private data = inject(MAT_DIALOG_DATA) as DialogData;
   private dialogRef = inject(MatDialogRef<RecommendationDetailDialogComponent, string | null>);
   private poster = inject(PosterService);
+  private recommendationsService = inject(RecommendationsService);
+
   protected rec = this.data.rec;
-  protected feedback = signal<FeedbackValue | null>(this.data.currentFeedback);
-  protected submitting = signal(false);
+  protected feedback = computed(
+    () => this.recommendationsService.feedback()[`${this.rec.mediaType}:${this.rec.tmdbId}`] ?? null,
+  );
+  protected submitting = computed(
+    () => this.recommendationsService.submitting()[`${this.rec.mediaType}:${this.rec.tmdbId}`] ?? false,
+  );
 
   protected openPoster(): void {
     if (!this.rec.poster) return;
@@ -32,14 +37,7 @@ export class RecommendationDetailDialogComponent {
   }
 
   protected async sendFeedback(value: FeedbackValue): Promise<void> {
-    if (this.submitting() || this.feedback() === value) return;
-    this.submitting.set(true);
-    try {
-      await this.data.onFeedback(value);
-      this.feedback.set(value);
-    } finally {
-      this.submitting.set(false);
-    }
+    await this.recommendationsService.submitFeedback(this.rec, value);
   }
 
   protected searchAndClose(): void {

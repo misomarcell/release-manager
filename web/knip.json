@@ -3,7 +3,6 @@
   "project": ["src/**/*.ts", "src/**/*.html"],
   "ignoreDependencies": [
     "@angular/animations",
-    "@angular/cdk",
     "@angular/compiler",
     "@angular/platform-server",
     "@angular/cli",

@@ -34,3 +34,27 @@ body {
   padding: 0;
   overflow: visible;
 }
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-150%);
+  }
+  100% {
+    transform: translateX(150%);
+  }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--mat-sys-surface-variant);
+  border-radius: 4px;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, var(--mat-sys-surface-container-highest) 50%, transparent 100%);
+    animation: shimmer 1.5s linear infinite;
+  }
+}

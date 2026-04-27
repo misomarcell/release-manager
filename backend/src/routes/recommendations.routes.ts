@@ -3,7 +3,11 @@ import type { Request, Response } from 'express';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
 import { getRecommendations } from '../services/recommendations.service.js';
-import { upsertFeedback, invalidateCacheForFilter } from '../repositories/recommendations.repository.js';
+import {
+  upsertFeedback,
+  invalidateCacheForFilter,
+  getFeedbackForItem,
+} from '../repositories/recommendations.repository.js';
 import type { RecommendationFeedbackRequest } from 'shared/recommendations.models';
 
 const router = Router();
@@ -18,6 +22,23 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
   } catch (err) {
     console.error('[Recommendations] GET error:', err);
     res.status(500).json({ error: 'Failed to fetch recommendations' });
+  }
+});
+
+router.get('/feedback', requireAuth, async (req: Request, res: Response) => {
+  const { userId } = (req as AuthenticatedRequest).user;
+  const tmdbId = Number(req.query['tmdbId']);
+  const mediaType = req.query['mediaType'];
+  if (!Number.isFinite(tmdbId) || tmdbId <= 0 || (mediaType !== 'movie' && mediaType !== 'tv')) {
+    res.status(400).json({ error: 'Invalid parameters' });
+    return;
+  }
+  try {
+    const feedback = await getFeedbackForItem(userId, tmdbId, mediaType);
+    res.json({ feedback });
+  } catch (err) {
+    console.error('[Recommendations] feedback GET error:', err);
+    res.status(500).json({ error: 'Failed to fetch feedback' });
   }
 });
 

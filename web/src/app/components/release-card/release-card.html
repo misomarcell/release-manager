@@ -48,13 +48,38 @@
         <p class="plot">{{ detail()!.plot }}</p>
       }
 
+      @if (m.metadata?.tmdbId && m.metadata?.mediaType) {
+        <div class="feedback-row">
+          <div class="feedback-btn-group">
+            <button
+              class="feedback-btn like"
+              [class.active]="recommendations.feedback()[m.metadata!.mediaType + ':' + m.metadata!.tmdbId] === 'like'"
+              [disabled]="recommendations.submitting()[m.metadata!.mediaType + ':' + m.metadata!.tmdbId]"
+              (click)="sendFeedback('like')"
+              aria-label="Like"
+            >
+              <mat-icon>thumb_up</mat-icon>
+            </button>
+            <button
+              class="feedback-btn dislike"
+              [class.active]="
+                recommendations.feedback()[m.metadata!.mediaType + ':' + m.metadata!.tmdbId] === 'dislike'
+              "
+              [disabled]="recommendations.submitting()[m.metadata!.mediaType + ':' + m.metadata!.tmdbId]"
+              (click)="sendFeedback('dislike')"
+              aria-label="Dislike"
+            >
+              <mat-icon>thumb_down</mat-icon>
+            </button>
+          </div>
+        </div>
+      }
+
       <div class="detail-table">
         @if (m.metadata?.mediaType) {
           <div class="detail-row">
             <span class="detail-label">Type</span>
-            <span class="detail-value">{{
-              m.metadata!.mediaType === 'tv' ? 'TV Show' : 'Movie'
-            }}</span>
+            <span class="detail-value">{{ m.metadata!.mediaType === 'tv' ? 'TV Show' : 'Movie' }}</span>
           </div>
         }
         @if (detail()?.rated) {
@@ -79,12 +104,7 @@
           <div class="detail-row">
             <span class="detail-label">IMDb</span>
             <span class="detail-value">
-              <a
-                [href]="'https://www.imdb.com/title/' + m.imdb_id"
-                target="_blank"
-                rel="noopener"
-                >{{ m.imdb_id }}</a
-              >
+              <a [href]="'https://www.imdb.com/title/' + m.imdb_id" target="_blank" rel="noopener">{{ m.imdb_id }}</a>
             </span>
           </div>
         }

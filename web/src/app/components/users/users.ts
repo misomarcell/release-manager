@@ -6,7 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatCardModule } from '@angular/material/card';
-import { ApiService } from '../../services/api.service';
+import { UsersService } from '../../services/users.service';
 import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { extractHttpError } from '../../utils/http-error';
@@ -20,7 +20,7 @@ import type { UserInfo } from '@rm/shared/user.models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UsersComponent implements OnInit {
-  private api = inject(ApiService);
+  private usersService = inject(UsersService);
   private auth = inject(AuthService);
   private dialog = inject(MatDialog);
 
@@ -46,7 +46,7 @@ export class UsersComponent implements OnInit {
     if (!confirmed) return;
 
     try {
-      await this.api.setUserValid(user.id, newValid);
+      await this.usersService.setUserValid(user.id, newValid);
       this.users.update((users) => users.map((u) => (u.id === user.id ? { ...u, valid: newValid } : u)));
     } catch (e: unknown) {
       this.error.set(extractHttpError(e, 'Failed to update user'));
@@ -61,7 +61,7 @@ export class UsersComponent implements OnInit {
     if (!confirmed) return;
 
     try {
-      await this.api.deleteUser(user.id);
+      await this.usersService.deleteUser(user.id);
       this.users.update((users) => users.filter((u) => u.id !== user.id));
     } catch (e: unknown) {
       this.error.set(extractHttpError(e, 'Failed to delete user'));
@@ -78,7 +78,7 @@ export class UsersComponent implements OnInit {
     if (!confirmed) return;
 
     try {
-      await this.api.setUserAdmin(user.id, newAdmin);
+      await this.usersService.setUserAdmin(user.id, newAdmin);
       this.users.update((users) => users.map((u) => (u.id === user.id ? { ...u, admin: newAdmin } : u)));
     } catch (e: unknown) {
       this.error.set(extractHttpError(e, 'Failed to update user'));
@@ -89,7 +89,7 @@ export class UsersComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const users = await this.api.getUsers();
+      const users = await this.usersService.getUsers();
       this.users.set(users);
     } catch (e: unknown) {
       this.error.set(extractHttpError(e, 'Failed to load users'));

@@ -6,7 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
-import { ApiService } from '../../services/api.service';
+import { AdminService } from '../../services/admin.service';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { extractHttpError } from '../../utils/http-error';
 
@@ -18,7 +18,7 @@ import { extractHttpError } from '../../utils/http-error';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminComponent {
-  private api = inject(ApiService);
+  private admin = inject(AdminService);
   private router = inject(Router);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
@@ -34,7 +34,7 @@ export class AdminComponent {
 
     this.clearing.set('metadata');
     try {
-      const result = await this.api.clearMetadataCache();
+      const result = await this.admin.clearMetadataCache();
       this.snackBar.open(`Cleared ${result.deleted} cached entries`, 'OK', { duration: 3000 });
     } catch (e: unknown) {
       this.snackBar.open(extractHttpError(e, 'Failed to clear cache'), 'OK', { duration: 5000 });
@@ -52,7 +52,7 @@ export class AdminComponent {
 
     this.clearing.set('expired');
     try {
-      const result = await this.api.clearExpiredData();
+      const result = await this.admin.clearExpiredData();
       const total = result.challenges + result.sessions;
       this.snackBar.open(
         `Removed ${total} expired rows (${result.challenges} challenges, ${result.sessions} sessions)`,
@@ -77,7 +77,7 @@ export class AdminComponent {
 
     this.clearing.set('sessions');
     try {
-      await this.api.logOutAllUsers();
+      await this.admin.logOutAllUsers();
       this.router.navigate(['/login']);
     } catch (e: unknown) {
       this.snackBar.open(extractHttpError(e, 'Failed to log out users'), 'OK', { duration: 5000 });
@@ -88,7 +88,7 @@ export class AdminComponent {
   protected async testQbittorrent(): Promise<void> {
     this.clearing.set('qbittorrent');
     try {
-      const result = await this.api.testQbittorrent();
+      const result = await this.admin.testQbittorrent();
       this.snackBar.open(`qBittorrent is reachable (${result.version})`, 'OK', { duration: 3000 });
     } catch (e: unknown) {
       this.snackBar.open(extractHttpError(e, 'Failed to reach qBittorrent'), 'OK', {

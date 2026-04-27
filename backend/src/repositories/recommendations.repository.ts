@@ -90,3 +90,15 @@ export async function invalidateCacheForFilter(userId: number, filter: 'movie' |
     [userId, filter],
   );
 }
+
+export async function getFeedbackForItem(
+  userId: number,
+  tmdbId: number,
+  mediaType: 'movie' | 'tv',
+): Promise<FeedbackValue | null> {
+  const result = await query<{ feedback: string }>(
+    `SELECT feedback FROM recommendation_feedback WHERE user_id = $1 AND tmdb_id = $2 AND media_type = $3`,
+    [userId, tmdbId, mediaType],
+  );
+  return result.rows.length > 0 ? (result.rows[0].feedback as FeedbackValue) : null;
+}

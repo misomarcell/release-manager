@@ -26,7 +26,7 @@
     </h2>
     <mat-accordion class="results">
       @for (movie of groupedMovies(); track movie.key; let i = $index) {
-        <app-movie-card [movie]="movie" (searchTitle)="onSearchByTitle($event)" />
+        <app-release-card [movie]="movie" (searchTitle)="onSearchByTitle($event)" />
       }
     </mat-accordion>
 
