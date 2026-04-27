@@ -9,6 +9,7 @@ import {
   logout,
   validateSession,
 } from '../services/auth.service.js';
+import { logger } from '../utils/logger.js';
 
 const router = Router();
 
@@ -34,15 +35,18 @@ router.post('/register/start', async (req: Request, res: Response) => {
       res.status(400).json({ error: 'Username must be between 3 and 32 characters' });
       return;
     }
-    const options = await startRegistration(
-      trimmed,
-      req.ip ?? req.socket.remoteAddress,
-      req.headers['user-agent'],
-    );
+    const options = await startRegistration(trimmed, req.ip ?? req.socket.remoteAddress, req.headers['user-agent']);
     res.json(options);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Registration start failed';
     const status = message === 'Username is already taken' ? 409 : 500;
+    if (status === 409) {
+      logger.warn('Registration start: username already taken', {
+        username: (req.body as { username?: string }).username,
+      });
+    } else {
+      logger.error('Registration start failed', { error: message });
+    }
     res.status(status).json({ error: message });
   }
 });
@@ -55,9 +59,15 @@ router.post('/register/finish', async (req: Request, res: Response) => {
       return;
     }
     const result = await finishRegistration(username, response as never);
+    logger.info('User registered', { username });
     res.json(result);
   } catch (error: unknown) {
-    res.status(400).json({ error: error instanceof Error ? error.message : 'Registration failed' });
+    const message = error instanceof Error ? error.message : 'Registration failed';
+    logger.warn('Registration finish failed', {
+      username: (req.body as { username?: string }).username,
+      error: message,
+    });
+    res.status(400).json({ error: message });
   }
 });
 
@@ -78,6 +88,7 @@ router.post('/login/finish', async (req: Request, res: Response) => {
       return;
     }
     const result = await finishAuthentication(response as never);
+    logger.info('User logged in', { username: result.username });
     res.cookie('session', result.token, {
       httpOnly: true,
       secure: process.env['NODE_ENV'] === 'production',
@@ -87,7 +98,9 @@ router.post('/login/finish', async (req: Request, res: Response) => {
     });
     res.json({ username: result.username, admin: result.admin });
   } catch (error: unknown) {
-    res.status(401).json({ error: error instanceof Error ? error.message : 'Login failed' });
+    const message = error instanceof Error ? error.message : 'Login failed';
+    logger.warn('Login failed', { error: message });
+    res.status(401).json({ error: message });
   }
 });
 

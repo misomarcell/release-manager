@@ -47,6 +47,10 @@
             <mat-icon matListItemIcon>admin_panel_settings</mat-icon>
             <span matListItemTitle>Administration</span>
           </a>
+          <a mat-list-item routerLink="/logs" routerLinkActive="active-link" (click)="closeSidenav()">
+            <mat-icon matListItemIcon>receipt_long</mat-icon>
+            <span matListItemTitle>Logs</span>
+          </a>
         }
       </mat-nav-list>
       <div class="sidenav-footer">

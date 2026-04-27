@@ -138,4 +138,16 @@ export async function initDatabase(): Promise<void> {
     ALTER TABLE recommendation_cache
       ADD COLUMN IF NOT EXISTS media_type_filter TEXT;
   `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS logs (
+      id         SERIAL PRIMARY KEY,
+      level      VARCHAR(10) NOT NULL,
+      message    TEXT NOT NULL,
+      context    JSONB,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS logs_created_at_idx ON logs (created_at DESC);
+    CREATE INDEX IF NOT EXISTS logs_level_idx ON logs (level);
+  `);
 }

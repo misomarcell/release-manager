@@ -51,3 +51,4 @@ shared/tsconfig.tsbuildinfo
 shared/tsconfig.tsbuildinfo
 shared/tsconfig.tsbuildinfo
 /web/node_modules
+*.tsbuildinfo

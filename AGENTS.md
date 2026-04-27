@@ -30,6 +30,7 @@
 - `shared/src/user.models.ts` — User types: `UserInfo`.
 - `shared/src/recommendations.models.ts` — Recommendation types: `Recommendation`, `FeedbackValue`, `RecommendationFeedbackRequest`.
 - `shared/src/constants.ts` — Shared constants: `TMDB_GENRE_MAP`, `DOWNLOAD_CATEGORIES`, `DownloadCategory`.
+- `shared/src/log.models.ts` — Logging types: `LogLevel`, `LogEntry`, `LogsResponse`.
 - Both frontend and backend import from `shared` — never duplicate these types.
 
 ## Backend Structure
@@ -56,10 +57,12 @@ backend/src/
     cache.repository.ts # Metadata cache database operations
     user.repository.ts  # User/credential/session database operations
     recommendations.repository.ts # Feedback and recommendation cache DB operations
+    log.repository.ts           # Log query database operations
   utils/
     coerce.ts           # Type coercion helpers
     concurrent.ts       # Concurrent promise mapper
     release-parser.ts   # Release name + TV info parsing
+    logger.ts           # Structured logger — writes to console + DB `logs` table
 ```
 
 ## Authentication

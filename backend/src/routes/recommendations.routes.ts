@@ -2,6 +2,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
+import { logger } from '../utils/logger.js';
 import { getRecommendations } from '../services/recommendations.service.js';
 import {
   upsertFeedback,
@@ -20,7 +21,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     const response = await getRecommendations(authUser.userId, filter);
     res.json({ ...response, canRefresh: authUser.admin ? response.canRefresh : false });
   } catch (err) {
-    console.error('[Recommendations] GET error:', err);
+    logger.error('Recommendations: GET error', { error: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: 'Failed to fetch recommendations' });
   }
 });
@@ -37,7 +38,7 @@ router.get('/feedback', requireAuth, async (req: Request, res: Response) => {
     const feedback = await getFeedbackForItem(userId, tmdbId, mediaType);
     res.json({ feedback });
   } catch (err) {
-    console.error('[Recommendations] feedback GET error:', err);
+    logger.error('Recommendations: feedback GET error', { error: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: 'Failed to fetch feedback' });
   }
 });
@@ -63,7 +64,7 @@ router.post('/feedback', requireAuth, async (req: Request, res: Response) => {
     await upsertFeedback(body as RecommendationFeedbackRequest, userId);
     res.json({ ok: true });
   } catch (err) {
-    console.error('[Recommendations] feedback error:', err);
+    logger.error('Recommendations: feedback save error', { error: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: 'Failed to save feedback' });
   }
 });
@@ -77,7 +78,7 @@ router.post('/refresh', requireAuth, requireAdmin, async (req: Request, res: Res
     const recommendations = await getRecommendations(userId, filter);
     res.json(recommendations);
   } catch (err) {
-    console.error('[Recommendations] refresh error:', err);
+    logger.error('Recommendations: refresh error', { error: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: 'Failed to refresh recommendations' });
   }
 });

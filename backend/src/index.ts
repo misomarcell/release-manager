@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { initDatabase } from './db/connection.js';
+import { logger } from './utils/logger.js';
 import authRoutes from './routes/auth.routes.js';
 import searchRoutes from './routes/search.routes.js';
 import userRoutes from './routes/user.routes.js';
@@ -35,7 +36,7 @@ app.get('/api/health', (_req, res) => {
 async function start() {
   await initDatabase();
   app.listen(config.port, () => {
-    console.log(`Backend listening on http://localhost:${config.port}`);
+    logger.info(`Backend started`, { port: config.port });
   });
 }
 

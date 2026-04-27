@@ -1,12 +1,8 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { requireAuth, requireAdmin, type AuthenticatedRequest } from '../middleware/auth.js';
-import {
-  getAllUsers,
-  setUserValid,
-  setUserAdmin,
-  deleteUser,
-} from '../repositories/user.repository.js';
+import { getAllUsers, setUserValid, setUserAdmin, deleteUser } from '../repositories/user.repository.js';
+import { logger } from '../utils/logger.js';
 
 const router = Router();
 
@@ -18,9 +14,7 @@ router.get('/', async (_req: Request, res: Response) => {
     const users = await getAllUsers();
     res.json(users);
   } catch (error: unknown) {
-    res
-      .status(500)
-      .json({ error: error instanceof Error ? error.message : 'Failed to load users' });
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load users' });
   }
 });
 
@@ -49,8 +43,13 @@ router.patch('/:id/valid', async (req: Request, res: Response) => {
       res.status(404).json({ error: 'User not found' });
       return;
     }
+    logger.info('Admin: user validity changed', { userId, valid, by: currentUser.username });
     res.json({ ok: true });
   } catch (error: unknown) {
+    logger.error('Admin: failed to update user validity', {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     res.status(500).json({ error: error instanceof Error ? error.message : 'Update failed' });
   }
 });
@@ -74,8 +73,13 @@ router.delete('/:id', async (req: Request, res: Response) => {
       res.status(404).json({ error: 'User not found' });
       return;
     }
+    logger.warn('Admin: user deleted', { userId, by: currentUser.username });
     res.json({ ok: true });
   } catch (error: unknown) {
+    logger.error('Admin: failed to delete user', {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     res.status(500).json({ error: error instanceof Error ? error.message : 'Delete failed' });
   }
 });
@@ -105,8 +109,13 @@ router.patch('/:id/admin', async (req: Request, res: Response) => {
       res.status(404).json({ error: 'User not found' });
       return;
     }
+    logger.warn('Admin: user admin status changed', { userId, admin, by: currentUser.username });
     res.json({ ok: true });
   } catch (error: unknown) {
+    logger.error('Admin: failed to update user admin status', {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     res.status(500).json({ error: error instanceof Error ? error.message : 'Update failed' });
   }
 });

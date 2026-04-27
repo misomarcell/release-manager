@@ -5,10 +5,12 @@ import { fetchBasicMetadata, getCacheKey, fetchDetailMetadata } from '../service
 import { addTorrent } from '../services/qbittorrent.service.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
+import type { AuthenticatedRequest } from '../middleware/auth.js';
 import { DOWNLOAD_CATEGORIES } from 'shared/constants';
 import type { NcoreResult, NcoreSearchResponse } from 'shared/ncore.models';
 import type { DownloadRequest, DownloadResponse } from 'shared/download.models';
 import type { MetadataLookup } from 'shared/tmdb.models';
+import { logger } from '../utils/logger.js';
 
 const router = Router();
 
@@ -32,10 +34,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     }
 
     // Fetch basic metadata once per unique key (6 concurrent)
-    const metadataMap = new Map<
-      string,
-      { metadata: NcoreResult['metadata']; fromCache: boolean }
-    >();
+    const metadataMap = new Map<string, { metadata: NcoreResult['metadata']; fromCache: boolean }>();
     await mapConcurrent([...uniqueLookups.entries()], 6, async ([key, lookup]) => {
       const result = await fetchBasicMetadata(lookup);
       metadataMap.set(key, { metadata: result.metadata, fromCache: result.fromCache });
@@ -63,6 +62,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     res.json(response);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Search failed';
+    logger.error('nCore search failed', { error: message });
     res.status(502).json({ error: message });
   }
 });
@@ -117,10 +117,13 @@ router.post('/download', requireAuth, requireAdmin, async (req: Request, res: Re
     }
 
     await addTorrent(downloadUrl, savePath, category);
+    const user = (req as AuthenticatedRequest).user;
+    logger.info('Torrent download started', { savePath, category, by: user.username });
     const response: DownloadResponse = { success: true, message: 'Torrent sent to qBittorrent' };
     res.json(response);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Download failed';
+    logger.error('Torrent download failed', { error: message });
     res.status(502).json({ success: false, message } satisfies DownloadResponse);
   }
 });
