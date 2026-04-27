@@ -50,8 +50,8 @@
             <div class="rec-actions">
               <button
                 class="feedback-btn like"
-                [class.active]="currentFeedback(rec) === 'like'"
-                [disabled]="submitting()[trackByTmdb($index, rec)]"
+                [class.active]="recommendations.feedback()[trackByTmdb($index, rec)] === 'like'"
+                [disabled]="recommendations.submitting()[trackByTmdb($index, rec)]"
                 (click)="sendFeedback(rec, 'like', i, 'movie')"
                 aria-label="Like"
               >
@@ -59,8 +59,8 @@
               </button>
               <button
                 class="feedback-btn dislike"
-                [class.active]="currentFeedback(rec) === 'dislike'"
-                [disabled]="submitting()[trackByTmdb($index, rec)]"
+                [class.active]="recommendations.feedback()[trackByTmdb($index, rec)] === 'dislike'"
+                [disabled]="recommendations.submitting()[trackByTmdb($index, rec)]"
                 (click)="sendFeedback(rec, 'dislike', i, 'movie')"
                 aria-label="Dislike"
               >
@@ -127,8 +127,8 @@
             <div class="rec-actions">
               <button
                 class="feedback-btn like"
-                [class.active]="currentFeedback(rec) === 'like'"
-                [disabled]="submitting()[trackByTmdb($index, rec)]"
+                [class.active]="recommendations.feedback()[trackByTmdb($index, rec)] === 'like'"
+                [disabled]="recommendations.submitting()[trackByTmdb($index, rec)]"
                 (click)="sendFeedback(rec, 'like', i, 'tv')"
                 aria-label="Like"
               >
@@ -136,8 +136,8 @@
               </button>
               <button
                 class="feedback-btn dislike"
-                [class.active]="currentFeedback(rec) === 'dislike'"
-                [disabled]="submitting()[trackByTmdb($index, rec)]"
+                [class.active]="recommendations.feedback()[trackByTmdb($index, rec)] === 'dislike'"
+                [disabled]="recommendations.submitting()[trackByTmdb($index, rec)]"
                 (click)="sendFeedback(rec, 'dislike', i, 'tv')"
                 aria-label="Dislike"
               >

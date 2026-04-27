@@ -12,7 +12,7 @@ import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
-import { ApiService } from '../../services/api.service';
+import { RecommendationsService } from '../../services/recommendations.service';
 import { RecommendationDetailDialogComponent } from './recommendation-detail-dialog/recommendation-detail-dialog';
 import type { Recommendation, FeedbackValue } from '@rm/shared/recommendations.models';
 
@@ -24,9 +24,9 @@ import type { Recommendation, FeedbackValue } from '@rm/shared/recommendations.m
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RecommendationsComponent implements OnInit {
-  private api = inject(ApiService);
   private dialog = inject(MatDialog);
   private router = inject(Router);
+  protected recommendations = inject(RecommendationsService);
 
   @ViewChildren('movieCard') movieCards!: QueryList<ElementRef<HTMLElement>>;
   @ViewChildren('tvCard') tvCards!: QueryList<ElementRef<HTMLElement>>;
@@ -37,8 +37,6 @@ export class RecommendationsComponent implements OnInit {
   protected loadingTv = signal(false);
   protected canRefreshMovies = signal(false);
   protected canRefreshTv = signal(false);
-  protected feedback = signal<Record<string, FeedbackValue>>({});
-  protected submitting = signal<Record<string, boolean>>({});
   protected readonly skeletonItems = [0, 1, 2, 3, 4];
 
   ngOnInit(): void {
@@ -49,10 +47,10 @@ export class RecommendationsComponent implements OnInit {
   private async loadMovies(): Promise<void> {
     this.loadingMovies.set(true);
     try {
-      const response = await this.api.getRecommendations('movie');
+      const response = await this.recommendations.getRecommendations('movie');
       this.movies.set(response.recommendations);
       this.canRefreshMovies.set(response.canRefresh);
-      this.seedFeedback(response.recommendations);
+      this.recommendations.seedFeedback(response.recommendations);
     } catch {
       // fail silently
     } finally {
@@ -63,10 +61,10 @@ export class RecommendationsComponent implements OnInit {
   private async loadTvShows(): Promise<void> {
     this.loadingTv.set(true);
     try {
-      const response = await this.api.getRecommendations('tv');
+      const response = await this.recommendations.getRecommendations('tv');
       this.tvShows.set(response.recommendations);
       this.canRefreshTv.set(response.canRefresh);
-      this.seedFeedback(response.recommendations);
+      this.recommendations.seedFeedback(response.recommendations);
     } catch {
       // fail silently
     } finally {
@@ -79,10 +77,10 @@ export class RecommendationsComponent implements OnInit {
     this.movies.set([]);
     this.loadingMovies.set(true);
     try {
-      const response = await this.api.refreshRecommendations('movie');
+      const response = await this.recommendations.refreshRecommendations('movie');
       this.movies.set(response.recommendations);
       this.canRefreshMovies.set(response.canRefresh);
-      this.seedFeedback(response.recommendations);
+      this.recommendations.seedFeedback(response.recommendations);
     } catch {
       // fail silently
     } finally {
@@ -95,10 +93,10 @@ export class RecommendationsComponent implements OnInit {
     this.tvShows.set([]);
     this.loadingTv.set(true);
     try {
-      const response = await this.api.refreshRecommendations('tv');
+      const response = await this.recommendations.refreshRecommendations('tv');
       this.tvShows.set(response.recommendations);
       this.canRefreshTv.set(response.canRefresh);
-      this.seedFeedback(response.recommendations);
+      this.recommendations.seedFeedback(response.recommendations);
     } catch {
       // fail silently
     } finally {
@@ -112,23 +110,15 @@ export class RecommendationsComponent implements OnInit {
 
   protected openDetail(rec: Recommendation): void {
     const ref = this.dialog.open(RecommendationDetailDialogComponent, {
-      data: {
-        rec,
-        currentFeedback: this.currentFeedback(rec),
-        onFeedback: (value: FeedbackValue) => this.sendFeedback(rec, value),
-      },
+      data: { rec },
       maxWidth: '480px',
       width: '90vw',
     });
     ref.afterClosed().subscribe((result: string | null | undefined) => {
       if (result) {
-        this.router.navigate(['/'], { queryParams: { q: result } });
+        this.router.navigate(['/releases'], { queryParams: { q: result } });
       }
     });
-  }
-
-  protected currentFeedback(rec: Recommendation): FeedbackValue | null {
-    return this.feedback()[`${rec.mediaType}:${rec.tmdbId}`] ?? null;
   }
 
   protected async sendFeedback(
@@ -137,41 +127,13 @@ export class RecommendationsComponent implements OnInit {
     ribbonIndex?: number,
     ribbonType?: 'movie' | 'tv',
   ): Promise<void> {
-    const key = `${rec.mediaType}:${rec.tmdbId}`;
-
-    if (this.submitting()[key]) return;
-    if (this.currentFeedback(rec) === value) return;
-
-    this.submitting.update((s) => ({ ...s, [key]: true }));
-
-    const summary = [rec.genre, rec.year, rec.plot ? rec.plot.slice(0, 120) : ''].filter(Boolean).join(', ');
-
-    try {
-      await this.api.submitRecommendationFeedback({
-        tmdbId: rec.tmdbId,
-        mediaType: rec.mediaType,
-        title: rec.title,
-        summary,
-        feedback: value,
-      });
-      this.feedback.update((f) => ({ ...f, [key]: value }));
+    const success = await this.recommendations.submitFeedback(rec, value);
+    if (success) {
       if (ribbonType === 'movie') this.canRefreshMovies.set(true);
       if (ribbonType === 'tv') this.canRefreshTv.set(true);
       if (ribbonIndex !== undefined) {
         this.scrollToCard(ribbonIndex + 1, ribbonType);
       }
-    } finally {
-      this.submitting.update((s) => ({ ...s, [key]: false }));
-    }
-  }
-
-  private seedFeedback(recs: Recommendation[]): void {
-    const updates: Record<string, FeedbackValue> = {};
-    for (const rec of recs) {
-      if (rec.feedback) updates[`${rec.mediaType}:${rec.tmdbId}`] = rec.feedback;
-    }
-    if (Object.keys(updates).length > 0) {
-      this.feedback.update((f) => ({ ...f, ...updates }));
     }
   }
 

@@ -7,7 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatChipsModule } from '@angular/material/chips';
-import { ApiService } from '../../services/api.service';
+import { SearchService } from '../../services/search.service';
 import { DOWNLOAD_CATEGORIES, type DownloadCategory } from '@rm/shared/constants';
 import type { NcoreResult, TvInfo } from '@rm/shared/ncore.models';
 
@@ -36,7 +36,7 @@ export interface DownloadDialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DownloadDialogComponent {
-  private api = inject(ApiService);
+  private search = inject(SearchService);
   private dialogRef = inject(MatDialogRef<DownloadDialogComponent>);
   protected data = inject(MAT_DIALOG_DATA) as DownloadDialogData;
 
@@ -62,7 +62,7 @@ export class DownloadDialogComponent {
     this.sending.set(true);
     this.error.set('');
     try {
-      const result = await this.api.download({
+      const result = await this.search.download({
         downloadUrl: this.data.release.download_url,
         savePath: this.savePath,
         category: this.category(),

@@ -3,9 +3,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatAccordion } from '@angular/material/expansion';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MovieCardComponent } from '../movie-card/movie-card';
+import { ReleaseCardComponent } from '../release-card/release-card';
 import { ReleaseSearchComponent, SearchParams } from '../release-search/release-search';
-import { ApiService } from '../../services/api.service';
+import { SearchService } from '../../services/search.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import type { NcoreCategoryKey, NcoreResult } from '@rm/shared/ncore.models';
 
@@ -26,7 +26,7 @@ export interface GroupedMovie {
     MatIconModule,
     MatAccordion,
     MatPaginatorModule,
-    MovieCardComponent,
+    ReleaseCardComponent,
     ReleaseSearchComponent,
   ],
   templateUrl: './home.html',
@@ -34,7 +34,7 @@ export interface GroupedMovie {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeComponent implements OnInit {
-  private api = inject(ApiService);
+  private search = inject(SearchService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private releaseSearch = viewChild(ReleaseSearchComponent);
@@ -152,7 +152,7 @@ export class HomeComponent implements OnInit {
     try {
       const hasSearchTerm = !!this.searchQuery.trim();
       this.lastSearchTerm.set(this.searchQuery.trim());
-      const response = await this.api.search(
+      const response = await this.search.search(
         this.selectedCategory(),
         this.searchQuery,
         this.currentPage(),
