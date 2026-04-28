@@ -210,6 +210,16 @@ function extractCertification(data: Record<string, unknown>, type: 'movie' | 'tv
 // In-flight deduplication for detail metadata
 const inflightDetail = new Map<string, Promise<MovieDetailMetadata | null>>();
 
+function extractTrailerKey(data: Record<string, unknown>): string {
+  const videos = asRecord(data['videos']);
+  const results = Array.isArray(videos['results']) ? videos['results'] : [];
+  const youtubeVideos = results.map((r) => asRecord(r)).filter((r) => asString(r['site']) === 'YouTube');
+  const trailer = youtubeVideos.find((r) => asString(r['type']) === 'Trailer');
+  if (trailer) return asString(trailer['key']) || '';
+  const teaser = youtubeVideos.find((r) => asString(r['type']) === 'Teaser');
+  return teaser ? asString(teaser['key']) || '' : '';
+}
+
 export async function fetchDetailMetadata(
   tmdbId: number,
   mediaType: 'movie' | 'tv',
@@ -233,7 +243,7 @@ async function doFetchDetailMetadata(tmdbId: number, mediaType: 'movie' | 'tv'):
 
   if (!config.tmdb.accessToken) return null;
 
-  const appendParam = mediaType === 'movie' ? 'release_dates' : 'content_ratings';
+  const appendParam = mediaType === 'movie' ? 'release_dates,videos' : 'content_ratings,videos';
   const details = await tmdbGet(`/${mediaType}/${tmdbId}`, {
     append_to_response: appendParam,
   });
@@ -255,8 +265,9 @@ async function doFetchDetailMetadata(tmdbId: number, mediaType: 'movie' | 'tv'):
   const rated = extractCertification(details, mediaType);
   const dateField = mediaType === 'movie' ? 'release_date' : 'first_air_date';
   const releaseDate = asString(details[dateField]);
+  const trailerKey = extractTrailerKey(details) || undefined;
 
-  const detail: MovieDetailMetadata = { plot, runtime, rated, releaseDate };
+  const detail: MovieDetailMetadata = { plot, runtime, rated, releaseDate, trailerKey };
   await updateCachedDetail(tmdbId, detail);
   return detail;
 }
@@ -286,10 +297,25 @@ async function fetchImdbId(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<s
   return asString(data['imdb_id']) || null;
 }
 
+async function fetchTrailerKey(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<string | null> {
+  const data = await tmdbGet(`/${mediaType}/${tmdbId}/videos`, {});
+  if (!data) return null;
+  // Direct /videos response has results at top level (unlike append_to_response which nests under 'videos')
+  const results = Array.isArray(data['results']) ? data['results'] : [];
+  const youtubeVideos = results.map((r) => asRecord(r)).filter((r) => asString(r['site']) === 'YouTube');
+  const trailer = youtubeVideos.find((r) => asString(r['type']) === 'Trailer');
+  if (trailer) return asString(trailer['key']) || null;
+  const teaser = youtubeVideos.find((r) => asString(r['type']) === 'Teaser');
+  return teaser ? asString(teaser['key']) || null : null;
+}
+
 export async function enrichRecommendationsWithImdbIds(recs: Recommendation[]): Promise<Recommendation[]> {
   return mapConcurrent(recs, 4, async (rec) => {
-    const imdbId = await fetchImdbId(rec.tmdbId, rec.mediaType);
-    return imdbId ? { ...rec, imdbId } : rec;
+    const [imdbId, trailerKey] = await Promise.all([
+      fetchImdbId(rec.tmdbId, rec.mediaType),
+      fetchTrailerKey(rec.tmdbId, rec.mediaType),
+    ]);
+    return { ...rec, ...(imdbId ? { imdbId } : {}), ...(trailerKey ? { trailerKey } : {}) };
   });
 }
 

@@ -17,11 +17,26 @@
       @if (rec.genre) {
         <p class="dialog-genre">{{ rec.genre }}</p>
       }
-      @if (rec.imdbId) {
-        <a class="imdb-link" [href]="'https://www.imdb.com/title/' + rec.imdbId" target="_blank" rel="noopener">
-          <mat-icon>open_in_new</mat-icon>
-          IMDb
-        </a>
+      @if (rec.imdbId || rec.trailerKey) {
+        <div class="dialog-links">
+          @if (rec.imdbId) {
+            <a class="imdb-link" [href]="'https://www.imdb.com/title/' + rec.imdbId" target="_blank" rel="noopener">
+              <mat-icon>open_in_new</mat-icon>
+              IMDb
+            </a>
+          }
+          @if (rec.trailerKey) {
+            <a
+              class="trailer-link"
+              [href]="'https://www.youtube.com/watch?v=' + rec.trailerKey"
+              target="_blank"
+              rel="noopener"
+            >
+              <mat-icon>play_circle</mat-icon>
+              Trailer
+            </a>
+          }
+        </div>
       }
     </div>
   </div>

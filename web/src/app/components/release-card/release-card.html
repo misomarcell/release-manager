@@ -57,19 +57,35 @@
         @if (detail()?.releaseDate) {
           <span>{{ detail()!.releaseDate }}</span>
         }
-        @if (m.imdb_id) {
-          <a
-            class="imdb-link"
-            [href]="'https://www.imdb.com/title/' + m.imdb_id"
-            target="_blank"
-            rel="noopener"
-            (click)="$event.stopPropagation()"
-          >
-            <mat-icon>open_in_new</mat-icon>
-            IMDb
-          </a>
-        }
       </div>
+      @if (m.imdb_id || detail()?.trailerKey) {
+        <div class="detail-links">
+          @if (m.imdb_id) {
+            <a
+              class="imdb-link"
+              [href]="'https://www.imdb.com/title/' + m.imdb_id"
+              target="_blank"
+              rel="noopener"
+              (click)="$event.stopPropagation()"
+            >
+              <mat-icon>open_in_new</mat-icon>
+              IMDb
+            </a>
+          }
+          @if (detail()?.trailerKey) {
+            <a
+              class="trailer-link"
+              [href]="'https://www.youtube.com/watch?v=' + detail()!.trailerKey"
+              target="_blank"
+              rel="noopener"
+              (click)="$event.stopPropagation()"
+            >
+              <mat-icon>play_circle</mat-icon>
+              Trailer
+            </a>
+          }
+        </div>
+      }
 
       @if (detail()?.plot) {
         <p class="plot">{{ detail()!.plot }}</p>

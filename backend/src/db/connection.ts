@@ -150,4 +150,9 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS logs_created_at_idx ON logs (created_at DESC);
     CREATE INDEX IF NOT EXISTS logs_level_idx ON logs (level);
   `);
+
+  await pool.query(`
+    ALTER TABLE metadata_cache
+      ADD COLUMN IF NOT EXISTS trailer_key VARCHAR(50);
+  `);
 }

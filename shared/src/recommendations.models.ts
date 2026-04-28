@@ -8,6 +8,7 @@ export interface Recommendation {
   rating: string;
   plot: string;
   imdbId?: string;
+  trailerKey?: string;
   reason?: string;
   feedback?: FeedbackValue;
 }

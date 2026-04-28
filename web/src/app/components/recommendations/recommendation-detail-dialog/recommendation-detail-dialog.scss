@@ -71,12 +71,37 @@ mat-dialog-actions {
     margin: 0;
   }
 
+  .dialog-links {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
   .imdb-link {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
     font-size: 0.8rem;
     color: var(--mat-sys-primary);
+    text-decoration: none;
+
+    mat-icon {
+      font-size: 0.85rem;
+      width: 0.85rem;
+      height: 0.85rem;
+    }
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .trailer-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: #c00;
     text-decoration: none;
 
     mat-icon {
@@ -127,6 +152,7 @@ mat-dialog-actions {
 
 .dialog-feedback-row {
   display: flex;
+  width: 100%;
 }
 
 .feedback-btn {

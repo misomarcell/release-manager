@@ -178,7 +178,7 @@
     gap: 0 0.2rem;
     font-size: 0.85rem;
     color: var(--mat-sys-on-surface-variant);
-    margin-bottom: 1rem;
+    margin-bottom: 0.4rem;
 
     > * + * {
       &::before {
@@ -189,11 +189,37 @@
     }
   }
 
+  .detail-links {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
   .imdb-link {
     display: inline-flex;
     align-items: center;
     gap: 0.2rem;
     color: var(--mat-sys-primary);
+    text-decoration: none;
+
+    mat-icon {
+      font-size: 0.85rem;
+      width: 0.85rem;
+      height: 0.85rem;
+    }
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .trailer-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    color: #c00;
     text-decoration: none;
 
     mat-icon {

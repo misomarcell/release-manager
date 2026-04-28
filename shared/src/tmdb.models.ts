@@ -22,4 +22,5 @@ export interface MovieDetailMetadata {
   runtime: string;
   rated: string;
   releaseDate: string;
+  trailerKey?: string;
 }
