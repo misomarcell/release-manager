@@ -2,6 +2,20 @@
   height: 0;
 }
 
+mat-dialog-content {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-height: 65vh;
+}
+
+mat-dialog-actions {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 1rem 1rem !important;
+  gap: 0.5rem;
+  margin: 0 !important;
+}
+
 .dialog-layout {
   display: flex;
   gap: 1rem;
@@ -77,6 +91,14 @@
   }
 }
 
+.dialog-title {
+  padding: 1rem 1rem 0 !important;
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0;
+}
+
 .dialog-plot {
   font-size: 0.875rem;
   color: var(--mat-sys-on-surface-variant);
@@ -101,13 +123,6 @@
     flex-shrink: 0;
     margin-top: 1px;
   }
-}
-
-.dialog-actions {
-  display: flex;
-  flex-direction: column;
-  padding: 0.75rem 1rem 1rem;
-  gap: 0.5rem;
 }
 
 .dialog-feedback-row {
@@ -167,6 +182,25 @@
 .search-btn {
   width: 100%;
   justify-content: center;
+  overflow: hidden;
+
+  ::ng-deep .mdc-button__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .btn-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 .close-btn {

@@ -113,6 +113,7 @@ export class RecommendationsComponent implements OnInit {
       data: { rec },
       maxWidth: '480px',
       width: '90vw',
+      autoFocus: false,
     });
     ref.afterClosed().subscribe((result: string | null | undefined) => {
       if (result) {

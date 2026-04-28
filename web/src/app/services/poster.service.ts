@@ -11,6 +11,7 @@ export class PosterService {
     this.dialog.open(PosterDialogComponent, {
       data: { thumbnailUrl, fullSizeUrl, alt },
       panelClass: 'poster-overlay',
+      autoFocus: false,
     });
   }
 }

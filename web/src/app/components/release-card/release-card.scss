@@ -171,35 +171,39 @@
     }
   }
 
-  .detail-table {
+  .detail-strip {
     display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-
-  .detail-row {
-    display: flex;
-    gap: 0.75rem;
-    font-size: 0.9rem;
-    line-height: 1.5;
-  }
-
-  .detail-label {
-    min-width: 5.5rem;
-    font-weight: 500;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 0.2rem;
+    font-size: 0.85rem;
     color: var(--mat-sys-on-surface-variant);
-    flex-shrink: 0;
+    margin-bottom: 1rem;
 
-    @media (max-width: 600px) {
-      min-width: 4.5rem;
+    > * + * {
+      &::before {
+        content: '·';
+        margin-right: 0.2rem;
+        opacity: 0.6;
+      }
     }
   }
 
-  .detail-value {
-    color: var(--mat-sys-on-surface);
+  .imdb-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    color: var(--mat-sys-primary);
+    text-decoration: none;
 
-    a {
-      color: var(--mat-sys-primary);
+    mat-icon {
+      font-size: 0.85rem;
+      width: 0.85rem;
+      height: 0.85rem;
+    }
+
+    &:hover {
+      text-decoration: underline;
     }
   }
 
@@ -207,6 +211,26 @@
     display: flex;
     margin: 1rem auto;
     font-size: 0.85rem;
+    max-width: 100%;
+    overflow: hidden;
+
+    ::ng-deep .mdc-button__label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      min-width: 0;
+    }
+
+    .btn-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+    }
   }
 
   .skeleton-plot {

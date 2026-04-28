@@ -107,6 +107,7 @@ export class ReleaseCardComponent {
       data: { html },
       width: '90vw',
       maxWidth: '800px',
+      autoFocus: false,
     });
   }
 
