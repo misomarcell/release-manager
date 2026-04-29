@@ -5,7 +5,6 @@ import { fetchBasicMetadata, getCacheKey, fetchDetailMetadata } from '../service
 import { addTorrent } from '../services/qbittorrent.service.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
-import type { AuthenticatedRequest } from '../middleware/auth.js';
 import { DOWNLOAD_CATEGORIES } from 'shared/constants';
 import type { NcoreResult, NcoreSearchResponse } from 'shared/ncore.models';
 import type { DownloadRequest, DownloadResponse } from 'shared/download.models';
@@ -117,8 +116,6 @@ router.post('/download', requireAuth, requireAdmin, async (req: Request, res: Re
     }
 
     await addTorrent(downloadUrl, savePath, category);
-    const user = (req as AuthenticatedRequest).user;
-    logger.info('Torrent download started', { savePath, category, by: user.username });
     const response: DownloadResponse = { success: true, message: 'Torrent sent to qBittorrent' };
     res.json(response);
   } catch (error: unknown) {

@@ -1,4 +1,5 @@
 import { config } from '../config.js';
+import { logger } from '../utils/logger.js';
 import { downloadTorrentFile } from './ncore.service.js';
 import type { DownloadCategory } from 'shared/constants';
 
@@ -48,11 +49,7 @@ async function qbtFetch(path: string, init: RequestInit): Promise<Response> {
   return response;
 }
 
-export async function addTorrent(
-  downloadUrl: string,
-  savePath: string,
-  category: DownloadCategory,
-): Promise<void> {
+export async function addTorrent(downloadUrl: string, savePath: string, category: DownloadCategory): Promise<void> {
   const { url } = config.qbittorrent;
   if (!url) {
     throw new Error('qBittorrent is not configured. Set QBITTORRENT_URL.');
@@ -62,15 +59,11 @@ export async function addTorrent(
   console.log('[qBittorrent]', `Torrent file size: ${torrentData.byteLength} bytes`);
 
   const formData = new FormData();
-  formData.append(
-    'torrents',
-    new Blob([torrentData], { type: 'application/x-bittorrent' }),
-    'release.torrent',
-  );
+  formData.append('torrents', new Blob([torrentData], { type: 'application/x-bittorrent' }), 'release.torrent');
   formData.append('savepath', savePath);
   formData.append('category', category);
 
-  console.log('[qBittorrent]', `Adding torrent to ${savePath} (${category})`);
+  logger.info('[qBittorrent] Adding new torrent', { savePath, category, size: torrentData.byteLength });
 
   const response = await qbtFetch('/api/v2/torrents/add', {
     method: 'POST',
@@ -78,7 +71,7 @@ export async function addTorrent(
   });
 
   const responseText = await response.text();
-  console.log('[qBittorrent]', `Response: ${response.status} ${responseText}`);
+  logger.info('[qBittorrent] Torrent add response', { status: response.status, responseText });
 
   if (!response.ok) {
     throw new Error(`qBittorrent add failed: ${response.status} ${responseText}`);
