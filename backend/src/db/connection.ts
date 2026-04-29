@@ -4,11 +4,11 @@ import { config } from '../config.js';
 const pool = new pg.Pool({ connectionString: config.databaseUrl });
 
 export async function query<T extends pg.QueryResultRow>(text: string, params?: unknown[]): Promise<pg.QueryResult<T>> {
-  return pool.query<T>(text, params);
+    return pool.query<T>(text, params);
 }
 
 export async function initDatabase(): Promise<void> {
-  await pool.query(`
+    await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id            SERIAL PRIMARY KEY,
       username      VARCHAR(255) UNIQUE NOT NULL,
@@ -55,9 +55,9 @@ export async function initDatabase(): Promise<void> {
     );
   `);
 
-  await pool.query(`DROP TABLE IF EXISTS omdb_cache`);
+    await pool.query(`DROP TABLE IF EXISTS omdb_cache`);
 
-  await pool.query(`
+    await pool.query(`
     ALTER TABLE challenges
       ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
 
@@ -76,19 +76,19 @@ export async function initDatabase(): Promise<void> {
       ALTER COLUMN expires_at SET NOT NULL;
   `);
 
-  await pool.query(`
+    await pool.query(`
     ALTER TABLE users
       ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45),
       ADD COLUMN IF NOT EXISTS user_agent TEXT,
       ADD COLUMN IF NOT EXISTS last_login TIMESTAMPTZ;
   `);
 
-  await pool.query(`
+    await pool.query(`
     ALTER TABLE users
       ADD COLUMN IF NOT EXISTS admin BOOLEAN DEFAULT FALSE;
   `);
 
-  await pool.query(`
+    await pool.query(`
     ALTER TABLE metadata_cache
       ADD COLUMN IF NOT EXISTS tmdb_id INTEGER,
       ADD COLUMN IF NOT EXISTS media_type TEXT,
@@ -97,7 +97,7 @@ export async function initDatabase(): Promise<void> {
     UPDATE metadata_cache SET release_date = '' WHERE release_date IS NULL;
   `);
 
-  await pool.query(`
+    await pool.query(`
     CREATE TABLE IF NOT EXISTS recommendation_feedback (
       id          SERIAL PRIMARY KEY,
       tmdb_id     INTEGER NOT NULL,
@@ -116,7 +116,7 @@ export async function initDatabase(): Promise<void> {
     );
   `);
 
-  await pool.query(`
+    await pool.query(`
     ALTER TABLE recommendation_feedback
       ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
 
@@ -124,22 +124,22 @@ export async function initDatabase(): Promise<void> {
       ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
   `);
 
-  await pool.query(`
+    await pool.query(`
     ALTER TABLE recommendation_feedback
       DROP CONSTRAINT IF EXISTS recommendation_feedback_tmdb_id_media_type_key;
   `);
 
-  await pool.query(`
+    await pool.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS recommendation_feedback_user_tmdb_media_idx
       ON recommendation_feedback (user_id, tmdb_id, media_type);
   `);
 
-  await pool.query(`
+    await pool.query(`
     ALTER TABLE recommendation_cache
       ADD COLUMN IF NOT EXISTS media_type_filter TEXT;
   `);
 
-  await pool.query(`
+    await pool.query(`
     CREATE TABLE IF NOT EXISTS logs (
       id         SERIAL PRIMARY KEY,
       level      VARCHAR(10) NOT NULL,
@@ -151,22 +151,22 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS logs_level_idx ON logs (level);
   `);
 
-  await pool.query(`
+    await pool.query(`
     ALTER TABLE metadata_cache
       ADD COLUMN IF NOT EXISTS trailer_key VARCHAR(50);
   `);
 
-  await pool.query(`
+    await pool.query(`
     ALTER TABLE metadata_cache
       ADD COLUMN IF NOT EXISTS imdb_id TEXT;
   `);
 
-  await pool.query(`
+    await pool.query(`
     ALTER TABLE jellyfin_library
       ADD COLUMN IF NOT EXISTS date_created TIMESTAMPTZ;
   `);
 
-  await pool.query(`
+    await pool.query(`
     CREATE TABLE IF NOT EXISTS jellyfin_library (
       id          SERIAL PRIMARY KEY,
       jellyfin_id VARCHAR(255) UNIQUE NOT NULL,

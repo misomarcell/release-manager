@@ -1,115 +1,88 @@
 ﻿import { getAiRecommendations, isOpenAiAvailable } from './openai.service.js';
-import {
-  fetchTopRatedRecommendations,
-  searchRecommendation,
-  enrichRecommendationsWithImdbIds,
-} from './metadata.service.js';
-import { hasFeedback, getAllFeedback, getFreshCache, setCache } from '../repositories/recommendations.repository.js';
-import { mapConcurrent } from '../utils/concurrent.js';
-import type { Recommendation, RecommendationsResponse } from 'shared/recommendations.models';
 import type { AiSuggestion } from './openai.service.js';
+import { fetchTopRatedRecommendations, enrichRecommendations } from './metadata.service.js';
+import { hasFeedback, getAllFeedback, getFreshCache, setCache } from '../repositories/recommendations.repository.js';
+import type { AiRecommendation, RecommendationsResponse } from 'shared/recommendations.models';
+import type { MediaType } from 'shared/tmdb.models';
 import type { FeedbackRow } from '../repositories/recommendations.repository.js';
 
 const RECOMMEND_COUNT = 10;
 const FEEDBACK_SAMPLE_SIZE = 100;
 
-async function enrichSuggestions(suggestions: AiSuggestion[], mediaType: 'movie' | 'tv'): Promise<Recommendation[]> {
-  const results = await mapConcurrent(suggestions, 4, async (s) => {
-    const rec = await searchRecommendation(s.title, s.year, mediaType);
-    if (!rec) return null;
-    return s.reason ? { ...rec, reason: s.reason } : rec;
-  });
-  return results.filter((r): r is Recommendation => r !== null);
+function buildFeedbackContext(feedback: FeedbackRow[]): string {
+    const liked = feedback.filter((f) => f.feedback === 'like');
+    const disliked = feedback.filter((f) => f.feedback === 'dislike');
+
+    const formatEntry = (f: FeedbackRow): string => {
+        const type = f.media_type === 'tv' ? 'TV Show' : 'Movie';
+        return f.summary ? `  - "${f.title}" (${type}) - ${f.summary}` : `  - "${f.title}" (${type})`;
+    };
+
+    const parts: string[] = [];
+    if (liked.length > 0) parts.push(`LIKED (${liked.length}):\n${liked.map(formatEntry).join('\n')}`);
+    if (disliked.length > 0) parts.push(`DISLIKED (${disliked.length}):\n${disliked.map(formatEntry).join('\n')}`);
+    return parts.join('\n\n');
 }
 
-function buildFeedbackContext(feedback: FeedbackRow[]): string {
-  const liked = feedback.filter((f) => f.feedback === 'like');
-  const disliked = feedback.filter((f) => f.feedback === 'dislike');
-
-  const formatEntry = (f: FeedbackRow): string => {
-    const type = f.media_type === 'tv' ? 'TV Show' : 'Movie';
-    return f.summary ? `  - "${f.title}" (${type}) - ${f.summary}` : `  - "${f.title}" (${type})`;
-  };
-
-  const parts: string[] = [];
-  if (liked.length > 0) {
-    parts.push(`LIKED (${liked.length}):\n${liked.map(formatEntry).join('\n')}`);
-  }
-  if (disliked.length > 0) {
-    parts.push(`DISLIKED (${disliked.length}):\n${disliked.map(formatEntry).join('\n')}`);
-  }
-  return parts.join('\n\n');
+function toAiRefs(suggestions: AiSuggestion[], mediaType: MediaType): AiRecommendation[] {
+    return suggestions.map((s) => ({ title: s.title, year: s.year, mediaType, reason: s.reason }));
 }
 
 export async function getRecommendations(
-  userId: number,
-  filter: 'movie' | 'tv' | null = null,
+    userId: number,
+    filter: MediaType | null = null,
 ): Promise<RecommendationsResponse> {
-  const [cached, canRefresh] = await Promise.all([getFreshCache(userId, filter), hasFeedback(userId)]);
-  if (cached) return { recommendations: cached, canRefresh };
+    const canRefresh = await hasFeedback(userId);
 
-  const allFeedback = await getAllFeedback(userId);
+    const cached = await getFreshCache(userId, filter);
+    if (cached) {
+        return { recommendations: await enrichRecommendations(cached.refs, cached.feedbackMap), canRefresh };
+    }
 
-  if (allFeedback.length === 0 || !isOpenAiAvailable()) {
-    const recs = await fetchTopRatedRecommendations(RECOMMEND_COUNT, filter);
-    return { recommendations: await enrichRecommendationsWithImdbIds(recs), canRefresh: false };
-  }
+    const allFeedback = await getAllFeedback(userId);
 
-  const ratedTmdbIds = new Set(allFeedback.map((r) => r.tmdb_id));
-  const ratedTitles = allFeedback.map((r) => r.title);
-  const feedbackSample =
-    allFeedback.length <= FEEDBACK_SAMPLE_SIZE
-      ? allFeedback
-      : allFeedback.sort(() => Math.random() - 0.5).slice(0, FEEDBACK_SAMPLE_SIZE);
+    if (allFeedback.length === 0 || !isOpenAiAvailable()) {
+        const refs = await fetchTopRatedRecommendations(RECOMMEND_COUNT, filter);
+        return { recommendations: await enrichRecommendations(refs), canRefresh: false };
+    }
 
-  const feedbackContext = buildFeedbackContext(feedbackSample);
+    const ratedTitles = allFeedback.map((r) => r.title);
+    const feedbackSample =
+        allFeedback.length <= FEEDBACK_SAMPLE_SIZE
+            ? allFeedback
+            : allFeedback.sort(() => Math.random() - 0.5).slice(0, FEEDBACK_SAMPLE_SIZE);
 
-  // Single AI call generates recommendations for both types at once
-  const { movies: movieSuggestions, tvShows: tvSuggestions } = await getAiRecommendations(
-    feedbackContext,
-    ratedTitles,
-    RECOMMEND_COUNT,
-  );
+    const { movies: movieSuggestions, tvShows: tvSuggestions } = await getAiRecommendations(
+        buildFeedbackContext(feedbackSample),
+        ratedTitles,
+        RECOMMEND_COUNT,
+    );
 
-  // Enrich both in parallel, falling back to TMDB top-rated if AI returned too few
-  const [movies, tvShows] = await Promise.all([
-    movieSuggestions.length >= 3
-      ? enrichSuggestions(movieSuggestions, 'movie').then((recs) =>
-          enrichRecommendationsWithImdbIds(recs.filter((r) => !ratedTmdbIds.has(r.tmdbId))),
-        )
-      : fetchTopRatedRecommendations(RECOMMEND_COUNT, 'movie').then(enrichRecommendationsWithImdbIds),
-    tvSuggestions.length >= 3
-      ? enrichSuggestions(tvSuggestions, 'tv').then((recs) =>
-          enrichRecommendationsWithImdbIds(recs.filter((r) => !ratedTmdbIds.has(r.tmdbId))),
-        )
-      : fetchTopRatedRecommendations(RECOMMEND_COUNT, 'tv').then(enrichRecommendationsWithImdbIds),
-  ]);
+    const getRefs = (suggestions: AiSuggestion[], mediaType: MediaType): Promise<AiRecommendation[]> =>
+        suggestions.length >= 3
+            ? Promise.resolve(toAiRefs(suggestions, mediaType))
+            : fetchTopRatedRecommendations(RECOMMEND_COUNT, mediaType);
 
-  // Cache the requested type(s). For specific filters, also opportunistically cache the other
-  // type if its cache is also stale — saves a second AI round-trip when both ribbons load in
-  // parallel on the first visit. We never overwrite a fresh cache on a targeted refresh.
-  await Promise.all([
-    filter !== 'tv' && movies.length > 0 ? setCache(movies, userId, 'movie') : Promise.resolve(),
-    filter !== 'movie' && tvShows.length > 0 ? setCache(tvShows, userId, 'tv') : Promise.resolve(),
-  ]);
+    if (filter === 'movie') {
+        const refs = await getRefs(movieSuggestions, 'movie');
+        await setCache(refs, userId, 'movie');
+        return { recommendations: await enrichRecommendations(refs), canRefresh: true };
+    }
 
-  if (filter === 'movie' && tvShows.length > 0) {
-    const tvFresh = await getFreshCache(userId, 'tv');
-    if (!tvFresh) await setCache(tvShows, userId, 'tv');
-  } else if (filter === 'tv' && movies.length > 0) {
-    const movieFresh = await getFreshCache(userId, 'movie');
-    if (!movieFresh) await setCache(movies, userId, 'movie');
-  }
+    if (filter === 'tv') {
+        const refs = await getRefs(tvSuggestions, 'tv');
+        await setCache(refs, userId, 'tv');
+        return { recommendations: await enrichRecommendations(refs), canRefresh: true };
+    }
 
-  if (filter === 'movie') return { recommendations: movies, canRefresh: true };
-  if (filter === 'tv') return { recommendations: tvShows, canRefresh: true };
+    const [movieRefs, tvRefs] = await Promise.all([getRefs(movieSuggestions, 'movie'), getRefs(tvSuggestions, 'tv')]);
 
-  // null filter (no mediaType param): interleave both and return
-  const combined: Recommendation[] = [];
-  const maxLen = Math.max(movies.length, tvShows.length);
-  for (let i = 0; i < maxLen; i++) {
-    if (movies[i]) combined.push(movies[i]);
-    if (tvShows[i]) combined.push(tvShows[i]);
-  }
-  return { recommendations: combined, canRefresh: true };
+    const allRefs: AiRecommendation[] = [];
+    const maxLen = Math.max(movieRefs.length, tvRefs.length);
+    for (let i = 0; i < maxLen; i++) {
+        if (movieRefs[i]) allRefs.push(movieRefs[i]);
+        if (tvRefs[i]) allRefs.push(tvRefs[i]);
+    }
+    await setCache(allRefs, userId, null);
+    return { recommendations: await enrichRecommendations(allRefs), canRefresh: true };
 }

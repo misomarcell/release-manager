@@ -18,10 +18,10 @@ import libraryRoutes from './routes/library.routes.js';
 const app = express();
 
 app.use(
-  cors({
-    origin: config.rp.origin,
-    credentials: true,
-  }),
+    cors({
+        origin: config.rp.origin,
+        credentials: true,
+    }),
 );
 app.use(express.json({ limit: '16kb' }));
 app.use(cookieParser());
@@ -35,43 +35,49 @@ app.use('/api/recommendations', recommendationsRoutes);
 app.use('/api/library', libraryRoutes);
 
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok' });
+    res.json({ status: 'ok' });
 });
 
 async function start() {
-  await initDatabase();
+    await initDatabase();
 
-  await reloadCache();
-  if (config.jellyfin.url && config.jellyfin.apiKey) {
-    needsSyncOnStartup()
-      .then((shouldSync) => {
-        if (shouldSync) {
-          runScheduledSync().catch((err: unknown) =>
-            logger.error('Jellyfin initial sync failed', { error: err instanceof Error ? err.message : String(err) }),
-          );
-        } else {
-          logger.info('Jellyfin startup sync skipped — data is recent');
-        }
-      })
-      .catch((err: unknown) =>
-        logger.error('Jellyfin startup check failed', { error: err instanceof Error ? err.message : String(err) }),
-      );
-    cron.schedule(config.jellyfin.cronSchedule, () => {
-      runScheduledSync().catch((err: unknown) =>
-        logger.error('Jellyfin scheduled sync failed', { error: err instanceof Error ? err.message : String(err) }),
-      );
+    await reloadCache();
+    if (config.jellyfin.url && config.jellyfin.apiKey) {
+        needsSyncOnStartup()
+            .then((shouldSync) => {
+                if (shouldSync) {
+                    runScheduledSync().catch((err: unknown) =>
+                        logger.error('Jellyfin initial sync failed', {
+                            error: err instanceof Error ? err.message : String(err),
+                        }),
+                    );
+                } else {
+                    logger.info('Jellyfin startup sync skipped — data is recent');
+                }
+            })
+            .catch((err: unknown) =>
+                logger.error('Jellyfin startup check failed', {
+                    error: err instanceof Error ? err.message : String(err),
+                }),
+            );
+        cron.schedule(config.jellyfin.cronSchedule, () => {
+            runScheduledSync().catch((err: unknown) =>
+                logger.error('Jellyfin scheduled sync failed', {
+                    error: err instanceof Error ? err.message : String(err),
+                }),
+            );
+        });
+        logger.info('Jellyfin sync scheduled', { schedule: config.jellyfin.cronSchedule });
+    } else {
+        logger.info('Jellyfin not configured — library sync disabled');
+    }
+
+    app.listen(config.port, () => {
+        logger.info(`Backend started`, { port: config.port });
     });
-    logger.info('Jellyfin sync scheduled', { schedule: config.jellyfin.cronSchedule });
-  } else {
-    logger.info('Jellyfin not configured — library sync disabled');
-  }
-
-  app.listen(config.port, () => {
-    logger.info(`Backend started`, { port: config.port });
-  });
 }
 
 start().catch((err) => {
-  console.error('Failed to start backend:', err);
-  process.exit(1);
+    console.error('Failed to start backend:', err);
+    process.exit(1);
 });
