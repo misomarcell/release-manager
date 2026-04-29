@@ -2,6 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
 import { ApiService } from './api.service';
 import type { LogsResponse } from '@rm/shared/log.models';
+import type { JellyfinSyncStatus } from '@rm/shared/jellyfin.models';
+
+export type { JellyfinSyncStatus };
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -27,5 +30,17 @@ export class AdminService {
     let params = new HttpParams().set('limit', limit).set('offset', offset);
     if (level) params = params.set('level', level);
     return this.api.get<LogsResponse>('/api/admin/logs', params);
+  }
+
+  async testJellyfin(): Promise<{ version: string }> {
+    return this.api.get<{ version: string }>('/api/admin/jellyfin-test');
+  }
+
+  async getJellyfinStatus(): Promise<JellyfinSyncStatus> {
+    return this.api.get<JellyfinSyncStatus>('/api/admin/jellyfin-status');
+  }
+
+  async syncJellyfin(): Promise<JellyfinSyncStatus> {
+    return this.api.post<JellyfinSyncStatus>('/api/admin/jellyfin-sync', {});
   }
 }

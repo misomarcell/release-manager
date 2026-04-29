@@ -1,3 +1,5 @@
+export type MediaType = 'movie' | 'tv';
+
 export interface MetadataLookup {
   imdbId: string;
   title: string;
@@ -6,7 +8,7 @@ export interface MetadataLookup {
 
 export interface MovieMetadata {
   tmdbId: number;
-  mediaType: 'movie' | 'tv' | '';
+  mediaType: MediaType | '';
   title: string;
   year: string;
   poster: string;
@@ -15,6 +17,7 @@ export interface MovieMetadata {
   plot: string;
   runtime: string;
   rated: string;
+  inJellyfinLibrary?: boolean;
 }
 
 export interface MovieDetailMetadata {

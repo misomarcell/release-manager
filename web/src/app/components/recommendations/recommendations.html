@@ -34,7 +34,12 @@
               }
             </div>
             <div class="rec-info" (click)="openDetail(rec)">
-              <span class="rec-title">{{ rec.title }}</span>
+              <span class="rec-title">
+                @if (rec.inJellyfinLibrary) {
+                  <mat-icon class="jellyfin-badge">library_add_check</mat-icon>
+                }
+                <span class="rec-title-text">{{ rec.title }}</span>
+              </span>
               <span class="rec-meta">
                 @if (rec.year) {
                   {{ rec.year }}
@@ -111,7 +116,12 @@
               }
             </div>
             <div class="rec-info" (click)="openDetail(rec)">
-              <span class="rec-title">{{ rec.title }}</span>
+              <span class="rec-title">
+                @if (rec.inJellyfinLibrary) {
+                  <mat-icon class="jellyfin-badge">library_add_check</mat-icon>
+                }
+                <span class="rec-title-text">{{ rec.title }}</span>
+              </span>
               <span class="rec-meta">
                 @if (rec.year) {
                   {{ rec.year }}

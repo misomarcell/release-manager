@@ -155,4 +155,24 @@ export async function initDatabase(): Promise<void> {
     ALTER TABLE metadata_cache
       ADD COLUMN IF NOT EXISTS trailer_key VARCHAR(50);
   `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS jellyfin_library (
+      id          SERIAL PRIMARY KEY,
+      jellyfin_id VARCHAR(255) UNIQUE NOT NULL,
+      tmdb_id     INTEGER,
+      media_type  VARCHAR(10),
+      title       TEXT NOT NULL,
+      year        TEXT,
+      synced_at   TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS jellyfin_sync_log (
+      id            SERIAL PRIMARY KEY,
+      started_at    TIMESTAMPTZ DEFAULT NOW(),
+      success       BOOLEAN NOT NULL,
+      item_count    INTEGER,
+      error_message TEXT
+    );
+  `);
 }

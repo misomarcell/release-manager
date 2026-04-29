@@ -3,6 +3,8 @@ import type { Request, Response } from 'express';
 import { requireAuth, requireAdmin, type AuthenticatedRequest } from '../middleware/auth.js';
 import { query } from '../db/connection.js';
 import { testConnection } from '../services/qbittorrent.service.js';
+import { testConnection as testJellyfinConnection, runScheduledSync } from '../services/jellyfin.service.js';
+import { getLastSyncStatus } from '../repositories/jellyfin.repository.js';
 import { getLogs } from '../repositories/log.repository.js';
 import { logger } from '../utils/logger.js';
 
@@ -73,6 +75,46 @@ router.get('/qbittorrent-test', async (_req: Request, res: Response) => {
       error: error instanceof Error ? error.message : String(error),
     });
     res.status(502).json({ error: error instanceof Error ? error.message : 'Failed to reach qBittorrent' });
+  }
+});
+
+router.get('/jellyfin-test', async (_req: Request, res: Response) => {
+  try {
+    const result = await testJellyfinConnection();
+    res.json(result);
+  } catch (error: unknown) {
+    logger.error('Admin: Jellyfin connection test failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    res.status(502).json({ error: error instanceof Error ? error.message : 'Failed to reach Jellyfin' });
+  }
+});
+
+router.get('/jellyfin-status', async (_req: Request, res: Response) => {
+  try {
+    const status = await getLastSyncStatus();
+    res.json(status);
+  } catch (error: unknown) {
+    logger.error('Admin: failed to retrieve Jellyfin sync status', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to retrieve sync status' });
+  }
+});
+
+router.post('/jellyfin-sync', async (req: Request, res: Response) => {
+  logger.info('Admin: Jellyfin manual sync triggered', {
+    by: (req as AuthenticatedRequest).user.username,
+  });
+  try {
+    await runScheduledSync();
+    const status = await getLastSyncStatus();
+    res.json(status);
+  } catch (error: unknown) {
+    logger.error('Admin: Jellyfin manual sync failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    res.status(502).json({ error: error instanceof Error ? error.message : 'Jellyfin sync failed' });
   }
 });
 
