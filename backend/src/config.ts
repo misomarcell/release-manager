@@ -37,6 +37,7 @@ export const config = {
   jellyfin: {
     url: process.env['JELLYFIN_URL']?.trim().replace(/\/$/, '') || '',
     apiKey: process.env['JELLYFIN_API_KEY']?.trim() || '',
+    userId: process.env['JELLYFIN_USER_ID']?.trim() || '',
     cronSchedule: process.env['JELLYFIN_CRON']?.trim() || '0 6 * * *',
   },
 };

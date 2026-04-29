@@ -13,6 +13,7 @@ export interface JellyfinItem {
   mediaType: MediaType | null;
   title: string;
   year: string | null;
+  dateCreated: Date | null;
 }
 
 // In-memory lookup sets — populated on startup and after each sync
@@ -59,19 +60,27 @@ export async function replaceLibrary(items: JellyfinItem[]): Promise<void> {
   const placeholders: string[] = [];
 
   items.forEach((item, i) => {
-    const base = i * 5;
-    placeholders.push(`($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5})`);
-    values.push(item.jellyfinId, item.tmdbId ?? null, item.mediaType ?? null, item.title, item.year ?? null);
+    const base = i * 6;
+    placeholders.push(`($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6})`);
+    values.push(
+      item.jellyfinId,
+      item.tmdbId ?? null,
+      item.mediaType ?? null,
+      item.title,
+      item.year ?? null,
+      item.dateCreated ?? null,
+    );
   });
 
   await query(
-    `INSERT INTO jellyfin_library (jellyfin_id, tmdb_id, media_type, title, year)
+    `INSERT INTO jellyfin_library (jellyfin_id, tmdb_id, media_type, title, year, date_created)
      VALUES ${placeholders.join(', ')}
      ON CONFLICT (jellyfin_id) DO UPDATE
        SET tmdb_id = EXCLUDED.tmdb_id,
            media_type = EXCLUDED.media_type,
            title = EXCLUDED.title,
            year = EXCLUDED.year,
+           date_created = EXCLUDED.date_created,
            synced_at = NOW()`,
     values,
   );
@@ -145,12 +154,12 @@ export async function getLibrary(search: string, page: number, perPage: number):
       `SELECT jellyfin_id, tmdb_id, media_type, title, year, synced_at
        FROM (
          SELECT DISTINCT ON (COALESCE(tmdb_id::text, jellyfin_id))
-           jellyfin_id, tmdb_id, media_type, title, year, synced_at
+           jellyfin_id, tmdb_id, media_type, title, year, synced_at, date_created
          FROM jellyfin_library
          ${whereSql}
          ORDER BY COALESCE(tmdb_id::text, jellyfin_id), title ASC
        ) deduped
-       ORDER BY title ASC
+       ORDER BY date_created DESC
        LIMIT $${searchParam ? 2 : 1} OFFSET $${searchParam ? 3 : 2}`,
       params,
     ),

@@ -8,6 +8,7 @@ interface JellyfinRawItem {
   Name: string;
   Type: string;
   ProductionYear?: number;
+  DateCreated?: string;
   ProviderIds?: {
     Tmdb?: string;
     [key: string]: string | undefined;
@@ -30,6 +31,8 @@ async function jellyfinGet(path: string, params?: Record<string, string>): Promi
     }
   }
 
+  console.log(`[Jellyfin] GET ${endpoint.pathname}${endpoint.search}`);
+
   const response = await fetch(endpoint, { headers: authHeaders() });
   if (!response.ok) {
     throw new Error(`Jellyfin responded with ${response.status} for ${path}`);
@@ -51,10 +54,10 @@ async function syncLibrary(): Promise<number> {
 
   logger.info('Jellyfin sync started');
 
-  const data = (await jellyfinGet('/Items', {
+  const data = (await jellyfinGet(`/Users/${config.jellyfin.userId}/Items`, {
     Recursive: 'true',
     IncludeItemTypes: 'Movie,Series',
-    Fields: 'ProviderIds,Name,ProductionYear',
+    Fields: 'ProviderIds,Name,ProductionYear,DateCreated',
   })) as { Items?: JellyfinRawItem[] };
 
   const rawItems: JellyfinRawItem[] = Array.isArray(data?.Items) ? data.Items : [];
@@ -67,8 +70,9 @@ async function syncLibrary(): Promise<number> {
       const tmdbIdRaw = raw.ProviderIds?.['Tmdb'];
       const tmdbId = tmdbIdRaw ? parseInt(tmdbIdRaw, 10) || null : null;
       const year = raw.ProductionYear ? String(raw.ProductionYear) : null;
+      const dateCreated = raw.DateCreated ? new Date(raw.DateCreated) : null;
 
-      return { jellyfinId: raw.Id, tmdbId, mediaType, title: raw.Name, year };
+      return { jellyfinId: raw.Id, tmdbId, mediaType, title: raw.Name, year, dateCreated };
     })
     .filter((item): item is JellyfinItem => item !== null);
 
