@@ -29,6 +29,12 @@
             · {{ m.metadata?.genre }}
           }
         </span>
+        @if (m.metadata?.inJellyfinLibrary) {
+          <span class="jellyfin-badge" title="Available in Jellyfin">
+            <mat-icon>library_add_check</mat-icon>
+            In library
+          </span>
+        }
       </div>
     </div>
   </mat-expansion-panel-header>

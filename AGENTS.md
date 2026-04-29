@@ -7,7 +7,7 @@
   - `backend/`: Express API server with PostgreSQL
   - `shared/`: shared TypeScript models used by both app and backend
 - Frontend serves Angular SSR and proxies `/api/*` requests to the backend.
-- Backend handles nCore search, TMDB enrichment, caching, Passkey authentication, and qBittorrent integration.
+- Backend handles nCore search, TMDB enrichment, caching, Passkey authentication, qBittorrent integration, and Jellyfin library sync.
 - PostgreSQL stores metadata cache, user credentials, and sessions.
 
 ## Workflow
@@ -25,7 +25,7 @@
 
 - `shared/src/` contains shared TypeScript models and constants used by both frontend and backend.
 - `shared/src/ncore.models.ts` — nCore-specific types: `NcoreCategoryKey`, `TvType`, `TvInfo`, `NcoreResult`, `NcoreSearchResponse`.
-- `shared/src/tmdb.models.ts` — TMDB metadata types: `MetadataLookup`, `MovieMetadata`, `MovieDetailMetadata`.
+- `shared/src/tmdb.models.ts` — TMDB metadata types: `MetadataLookup`, `MovieMetadata` (includes `inJellyfinLibrary`), `MovieDetailMetadata`.
 - `shared/src/download.models.ts` — Download types: `DownloadRequest`, `DownloadResponse`.
 - `shared/src/user.models.ts` — User types: `UserInfo`.
 - `shared/src/recommendations.models.ts` — Recommendation types: `Recommendation`, `FeedbackValue`, `RecommendationFeedbackRequest`.
@@ -46,18 +46,21 @@ backend/src/
     search.routes.ts    # nCore search + TMDB enrichment + download
     version.routes.ts   # App version endpoint (latest GitHub commit)
     recommendations.routes.ts # AI-powered recommendations + feedback
+    admin.routes.ts     # Admin actions incl. Jellyfin sync + qBittorrent test
   services/
     auth.service.ts     # WebAuthn/Passkey logic
     github.service.ts   # GitHub API integration (latest commit info)
     ncore.service.ts    # nCore API: search, NFO, torrent file download
-    tmdb.service.ts     # TMDB API + PostgreSQL caching
+    tmdb.service.ts     # TMDB API + PostgreSQL caching; enriches all results with inJellyfinLibrary
     qbittorrent.service.ts # qBittorrent Web API integration
+    jellyfin.service.ts # Jellyfin API: library sync + connection test
     recommendations.service.ts # OpenAI + TMDB top-rated recommendations
   repositories/
     cache.repository.ts # Metadata cache database operations
     user.repository.ts  # User/credential/session database operations
     recommendations.repository.ts # Feedback and recommendation cache DB operations
     log.repository.ts           # Log query database operations
+    jellyfin.repository.ts      # Jellyfin library DB operations + in-memory lookup cache
   utils/
     coerce.ts           # Type coercion helpers
     concurrent.ts       # Concurrent promise mapper
@@ -108,6 +111,9 @@ backend/src/
 | `DOWNLOAD_PATH_MOVIES` | Save path for movies (default: `/media/Movies`)                        |
 | `DOWNLOAD_PATH_TV`     | Save path for TV shows (default: `/media/TV_Shows`)                    |
 | `OPENAI_API_KEY`       | OpenAI API key for AI-powered recommendations (optional)               |
+| `JELLYFIN_URL`         | Jellyfin server URL (e.g. `http://jellyfin:8096`)                      |
+| `JELLYFIN_API_KEY`     | Jellyfin admin API key                                                 |
+| `JELLYFIN_CRON`        | Cron schedule for library sync (default: `0 6 * * *` — daily at 6 AM)  |
 
 ## Validation Rules
 

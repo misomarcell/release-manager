@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -6,24 +7,37 @@ import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
-import { AdminService } from '../../services/admin.service';
+import { AdminService, type JellyfinSyncStatus } from '../../services/admin.service';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { extractHttpError } from '../../utils/http-error';
 
 @Component({
   selector: 'app-admin',
-  imports: [MatButtonModule, MatIconModule, MatCardModule],
+  imports: [DatePipe, MatButtonModule, MatIconModule, MatCardModule],
   templateUrl: './admin.html',
   styleUrl: './admin.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AdminComponent {
+export class AdminComponent implements OnInit {
   private admin = inject(AdminService);
   private router = inject(Router);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
   protected clearing = signal<string | null>(null);
+  protected jellyfinStatus = signal<JellyfinSyncStatus | null>(null);
+
+  ngOnInit(): void {
+    void this.loadJellyfinStatus();
+  }
+
+  private async loadJellyfinStatus(): Promise<void> {
+    try {
+      this.jellyfinStatus.set(await this.admin.getJellyfinStatus());
+    } catch {
+      // not critical — leave null
+    }
+  }
 
   protected async clearMetadataCache(): Promise<void> {
     const confirmed = await this.confirm(
@@ -94,6 +108,31 @@ export class AdminComponent {
       this.snackBar.open(extractHttpError(e, 'Failed to reach qBittorrent'), 'OK', {
         duration: 5000,
       });
+    } finally {
+      this.clearing.set(null);
+    }
+  }
+
+  protected async testJellyfin(): Promise<void> {
+    this.clearing.set('jellyfin-test');
+    try {
+      const result = await this.admin.testJellyfin();
+      this.snackBar.open(`Jellyfin is reachable (v${result.version})`, 'OK', { duration: 3000 });
+    } catch (e: unknown) {
+      this.snackBar.open(extractHttpError(e, 'Failed to reach Jellyfin'), 'OK', { duration: 5000 });
+    } finally {
+      this.clearing.set(null);
+    }
+  }
+
+  protected async syncJellyfin(): Promise<void> {
+    this.clearing.set('jellyfin-sync');
+    try {
+      const status = await this.admin.syncJellyfin();
+      this.jellyfinStatus.set(status);
+      this.snackBar.open(`Jellyfin sync complete — ${status.itemCount ?? 0} items`, 'OK', { duration: 3000 });
+    } catch (e: unknown) {
+      this.snackBar.open(extractHttpError(e, 'Jellyfin sync failed'), 'OK', { duration: 5000 });
     } finally {
       this.clearing.set(null);
     }

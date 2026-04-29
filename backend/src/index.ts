@@ -2,8 +2,11 @@ import { config } from './config.js';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import cron from 'node-cron';
 import { initDatabase } from './db/connection.js';
 import { logger } from './utils/logger.js';
+import { reloadCache, needsSyncOnStartup } from './repositories/jellyfin.repository.js';
+import { runScheduledSync } from './services/jellyfin.service.js';
 import authRoutes from './routes/auth.routes.js';
 import searchRoutes from './routes/search.routes.js';
 import userRoutes from './routes/user.routes.js';
@@ -35,6 +38,32 @@ app.get('/api/health', (_req, res) => {
 
 async function start() {
   await initDatabase();
+
+  await reloadCache();
+  if (config.jellyfin.url && config.jellyfin.apiKey) {
+    needsSyncOnStartup()
+      .then((shouldSync) => {
+        if (shouldSync) {
+          runScheduledSync().catch((err: unknown) =>
+            logger.error('Jellyfin initial sync failed', { error: err instanceof Error ? err.message : String(err) }),
+          );
+        } else {
+          logger.info('Jellyfin startup sync skipped — data is recent');
+        }
+      })
+      .catch((err: unknown) =>
+        logger.error('Jellyfin startup check failed', { error: err instanceof Error ? err.message : String(err) }),
+      );
+    cron.schedule(config.jellyfin.cronSchedule, () => {
+      runScheduledSync().catch((err: unknown) =>
+        logger.error('Jellyfin scheduled sync failed', { error: err instanceof Error ? err.message : String(err) }),
+      );
+    });
+    logger.info('Jellyfin sync scheduled', { schedule: config.jellyfin.cronSchedule });
+  } else {
+    logger.info('Jellyfin not configured — library sync disabled');
+  }
+
   app.listen(config.port, () => {
     logger.info(`Backend started`, { port: config.port });
   });

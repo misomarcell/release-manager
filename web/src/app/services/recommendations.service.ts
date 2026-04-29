@@ -8,10 +8,11 @@ import type {
   RecommendationFeedbackRequest,
   RecommendationsResponse,
 } from '@rm/shared/recommendations.models';
+import type { MediaType } from '@rm/shared/tmdb.models';
 
 interface FeedbackTarget {
   tmdbId: number;
-  mediaType: 'movie' | 'tv';
+  mediaType: MediaType;
   title: string;
   genre?: string;
   year?: string;
@@ -31,11 +32,11 @@ export class RecommendationsService {
     return `${mediaType}:${tmdbId}`;
   }
 
-  currentFeedback(tmdbId: number, mediaType: 'movie' | 'tv'): FeedbackValue | null {
+  currentFeedback(tmdbId: number, mediaType: MediaType): FeedbackValue | null {
     return this.feedback()[this.feedbackKey(tmdbId, mediaType)] ?? null;
   }
 
-  isSubmitting(tmdbId: number, mediaType: 'movie' | 'tv'): boolean {
+  isSubmitting(tmdbId: number, mediaType: MediaType): boolean {
     return this.submitting()[this.feedbackKey(tmdbId, mediaType)] ?? false;
   }
 
@@ -53,7 +54,7 @@ export class RecommendationsService {
     }
   }
 
-  async fetchFeedback(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<void> {
+  async fetchFeedback(tmdbId: number, mediaType: MediaType): Promise<void> {
     const key = this.feedbackKey(tmdbId, mediaType);
     if (this.fetched.has(key)) return;
     this.fetched.add(key);
@@ -107,19 +108,19 @@ export class RecommendationsService {
     }
   }
 
-  async getRecommendations(mediaType?: 'movie' | 'tv'): Promise<RecommendationsResponse> {
+  async getRecommendations(mediaType?: MediaType): Promise<RecommendationsResponse> {
     let params = new HttpParams();
     if (mediaType) params = params.set('mediaType', mediaType);
     return this.api.get<RecommendationsResponse>('/api/recommendations', params);
   }
 
-  async refreshRecommendations(mediaType?: 'movie' | 'tv'): Promise<RecommendationsResponse> {
+  async refreshRecommendations(mediaType?: MediaType): Promise<RecommendationsResponse> {
     let params = new HttpParams();
     if (mediaType) params = params.set('mediaType', mediaType);
     return this.api.post<RecommendationsResponse>('/api/recommendations/refresh', {}, params);
   }
 
-  async getFeedback(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<{ feedback: FeedbackValue | null }> {
+  async getFeedback(tmdbId: number, mediaType: MediaType): Promise<{ feedback: FeedbackValue | null }> {
     const params = new HttpParams().set('tmdbId', tmdbId.toString()).set('mediaType', mediaType);
     return this.api.get<{ feedback: FeedbackValue | null }>('/api/recommendations/feedback', params);
   }

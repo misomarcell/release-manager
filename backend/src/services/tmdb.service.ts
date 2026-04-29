@@ -7,6 +7,7 @@ import {
   getCachedDetailByTmdbId,
   updateCachedDetail,
 } from '../repositories/cache.repository.js';
+import { isInLibrary } from '../repositories/jellyfin.repository.js';
 import { TMDB_GENRE_MAP } from 'shared/constants';
 import type { MovieMetadata, MovieDetailMetadata, MetadataLookup } from 'shared/tmdb.models';
 import type { Recommendation } from 'shared/recommendations.models';
@@ -144,7 +145,10 @@ export async function fetchBasicMetadata(lookup: MetadataLookup): Promise<BasicF
 
 async function doFetchBasicMetadata(lookup: MetadataLookup, cacheKey: string): Promise<BasicFetchResult> {
   const cached = await getCachedMetadata(cacheKey);
-  if (cached) return { metadata: cached, fromCache: true };
+  if (cached) {
+    cached.inJellyfinLibrary = isInLibrary(cached.tmdbId, cached.title, cached.year);
+    return { metadata: cached, fromCache: true };
+  }
 
   if (!config.tmdb.accessToken) return { metadata: null, fromCache: false };
 
@@ -176,6 +180,7 @@ async function doFetchBasicMetadata(lookup: MetadataLookup, cacheKey: string): P
 
   const metadata = buildBasicMetadata(item, lookup);
   await setCachedMetadata(cacheKey, metadata);
+  metadata.inJellyfinLibrary = isInLibrary(metadata.tmdbId, metadata.title, metadata.year);
   return { metadata, fromCache: false };
 }
 
@@ -291,31 +296,26 @@ function buildRecommendation(item: Record<string, unknown>, mediaType: 'movie' |
   return { tmdbId: id, mediaType, title, year, poster, genre, rating, plot };
 }
 
-async function fetchImdbId(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<string | null> {
-  const data = await tmdbGet(`/${mediaType}/${tmdbId}/external_ids`, {});
-  if (!data) return null;
-  return asString(data['imdb_id']) || null;
-}
+async function fetchExternalData(
+  tmdbId: number,
+  mediaType: 'movie' | 'tv',
+): Promise<{ imdbId: string | null; trailerKey: string | null }> {
+  const data = await tmdbGet(`/${mediaType}/${tmdbId}`, {
+    append_to_response: 'external_ids,videos',
+  });
+  if (!data) return { imdbId: null, trailerKey: null };
 
-async function fetchTrailerKey(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<string | null> {
-  const data = await tmdbGet(`/${mediaType}/${tmdbId}/videos`, {});
-  if (!data) return null;
-  // Direct /videos response has results at top level (unlike append_to_response which nests under 'videos')
-  const results = Array.isArray(data['results']) ? data['results'] : [];
-  const youtubeVideos = results.map((r) => asRecord(r)).filter((r) => asString(r['site']) === 'YouTube');
-  const trailer = youtubeVideos.find((r) => asString(r['type']) === 'Trailer');
-  if (trailer) return asString(trailer['key']) || null;
-  const teaser = youtubeVideos.find((r) => asString(r['type']) === 'Teaser');
-  return teaser ? asString(teaser['key']) || null : null;
+  const externalIds = asRecord(data['external_ids']);
+  const imdbId = asString(externalIds['imdb_id']) || null;
+  const trailerKey = extractTrailerKey(data) || null;
+  return { imdbId, trailerKey };
 }
 
 export async function enrichRecommendationsWithImdbIds(recs: Recommendation[]): Promise<Recommendation[]> {
   return mapConcurrent(recs, 4, async (rec) => {
-    const [imdbId, trailerKey] = await Promise.all([
-      fetchImdbId(rec.tmdbId, rec.mediaType),
-      fetchTrailerKey(rec.tmdbId, rec.mediaType),
-    ]);
-    return { ...rec, ...(imdbId ? { imdbId } : {}), ...(trailerKey ? { trailerKey } : {}) };
+    const { imdbId, trailerKey } = await fetchExternalData(rec.tmdbId, rec.mediaType);
+    const inJellyfinLibrary = isInLibrary(rec.tmdbId, rec.title, rec.year);
+    return { ...rec, ...(imdbId ? { imdbId } : {}), ...(trailerKey ? { trailerKey } : {}), inJellyfinLibrary };
   });
 }
 
@@ -385,5 +385,6 @@ export async function searchRecommendation(
   if (!rec) return null;
 
   await setCachedMetadata(cacheKey, { ...rec, runtime: '', rated: '' });
+  rec.inJellyfinLibrary = isInLibrary(rec.tmdbId, rec.title, rec.year);
   return rec;
 }

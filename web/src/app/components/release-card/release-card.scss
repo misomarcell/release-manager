@@ -87,6 +87,20 @@
         font-size: 0.9rem;
       }
     }
+
+    .jellyfin-badge {
+      color: var(--mat-sys-tertiary);
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 0.8rem;
+
+      mat-icon {
+        font-size: 1rem;
+        width: 1rem;
+        height: 1rem;
+      }
+    }
   }
 }
 

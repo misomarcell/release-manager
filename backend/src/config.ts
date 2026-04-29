@@ -5,8 +5,7 @@ dotenv.config({ path: resolve(import.meta.dirname, '../../.env') });
 
 export const config = {
   port: parseInt(process.env['PORT'] ?? '3000', 10),
-  databaseUrl:
-    process.env['DATABASE_URL'] ?? 'postgres://movieapp:movieapp@localhost:5432/movieapp',
+  databaseUrl: process.env['DATABASE_URL'] ?? 'postgres://movieapp:movieapp@localhost:5432/movieapp',
   ncore: {
     baseUrl: process.env['NCORE_BASE_URL']?.trim() || 'https://ncore.pro',
     username: process.env['NCORE_USERNAME']?.trim() || '',
@@ -22,9 +21,7 @@ export const config = {
   rp: {
     id: process.env['RP_ID'] ?? 'localhost',
     name: 'MovieReleases',
-    origin: (process.env['RP_ORIGIN'] ?? 'http://localhost:4000,http://localhost:4200')
-      .split(',')
-      .map((o) => o.trim()),
+    origin: (process.env['RP_ORIGIN'] ?? 'http://localhost:4000,http://localhost:4200').split(',').map((o) => o.trim()),
   },
   qbittorrent: {
     url: process.env['QBITTORRENT_URL']?.trim() || '',
@@ -36,5 +33,10 @@ export const config = {
   cacheExpiryMs: 7 * 24 * 60 * 60 * 1000, // 1 week
   openai: {
     apiKey: process.env['OPENAI_API_KEY']?.trim() || '',
+  },
+  jellyfin: {
+    url: process.env['JELLYFIN_URL']?.trim().replace(/\/$/, '') || '',
+    apiKey: process.env['JELLYFIN_API_KEY']?.trim() || '',
+    cronSchedule: process.env['JELLYFIN_CRON']?.trim() || '0 6 * * *',
   },
 };

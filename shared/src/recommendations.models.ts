@@ -1,6 +1,8 @@
+import type { MediaType } from './tmdb.models.js';
+
 export interface Recommendation {
   tmdbId: number;
-  mediaType: 'movie' | 'tv';
+  mediaType: MediaType;
   title: string;
   year: string;
   poster: string;
@@ -11,13 +13,14 @@ export interface Recommendation {
   trailerKey?: string;
   reason?: string;
   feedback?: FeedbackValue;
+  inJellyfinLibrary?: boolean;
 }
 
 export type FeedbackValue = 'like' | 'dislike';
 
 export interface RecommendationFeedbackRequest {
   tmdbId: number;
-  mediaType: 'movie' | 'tv';
+  mediaType: MediaType;
   title: string;
   summary: string;
   feedback: FeedbackValue;
