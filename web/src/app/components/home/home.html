@@ -1,45 +1,45 @@
 <main class="container">
-  <app-release-search (searchSubmit)="onSearch($event)" />
+    <app-release-search (searchSubmit)="onSearch($event)" />
 
-  @if (loading()) {
-    <div class="release-skeletons">
-      @for (i of skeletonItems; track i) {
-        <div class="skeleton-card-row">
-          <div class="skeleton skel-poster"></div>
-          <div class="skel-text">
-            <div class="skeleton skel-title"></div>
-            <div class="skeleton skel-meta"></div>
-          </div>
+    @if (loading()) {
+        <div class="release-skeletons">
+            @for (i of skeletonItems; track i) {
+                <div class="skeleton-card-row">
+                    <div class="skeleton skel-poster"></div>
+                    <div class="skel-text">
+                        <div class="skeleton skel-title"></div>
+                        <div class="skeleton skel-meta"></div>
+                    </div>
+                </div>
+            }
         </div>
-      }
-    </div>
-  }
+    }
 
-  @if (error(); as err) {
-    <p class="error">{{ err }}</p>
-  }
+    @if (error(); as err) {
+        <p class="error">{{ err }}</p>
+    }
 
-  @if (!loading() && groupedMovies().length > 0) {
-    <h2 class="list-title">
-      <mat-icon class="list-title-icon">{{ listTitleIcon() }}</mat-icon>
-      {{ listTitle() }}
-    </h2>
-    <mat-accordion class="results">
-      @for (movie of groupedMovies(); track movie.key; let i = $index) {
-        <app-release-card [movie]="movie" (searchTitle)="onSearchByTitle($event)" />
-      }
-    </mat-accordion>
+    @if (!loading() && groupedMovies().length > 0) {
+        <h2 class="list-title">
+            <mat-icon class="list-title-icon">new_releases</mat-icon>
+            {{ listTitle() }}
+        </h2>
+        <mat-accordion class="results">
+            @for (movie of groupedMovies(); track movie.key; let i = $index) {
+                <app-release-card [movie]="movie" (searchTitle)="onSearchByTitle($event)" />
+            }
+        </mat-accordion>
 
-    <mat-paginator
-      [length]="totalResults()"
-      [pageSize]="pageSize"
-      [pageIndex]="currentPage() - 1"
-      [hidePageSize]="true"
-      (page)="onPage($event)"
-      showFirstLastButtons
-      aria-label="Page selector"
-    />
-  } @else if (!loading() && !error()) {
-    <p class="empty">No results found.</p>
-  }
+        <mat-paginator
+            [length]="totalResults()"
+            [pageSize]="pageSize"
+            [pageIndex]="currentPage() - 1"
+            [hidePageSize]="true"
+            (page)="onPage($event)"
+            showFirstLastButtons
+            aria-label="Page selector"
+        />
+    } @else if (!loading() && !error()) {
+        <p class="empty">No results found.</p>
+    }
 </main>

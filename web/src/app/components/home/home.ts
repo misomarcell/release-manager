@@ -12,169 +12,160 @@ import type { NcoreCategoryKey, NcoreResult } from '@rm/shared/ncore.models';
 const VALID_CATEGORIES: NcoreCategoryKey[] = ['all', 'movies', 'tv'];
 
 export interface GroupedMovie {
-  key: string;
-  metadata: NcoreResult['metadata'];
-  metadata_lookup: NcoreResult['metadata_lookup'];
-  imdb_id: string;
-  releases: NcoreResult[];
+    key: string;
+    metadata: NcoreResult['metadata'];
+    metadata_lookup: NcoreResult['metadata_lookup'];
+    imdb_id: string;
+    releases: NcoreResult[];
 }
 
 @Component({
-  selector: 'app-home',
-  imports: [
-    MatButtonModule,
-    MatIconModule,
-    MatAccordion,
-    MatPaginatorModule,
-    ReleaseCardComponent,
-    ReleaseSearchComponent,
-  ],
-  templateUrl: './home.html',
-  styleUrl: './home.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-home',
+    imports: [
+        MatButtonModule,
+        MatIconModule,
+        MatAccordion,
+        MatPaginatorModule,
+        ReleaseCardComponent,
+        ReleaseSearchComponent,
+    ],
+    templateUrl: './home.html',
+    styleUrl: './home.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeComponent implements OnInit {
-  private search = inject(SearchService);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private releaseSearch = viewChild(ReleaseSearchComponent);
+    private search = inject(SearchService);
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
+    private releaseSearch = viewChild(ReleaseSearchComponent);
 
-  protected loading = signal(false);
-  protected error = signal<string | null>(null);
-  private results = signal<NcoreResult[]>([]);
-  protected readonly skeletonItems = [0, 1, 2, 3, 4, 5];
-  protected totalResults = signal(0);
-  protected currentPage = signal(1);
-  protected readonly pageSize = 100;
+    protected loading = signal(false);
+    protected error = signal<string | null>(null);
+    private results = signal<NcoreResult[]>([]);
+    protected readonly skeletonItems = [0, 1, 2, 3, 4, 5];
+    protected totalResults = signal(0);
+    protected currentPage = signal(1);
+    protected readonly pageSize = 100;
 
-  private searchQuery = '';
-  private selectedCategory = signal<NcoreCategoryKey>('all');
-  private uhdOnly = signal(true);
-  private lastSearchTerm = signal('');
+    private searchQuery = '';
+    private selectedCategory = signal<NcoreCategoryKey>('all');
+    private uhdOnly = signal(true);
+    private lastSearchTerm = signal('');
 
-  protected groupedMovies = computed(() => {
-    const results = this.results();
-    const groups = new Map<string, GroupedMovie>();
-    for (const r of results) {
-      const key = r.imdb_id || `${r.metadata_lookup.title}::${r.metadata_lookup.year}`;
-      const existing = groups.get(key);
-      if (existing) {
-        existing.releases.push(r);
-        if (!existing.metadata && r.metadata) {
-          existing.metadata = r.metadata;
+    protected groupedMovies = computed(() => {
+        const results = this.results();
+        const groups = new Map<string, GroupedMovie>();
+        for (const r of results) {
+            const key = r.imdb_id || `${r.metadata_lookup.title}::${r.metadata_lookup.year}`;
+            const existing = groups.get(key);
+            if (existing) {
+                existing.releases.push(r);
+                if (!existing.metadata && r.metadata) {
+                    existing.metadata = r.metadata;
+                }
+            } else {
+                groups.set(key, {
+                    key,
+                    metadata: r.metadata,
+                    metadata_lookup: r.metadata_lookup,
+                    imdb_id: r.imdb_id,
+                    releases: [r],
+                });
+            }
         }
-      } else {
-        groups.set(key, {
-          key,
-          metadata: r.metadata,
-          metadata_lookup: r.metadata_lookup,
-          imdb_id: r.imdb_id,
-          releases: [r],
-        });
-      }
-    }
-    return [...groups.values()];
-  });
-
-  protected listTitle = computed(() => {
-    const term = this.lastSearchTerm();
-    if (term) return `Results for: ${term}`;
-    const cat = this.selectedCategory();
-    if (cat === 'movies') return 'Top Movies';
-    if (cat === 'tv') return 'Top TV Shows';
-    return 'Top Releases';
-  });
-
-  protected listTitleIcon = computed(() => {
-    const term = this.lastSearchTerm();
-    if (term) return 'search';
-    const cat = this.selectedCategory();
-    if (cat === 'movies') return 'movie';
-    if (cat === 'tv') return 'tv';
-    return 'new_releases';
-  });
-
-  ngOnInit(): void {
-    const params = this.route.snapshot.queryParams;
-    const cat = params['category'];
-    if (cat && VALID_CATEGORIES.includes(cat)) {
-      this.selectedCategory.set(cat as NcoreCategoryKey);
-    }
-    if (params['q']) {
-      this.searchQuery = params['q'];
-    }
-    if (params['uhd'] === 'false') {
-      this.uhdOnly.set(false);
-    }
-    const page = parseInt(params['page'], 10);
-    if (page > 0) {
-      this.currentPage.set(page);
-    }
-
-    // Sync initial state to child after view init
-    queueMicrotask(() => {
-      const child = this.releaseSearch();
-      if (child) {
-        if (this.searchQuery) child.setQuery(this.searchQuery);
-        if (this.selectedCategory() !== 'movies') child.setCategory(this.selectedCategory());
-        if (!this.uhdOnly()) child.setUhdOnly(false);
-      }
+        return [...groups.values()];
     });
 
-    void this.loadResults();
-  }
+    protected listTitle = computed(() => {
+        const term = this.lastSearchTerm();
+        if (term) return `Results for: ${term}`;
+        const cat = this.selectedCategory();
+        if (cat === 'movies') return 'Top Movies';
+        if (cat === 'tv') return 'Top TV Shows';
+        return 'Top Releases';
+    });
 
-  protected onSearch(params: SearchParams): void {
-    this.searchQuery = params.query;
-    this.selectedCategory.set(params.category);
-    this.uhdOnly.set(params.uhdOnly);
-    this.currentPage.set(1);
-    void this.loadResults();
-  }
+    ngOnInit(): void {
+        const params = this.route.snapshot.queryParams;
+        const cat = params['category'];
+        if (cat && VALID_CATEGORIES.includes(cat)) {
+            this.selectedCategory.set(cat as NcoreCategoryKey);
+        }
+        if (params['q']) {
+            this.searchQuery = params['q'];
+        }
+        if (params['uhd'] === 'false') {
+            this.uhdOnly.set(false);
+        }
+        const page = parseInt(params['page'], 10);
+        if (page > 0) {
+            this.currentPage.set(page);
+        }
 
-  protected onSearchByTitle(title: string): void {
-    this.releaseSearch()?.setQuery(title);
-  }
+        // Sync initial state to child after view init
+        queueMicrotask(() => {
+            const child = this.releaseSearch();
+            if (child) {
+                if (this.searchQuery) child.setQuery(this.searchQuery);
+                if (this.selectedCategory() !== 'movies') child.setCategory(this.selectedCategory());
+                if (!this.uhdOnly()) child.setUhdOnly(false);
+            }
+        });
 
-  protected onPage(event: PageEvent): void {
-    this.currentPage.set(event.pageIndex + 1);
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+        void this.loadResults();
     }
-    void this.loadResults();
-  }
 
-  private async loadResults(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
-    this.syncQueryParams();
-
-    try {
-      const hasSearchTerm = !!this.searchQuery.trim();
-      this.lastSearchTerm.set(this.searchQuery.trim());
-      const response = await this.search.search(
-        this.selectedCategory(),
-        this.searchQuery,
-        this.currentPage(),
-        this.pageSize,
-        !hasSearchTerm && this.uhdOnly(),
-      );
-      this.results.set(response.results);
-      this.totalResults.set(response.totalResults);
-    } catch (e: unknown) {
-      this.error.set(e instanceof Error ? e.message : 'Search failed');
-      this.results.set([]);
-    } finally {
-      this.loading.set(false);
+    protected onSearch(params: SearchParams): void {
+        this.searchQuery = params.query;
+        this.selectedCategory.set(params.category);
+        this.uhdOnly.set(params.uhdOnly);
+        this.currentPage.set(1);
+        void this.loadResults();
     }
-  }
 
-  private syncQueryParams(): void {
-    const params: Record<string, string> = {};
-    if (this.searchQuery.trim()) params['q'] = this.searchQuery.trim();
-    if (this.selectedCategory() !== 'movies') params['category'] = this.selectedCategory();
-    if (!this.uhdOnly()) params['uhd'] = 'false';
-    if (this.currentPage() > 1) params['page'] = String(this.currentPage());
-    this.router.navigate([], { queryParams: params, replaceUrl: true });
-  }
+    protected onSearchByTitle(title: string): void {
+        this.releaseSearch()?.setQuery(title);
+    }
+
+    protected onPage(event: PageEvent): void {
+        this.currentPage.set(event.pageIndex + 1);
+        if (typeof window !== 'undefined') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        void this.loadResults();
+    }
+
+    private async loadResults(): Promise<void> {
+        this.loading.set(true);
+        this.error.set(null);
+        this.syncQueryParams();
+
+        try {
+            const hasSearchTerm = !!this.searchQuery.trim();
+            this.lastSearchTerm.set(this.searchQuery.trim());
+            const response = await this.search.search(
+                this.selectedCategory(),
+                this.searchQuery,
+                this.currentPage(),
+                this.pageSize,
+                !hasSearchTerm && this.uhdOnly(),
+            );
+            this.results.set(response.results);
+            this.totalResults.set(response.totalResults);
+        } catch (e: unknown) {
+            this.error.set(e instanceof Error ? e.message : 'Search failed');
+            this.results.set([]);
+        } finally {
+            this.loading.set(false);
+        }
+    }
+
+    private syncQueryParams(): void {
+        const params: Record<string, string> = {};
+        if (this.searchQuery.trim()) params['q'] = this.searchQuery.trim();
+        if (this.selectedCategory() !== 'movies') params['category'] = this.selectedCategory();
+        if (!this.uhdOnly()) params['uhd'] = 'false';
+        if (this.currentPage() > 1) params['page'] = String(this.currentPage());
+        this.router.navigate([], { queryParams: params, replaceUrl: true });
+    }
 }
