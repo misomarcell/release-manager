@@ -1,0 +1,72 @@
+<main class="container">
+  <div class="search-bar">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-field">
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        #searchInput
+        [(ngModel)]="searchQuery"
+        (keydown.enter)="onSearch()"
+        placeholder="Search library..."
+        autocomplete="off"
+      />
+      @if (searchQuery()) {
+        <button mat-icon-button matSuffix aria-label="Clear" (click)="clearSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+  </div>
+
+  @if (loading()) {
+    <div class="release-skeletons">
+      @for (i of skeletonItems; track i) {
+        <div class="skeleton-card-row">
+          <div class="skeleton skel-poster"></div>
+          <div class="skel-text">
+            <div class="skeleton skel-title"></div>
+            <div class="skeleton skel-meta"></div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  @if (error(); as err) {
+    <p class="error">{{ err }}</p>
+  }
+
+  @if (!loading() && items().length > 0) {
+    <h2 class="list-title">
+      <mat-icon class="list-title-icon">video_library</mat-icon>
+      @if (activeSearch()) {
+        Results for: {{ activeSearch() }}
+      } @else {
+        My Library ({{ total() }})
+      }
+    </h2>
+    <mat-accordion class="results">
+      @for (item of items(); track item.jellyfinId) {
+        <app-library-card [item]="item" [jellyfinBaseUrl]="jellyfinBaseUrl()" />
+      }
+    </mat-accordion>
+
+    <mat-paginator
+      [length]="total()"
+      [pageSize]="pageSize"
+      [pageIndex]="currentPage() - 1"
+      [hidePageSize]="true"
+      (page)="onPage($event)"
+      showFirstLastButtons
+      aria-label="Page selector"
+    />
+  } @else if (!loading() && !error()) {
+    <p class="empty">
+      @if (searchQuery()) {
+        No results for "{{ searchQuery() }}".
+      } @else {
+        Your Jellyfin library is empty or not yet synced.
+      }
+    </p>
+  }
+</main>

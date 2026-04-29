@@ -1,6 +1,11 @@
 import { query } from '../db/connection.js';
-import type { JellyfinSyncStatus } from 'shared/jellyfin.models';
+import type { JellyfinSyncStatus, LibraryItem } from 'shared/jellyfin.models';
 import type { MediaType } from 'shared/tmdb.models';
+
+interface LibraryPage {
+  items: LibraryItem[];
+  total: number;
+}
 
 export interface JellyfinItem {
   jellyfinId: string;
@@ -117,4 +122,60 @@ export async function needsSyncOnStartup(): Promise<boolean> {
 
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
   return new Date(syncResult.rows[0].started_at) < oneDayAgo;
+}
+
+export async function getLibrary(search: string, page: number, perPage: number): Promise<LibraryPage> {
+  const offset = (page - 1) * perPage;
+  const searchParam = search.trim() ? `%${search.trim()}%` : null;
+
+  const whereSql = searchParam ? `WHERE title ILIKE $1` : '';
+
+  const params: unknown[] = searchParam ? [searchParam, perPage, offset] : [perPage, offset];
+  const countParams: unknown[] = searchParam ? [searchParam] : [];
+
+  const [dataResult, countResult] = await Promise.all([
+    query<{
+      jellyfin_id: string;
+      tmdb_id: number | null;
+      media_type: string | null;
+      title: string;
+      year: string | null;
+      synced_at: string;
+    }>(
+      `SELECT jellyfin_id, tmdb_id, media_type, title, year, synced_at
+       FROM (
+         SELECT DISTINCT ON (COALESCE(tmdb_id::text, jellyfin_id))
+           jellyfin_id, tmdb_id, media_type, title, year, synced_at
+         FROM jellyfin_library
+         ${whereSql}
+         ORDER BY COALESCE(tmdb_id::text, jellyfin_id), title ASC
+       ) deduped
+       ORDER BY title ASC
+       LIMIT $${searchParam ? 2 : 1} OFFSET $${searchParam ? 3 : 2}`,
+      params,
+    ),
+    query<{ count: string }>(
+      `SELECT COUNT(*) AS count FROM (
+         SELECT DISTINCT ON (COALESCE(tmdb_id::text, jellyfin_id)) jellyfin_id
+         FROM jellyfin_library
+         ${whereSql}
+         ORDER BY COALESCE(tmdb_id::text, jellyfin_id)
+       ) deduped`,
+      countParams,
+    ),
+  ]);
+
+  const items: LibraryItem[] = dataResult.rows.map((row) => ({
+    jellyfinId: row.jellyfin_id,
+    tmdbId: row.tmdb_id,
+    mediaType: (row.media_type as 'movie' | 'tv') ?? null,
+    title: row.title,
+    year: row.year,
+    syncedAt: row.synced_at,
+    poster: null,
+    genre: null,
+    rating: null,
+  }));
+
+  return { items, total: parseInt(countResult.rows[0].count, 10) };
 }

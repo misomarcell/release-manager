@@ -1,29 +1,11 @@
 import { config } from '../config.js';
 import { asRecord, asString, asNumber } from '../utils/coerce.js';
-import { mapConcurrent } from '../utils/concurrent.js';
-import {
-  getCachedMetadata,
-  setCachedMetadata,
-  getCachedDetailByTmdbId,
-  updateCachedDetail,
-} from '../repositories/cache.repository.js';
-import { isInLibrary } from '../repositories/jellyfin.repository.js';
 import { TMDB_GENRE_MAP } from 'shared/constants';
 import type { MovieMetadata, MovieDetailMetadata, MetadataLookup } from 'shared/tmdb.models';
 import type { Recommendation } from 'shared/recommendations.models';
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w342';
-
-interface BasicFetchResult {
-  metadata: MovieMetadata | null;
-  fromCache: boolean;
-}
-
-export function getCacheKey(lookup: MetadataLookup): string {
-  if (lookup.imdbId) return `id:${lookup.imdbId}`;
-  return `title:${lookup.title.trim().toLowerCase()}|year:${lookup.year}`;
-}
 
 function authHeaders(): Record<string, string> {
   return {
@@ -126,64 +108,6 @@ function buildBasicMetadata(item: FindResult, lookup: MetadataLookup): MovieMeta
   };
 }
 
-// In-flight deduplication for basic metadata
-const inflightBasic = new Map<string, Promise<BasicFetchResult>>();
-
-export async function fetchBasicMetadata(lookup: MetadataLookup): Promise<BasicFetchResult> {
-  const cacheKey = getCacheKey(lookup);
-
-  const existing = inflightBasic.get(cacheKey);
-  if (existing) return existing;
-
-  const promise = doFetchBasicMetadata(lookup, cacheKey).finally(() => {
-    inflightBasic.delete(cacheKey);
-  });
-
-  inflightBasic.set(cacheKey, promise);
-  return promise;
-}
-
-async function doFetchBasicMetadata(lookup: MetadataLookup, cacheKey: string): Promise<BasicFetchResult> {
-  const cached = await getCachedMetadata(cacheKey);
-  if (cached) {
-    cached.inJellyfinLibrary = isInLibrary(cached.tmdbId, cached.title, cached.year);
-    return { metadata: cached, fromCache: true };
-  }
-
-  if (!config.tmdb.accessToken) return { metadata: null, fromCache: false };
-
-  let item: FindResult | null = null;
-
-  if (lookup.imdbId) {
-    const data = await tmdbGet(`/find/${encodeURIComponent(lookup.imdbId)}`, {
-      external_source: 'imdb_id',
-    });
-    if (data) item = extractFromFindResponse(data);
-  }
-
-  if (!item && lookup.title) {
-    const params: Record<string, string> = { query: lookup.title };
-    if (lookup.year) params['year'] = lookup.year;
-
-    const movieData = await tmdbGet('/search/movie', params);
-    if (movieData) item = extractFromSearchResponse(movieData, 'movie');
-
-    if (!item) {
-      const tvParams: Record<string, string> = { query: lookup.title };
-      if (lookup.year) tvParams['first_air_date_year'] = lookup.year;
-      const tvData = await tmdbGet('/search/tv', tvParams);
-      if (tvData) item = extractFromSearchResponse(tvData, 'tv');
-    }
-  }
-
-  if (!item) return { metadata: null, fromCache: false };
-
-  const metadata = buildBasicMetadata(item, lookup);
-  await setCachedMetadata(cacheKey, metadata);
-  metadata.inJellyfinLibrary = isInLibrary(metadata.tmdbId, metadata.title, metadata.year);
-  return { metadata, fromCache: false };
-}
-
 function extractCertification(data: Record<string, unknown>, type: 'movie' | 'tv'): string {
   if (type === 'movie') {
     const releaseDates = asRecord(data['release_dates']);
@@ -212,9 +136,6 @@ function extractCertification(data: Record<string, unknown>, type: 'movie' | 'tv
   return '';
 }
 
-// In-flight deduplication for detail metadata
-const inflightDetail = new Map<string, Promise<MovieDetailMetadata | null>>();
-
 function extractTrailerKey(data: Record<string, unknown>): string {
   const videos = asRecord(data['videos']);
   const results = Array.isArray(videos['results']) ? videos['results'] : [];
@@ -223,58 +144,6 @@ function extractTrailerKey(data: Record<string, unknown>): string {
   if (trailer) return asString(trailer['key']) || '';
   const teaser = youtubeVideos.find((r) => asString(r['type']) === 'Teaser');
   return teaser ? asString(teaser['key']) || '' : '';
-}
-
-export async function fetchDetailMetadata(
-  tmdbId: number,
-  mediaType: 'movie' | 'tv',
-): Promise<MovieDetailMetadata | null> {
-  const key = `${mediaType}:${tmdbId}`;
-
-  const existing = inflightDetail.get(key);
-  if (existing) return existing;
-
-  const promise = doFetchDetailMetadata(tmdbId, mediaType).finally(() => {
-    inflightDetail.delete(key);
-  });
-
-  inflightDetail.set(key, promise);
-  return promise;
-}
-
-async function doFetchDetailMetadata(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<MovieDetailMetadata | null> {
-  const cached = await getCachedDetailByTmdbId(tmdbId);
-  if (cached) return cached;
-
-  if (!config.tmdb.accessToken) return null;
-
-  const appendParam = mediaType === 'movie' ? 'release_dates,videos' : 'content_ratings,videos';
-  const details = await tmdbGet(`/${mediaType}/${tmdbId}`, {
-    append_to_response: appendParam,
-  });
-  if (!details) return null;
-
-  let runtime = '';
-  if (mediaType === 'movie') {
-    const rt = asNumber(details['runtime']);
-    if (rt) runtime = `${rt} min`;
-  } else {
-    const ert = Array.isArray(details['episode_run_time']) ? details['episode_run_time'] : [];
-    if (ert.length > 0) {
-      const rt = asNumber(ert[0]);
-      if (rt) runtime = `${rt} min`;
-    }
-  }
-
-  const plot = asString(details['overview']);
-  const rated = extractCertification(details, mediaType);
-  const dateField = mediaType === 'movie' ? 'release_date' : 'first_air_date';
-  const releaseDate = asString(details[dateField]);
-  const trailerKey = extractTrailerKey(details) || undefined;
-
-  const detail: MovieDetailMetadata = { plot, runtime, rated, releaseDate, trailerKey };
-  await updateCachedDetail(tmdbId, detail);
-  return detail;
 }
 
 function buildRecommendation(item: Record<string, unknown>, mediaType: 'movie' | 'tv'): Recommendation | null {
@@ -296,7 +165,101 @@ function buildRecommendation(item: Record<string, unknown>, mediaType: 'movie' |
   return { tmdbId: id, mediaType, title, year, poster, genre, rating, plot };
 }
 
-async function fetchExternalData(
+// ── Public API ─────────────────────────────────────────────────────────────────
+
+/**
+ * Resolve basic metadata (title, poster, genres, rating) for a given lookup.
+ * Priority: TMDB ID → IMDB ID → title+year search.
+ * Returns raw TMDB data mapped to MovieMetadata — no caching.
+ */
+export async function tmdbFetchBasic(lookup: MetadataLookup): Promise<MovieMetadata | null> {
+  if (!config.tmdb.accessToken) return null;
+
+  let item: FindResult | null = null;
+
+  if (lookup.tmdbId && lookup.mediaType) {
+    const data = await tmdbGet(`/${lookup.mediaType}/${lookup.tmdbId}`);
+    if (data) {
+      const rawGenres = Array.isArray(data['genres']) ? (data['genres'] as unknown[]) : [];
+      const normalized: Record<string, unknown> = {
+        ...data,
+        genre_ids: rawGenres.map((g) => asNumber(asRecord(g as Record<string, unknown>)['id'])),
+      };
+      item = { id: lookup.tmdbId, type: lookup.mediaType, data: normalized };
+    }
+  }
+
+  if (!item && lookup.imdbId) {
+    const data = await tmdbGet(`/find/${encodeURIComponent(lookup.imdbId)}`, {
+      external_source: 'imdb_id',
+    });
+    if (data) item = extractFromFindResponse(data);
+  }
+
+  if (!item && lookup.title) {
+    const params: Record<string, string> = { query: lookup.title };
+    if (lookup.year) params['year'] = lookup.year;
+
+    const movieData = await tmdbGet('/search/movie', params);
+    if (movieData) item = extractFromSearchResponse(movieData, 'movie');
+
+    if (!item) {
+      const tvParams: Record<string, string> = { query: lookup.title };
+      if (lookup.year) tvParams['first_air_date_year'] = lookup.year;
+      const tvData = await tmdbGet('/search/tv', tvParams);
+      if (tvData) item = extractFromSearchResponse(tvData, 'tv');
+    }
+  }
+
+  if (!item) return null;
+  return buildBasicMetadata(item, lookup);
+}
+
+/**
+ * Fetch detail metadata (plot, runtime, rating, release date, trailer) for a known TMDB title.
+ * No caching — returns raw TMDB data.
+ */
+export async function tmdbFetchDetail(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<MovieDetailMetadata | null> {
+  if (!config.tmdb.accessToken) return null;
+
+  const appendParam = mediaType === 'movie' ? 'release_dates,videos' : 'content_ratings,videos,external_ids';
+  const details = await tmdbGet(`/${mediaType}/${tmdbId}`, { append_to_response: appendParam });
+  if (!details) return null;
+
+  let runtime = '';
+  if (mediaType === 'movie') {
+    const rt = asNumber(details['runtime']);
+    if (rt) runtime = `${rt} min`;
+  } else {
+    const ert = Array.isArray(details['episode_run_time']) ? details['episode_run_time'] : [];
+    if (ert.length > 0) {
+      const rt = asNumber(ert[0]);
+      if (rt) runtime = `${rt} min`;
+    }
+  }
+
+  const plot = asString(details['overview']);
+  const rated = extractCertification(details, mediaType);
+  const dateField = mediaType === 'movie' ? 'release_date' : 'first_air_date';
+  const releaseDate = asString(details[dateField]);
+  const trailerKey = extractTrailerKey(details) || undefined;
+
+  let imdbId: string | undefined;
+  if (mediaType === 'movie') {
+    imdbId = asString(details['imdb_id']) || undefined;
+  } else {
+    const externalIds = asRecord(details['external_ids']);
+    imdbId = asString(externalIds['imdb_id']) || undefined;
+  }
+
+  return { plot, runtime, rated, releaseDate, trailerKey, imdbId };
+}
+
+/**
+ * Fetch external IDs (IMDB) and trailer key for a known TMDB title.
+ * No caching.
+ */
+export async function tmdbFetchExternalData(
   tmdbId: number,
   mediaType: 'movie' | 'tv',
 ): Promise<{ imdbId: string | null; trailerKey: string | null }> {
@@ -311,14 +274,10 @@ async function fetchExternalData(
   return { imdbId, trailerKey };
 }
 
-export async function enrichRecommendationsWithImdbIds(recs: Recommendation[]): Promise<Recommendation[]> {
-  return mapConcurrent(recs, 4, async (rec) => {
-    const { imdbId, trailerKey } = await fetchExternalData(rec.tmdbId, rec.mediaType);
-    const inJellyfinLibrary = isInLibrary(rec.tmdbId, rec.title, rec.year);
-    return { ...rec, ...(imdbId ? { imdbId } : {}), ...(trailerKey ? { trailerKey } : {}), inJellyfinLibrary };
-  });
-}
-
+/**
+ * Fetch TMDB top-rated titles for a given media type.
+ * No caching.
+ */
 async function fetchTopRatedByType(type: 'movie' | 'tv', count: number): Promise<Recommendation[]> {
   const data = await tmdbGet(`/${type}/top_rated`, { language: 'en-US', page: '1' });
   if (!data) return [];
@@ -329,13 +288,11 @@ async function fetchTopRatedByType(type: 'movie' | 'tv', count: number): Promise
     .filter((r): r is Recommendation => r !== null);
 }
 
-export async function fetchTopRatedRecommendations(
+export async function tmdbFetchTopRated(
   count: number,
   filter: 'movie' | 'tv' | null = null,
 ): Promise<Recommendation[]> {
-  if (filter !== null) {
-    return fetchTopRatedByType(filter, count);
-  }
+  if (filter !== null) return fetchTopRatedByType(filter, count);
 
   const [movies, tvShows] = await Promise.all([fetchTopRatedByType('movie', count), fetchTopRatedByType('tv', count)]);
 
@@ -348,28 +305,15 @@ export async function fetchTopRatedRecommendations(
   return combined;
 }
 
-export async function searchRecommendation(
+/**
+ * Search TMDB for a single title and return it as a Recommendation.
+ * No caching.
+ */
+export async function tmdbSearchRecommendation(
   title: string,
   year: string,
   mediaType: 'movie' | 'tv',
 ): Promise<Recommendation | null> {
-  const lookup: MetadataLookup = { title, year, imdbId: '' };
-  const cacheKey = getCacheKey(lookup);
-
-  const cached = await getCachedMetadata(cacheKey);
-  if (cached && cached.tmdbId) {
-    return {
-      tmdbId: cached.tmdbId,
-      mediaType: (cached.mediaType as 'movie' | 'tv') || mediaType,
-      title: cached.title,
-      year: cached.year,
-      poster: cached.poster,
-      genre: cached.genre,
-      rating: cached.rating,
-      plot: cached.plot,
-    };
-  }
-
   if (!config.tmdb.accessToken) return null;
 
   const params: Record<string, string> = { query: title, language: 'en-US' };
@@ -381,10 +325,5 @@ export async function searchRecommendation(
   const items = Array.isArray(data['results']) ? data['results'] : [];
   if (items.length === 0) return null;
 
-  const rec = buildRecommendation(asRecord(items[0]), mediaType);
-  if (!rec) return null;
-
-  await setCachedMetadata(cacheKey, { ...rec, runtime: '', rated: '' });
-  rec.inJellyfinLibrary = isInLibrary(rec.tmdbId, rec.title, rec.year);
-  return rec;
+  return buildRecommendation(asRecord(items[0]), mediaType);
 }

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { searchNcore, fetchNfo } from '../services/ncore.service.js';
-import { fetchBasicMetadata, getCacheKey, fetchDetailMetadata } from '../services/tmdb.service.js';
+import { fetchBasicMetadata, getCacheKey, fetchDetailMetadata } from '../services/metadata.service.js';
 import { addTorrent } from '../services/qbittorrent.service.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';

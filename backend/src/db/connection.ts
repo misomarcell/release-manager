@@ -157,6 +157,11 @@ export async function initDatabase(): Promise<void> {
   `);
 
   await pool.query(`
+    ALTER TABLE metadata_cache
+      ADD COLUMN IF NOT EXISTS imdb_id TEXT;
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS jellyfin_library (
       id          SERIAL PRIMARY KEY,
       jellyfin_id VARCHAR(255) UNIQUE NOT NULL,

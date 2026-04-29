@@ -42,88 +42,16 @@
   <mat-divider />
 
   <div class="card-details">
-    @if (detailLoading()) {
-      <div class="skeleton skeleton-plot"></div>
-      <div class="skeleton-table">
-        <div class="skeleton skeleton-row"></div>
-        <div class="skeleton skeleton-row short"></div>
-        <div class="skeleton skeleton-row"></div>
-      </div>
-    } @else {
-      <div class="detail-strip">
-        @if (m.metadata?.mediaType) {
-          <span>{{ m.metadata!.mediaType === 'tv' ? 'TV Show' : 'Movie' }}</span>
-        }
-        @if (detail()?.rated) {
-          <span>{{ detail()!.rated }}</span>
-        }
-        @if (detail()?.runtime) {
-          <span>{{ detail()!.runtime }}</span>
-        }
-        @if (detail()?.releaseDate) {
-          <span>{{ detail()!.releaseDate }}</span>
-        }
-      </div>
-      @if (m.imdb_id || detail()?.trailerKey) {
-        <div class="detail-links">
-          @if (m.imdb_id) {
-            <a
-              class="imdb-link"
-              [href]="'https://www.imdb.com/title/' + m.imdb_id"
-              target="_blank"
-              rel="noopener"
-              (click)="$event.stopPropagation()"
-            >
-              <mat-icon>open_in_new</mat-icon>
-              IMDb
-            </a>
-          }
-          @if (detail()?.trailerKey) {
-            <a
-              class="trailer-link"
-              [href]="'https://www.youtube.com/watch?v=' + detail()!.trailerKey"
-              target="_blank"
-              rel="noopener"
-              (click)="$event.stopPropagation()"
-            >
-              <mat-icon>play_circle</mat-icon>
-              Trailer
-            </a>
-          }
-        </div>
-      }
-
-      @if (detail()?.plot) {
-        <p class="plot">{{ detail()!.plot }}</p>
-      }
-
-      @if (m.metadata?.tmdbId && m.metadata?.mediaType) {
-        <div class="feedback-row">
-          <div class="feedback-btn-group">
-            <button
-              class="feedback-btn like"
-              [class.active]="recommendations.feedback()[m.metadata!.mediaType + ':' + m.metadata!.tmdbId] === 'like'"
-              [disabled]="recommendations.submitting()[m.metadata!.mediaType + ':' + m.metadata!.tmdbId]"
-              (click)="sendFeedback('like')"
-              aria-label="Like"
-            >
-              <mat-icon>thumb_up</mat-icon>
-            </button>
-            <button
-              class="feedback-btn dislike"
-              [class.active]="
-                recommendations.feedback()[m.metadata!.mediaType + ':' + m.metadata!.tmdbId] === 'dislike'
-              "
-              [disabled]="recommendations.submitting()[m.metadata!.mediaType + ':' + m.metadata!.tmdbId]"
-              (click)="sendFeedback('dislike')"
-              aria-label="Dislike"
-            >
-              <mat-icon>thumb_down</mat-icon>
-            </button>
-          </div>
-        </div>
-      }
-    }
+    <app-media-details
+      [tmdbId]="m.metadata?.tmdbId ?? null"
+      [mediaType]="m.metadata?.mediaType || null"
+      [imdbId]="m.imdb_id"
+      [detail]="detail()"
+      [detailLoading]="detailLoading()"
+      [title]="displayTitle()"
+      [genre]="m.metadata?.genre ?? ''"
+      [year]="m.metadata?.year ?? ''"
+    />
 
     <button mat-button class="search-title-btn" (click)="onSearchTitle()">
       <mat-icon>search</mat-icon>

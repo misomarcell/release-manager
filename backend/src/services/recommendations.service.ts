@@ -3,7 +3,7 @@ import {
   fetchTopRatedRecommendations,
   searchRecommendation,
   enrichRecommendationsWithImdbIds,
-} from './tmdb.service.js';
+} from './metadata.service.js';
 import { hasFeedback, getAllFeedback, getFreshCache, setCache } from '../repositories/recommendations.repository.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import type { Recommendation, RecommendationsResponse } from 'shared/recommendations.models';

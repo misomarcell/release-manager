@@ -4,6 +4,8 @@ export interface MetadataLookup {
   imdbId: string;
   title: string;
   year: string;
+  tmdbId?: number;
+  mediaType?: MediaType;
 }
 
 export interface MovieMetadata {
@@ -26,4 +28,5 @@ export interface MovieDetailMetadata {
   rated: string;
   releaseDate: string;
   trailerKey?: string;
+  imdbId?: string;
 }

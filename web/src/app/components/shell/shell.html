@@ -33,6 +33,10 @@
           <mat-icon matListItemIcon>new_releases</mat-icon>
           <span matListItemTitle>Releases</span>
         </a>
+        <a mat-list-item routerLink="/library" routerLinkActive="active-link" (click)="closeSidenav()">
+          <mat-icon matListItemIcon>video_library</mat-icon>
+          <span matListItemTitle>Library</span>
+        </a>
         <a mat-list-item routerLink="/recommendations" routerLinkActive="active-link" (click)="closeSidenav()">
           <mat-icon matListItemIcon>auto_awesome</mat-icon>
           <span matListItemTitle>Recommendations</span>

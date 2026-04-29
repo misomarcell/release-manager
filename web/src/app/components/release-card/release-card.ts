@@ -11,11 +11,11 @@ import { PosterService } from '../../services/poster.service';
 import { RecommendationsService } from '../../services/recommendations.service';
 import { NfoDialogComponent } from '../nfo-dialog/nfo-dialog';
 import { DownloadDialogComponent } from '../download-dialog/download-dialog';
+import { MediaDetailsComponent } from '../media-details/media-details';
 import type { DownloadDialogData } from '../download-dialog/download-dialog';
 import type { GroupedMovie } from '../home/home';
 import type { NcoreResult } from '@rm/shared/ncore.models';
 import type { MovieDetailMetadata } from '@rm/shared/tmdb.models';
-import type { FeedbackValue } from '@rm/shared/recommendations.models';
 
 const TV_CATEGORIES = new Set(['hdser_hun', 'hdser']);
 const MOVIES_BASE = '/media/Movies';
@@ -23,7 +23,7 @@ const TV_BASE = '/media/TV_Shows';
 
 @Component({
   selector: 'app-release-card',
-  imports: [MatExpansionModule, MatButtonModule, MatIconModule, MatDividerModule],
+  imports: [MatExpansionModule, MatButtonModule, MatIconModule, MatDividerModule, MediaDetailsComponent],
   templateUrl: './release-card.html',
   styleUrl: './release-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,8 +33,8 @@ export class ReleaseCardComponent {
   private snackBar = inject(MatSnackBar);
   private search = inject(SearchService);
   private poster = inject(PosterService);
+  private recommendations = inject(RecommendationsService);
   protected auth = inject(AuthService);
-  protected recommendations = inject(RecommendationsService);
 
   movie = input.required<GroupedMovie>();
   searchTitle = output<string>();
@@ -76,22 +76,6 @@ export class ReleaseCardComponent {
       this.detailLoading.set(false);
       this.detailLoaded = true;
     }
-  }
-
-  protected async sendFeedback(value: FeedbackValue): Promise<void> {
-    const m = this.movie();
-    if (!m.metadata?.tmdbId || !m.metadata?.mediaType) return;
-    await this.recommendations.submitFeedback(
-      {
-        tmdbId: m.metadata.tmdbId,
-        mediaType: m.metadata.mediaType,
-        title: this.displayTitle(),
-        genre: m.metadata.genre,
-        year: m.metadata.year,
-        plot: this.detail()?.plot,
-      },
-      value,
-    );
   }
 
   protected openPoster(event: MouseEvent): void {
