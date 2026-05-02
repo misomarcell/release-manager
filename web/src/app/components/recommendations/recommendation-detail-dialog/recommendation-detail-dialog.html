@@ -32,14 +32,7 @@
 </mat-dialog-content>
 <mat-dialog-actions>
     <div class="dialog-feedback-row">
-        <app-feedback-buttons
-            [tmdbId]="rec.tmdbId"
-            [mediaType]="rec.mediaType"
-            [title]="rec.title"
-            [genre]="rec.genre"
-            [year]="rec.year"
-            [plot]="rec.plot"
-        />
+        <app-feedback-buttons [tmdbId]="rec.tmdbId" [mediaType]="rec.mediaType" />
     </div>
     <button mat-button class="search-btn" (click)="searchAndClose()">
         <mat-icon>search</mat-icon>

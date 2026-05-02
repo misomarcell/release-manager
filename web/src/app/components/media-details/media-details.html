@@ -28,13 +28,6 @@
     }
 
     @if (hasFeedback()) {
-        <app-feedback-buttons
-            [tmdbId]="tmdbId()!"
-            [mediaType]="mediaType()!"
-            [title]="title()"
-            [genre]="genre()"
-            [year]="year()"
-            [plot]="detail()?.plot"
-        />
+        <app-feedback-buttons [tmdbId]="tmdbId()!" [mediaType]="mediaType()!" />
     }
 }

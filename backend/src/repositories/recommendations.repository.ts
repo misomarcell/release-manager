@@ -1,6 +1,14 @@
 import { MediaType } from 'shared/tmdb.models';
 import { query } from '../db/connection.js';
-import type { AiRecommendation, RecommendationFeedbackRequest, FeedbackValue } from 'shared/recommendations.models';
+import type { AiRecommendation, FeedbackValue } from 'shared/recommendations.models';
+
+interface FeedbackRecord {
+    tmdbId: number;
+    mediaType: string;
+    title: string;
+    summary: string;
+    feedback: string;
+}
 
 interface FeedbackRow {
     tmdb_id: number;
@@ -38,13 +46,13 @@ export async function getAllFeedback(userId: number): Promise<FeedbackRow[]> {
     return result.rows;
 }
 
-export async function upsertFeedback(req: RecommendationFeedbackRequest, userId: number): Promise<void> {
+export async function upsertFeedback(rec: FeedbackRecord, userId: number): Promise<void> {
     await query(
         `INSERT INTO recommendation_feedback (user_id, tmdb_id, media_type, title, summary, feedback)
      VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (user_id, tmdb_id, media_type)
      DO UPDATE SET summary=$5, feedback=$6, created_at=NOW()`,
-        [userId, req.tmdbId, req.mediaType, req.title, req.summary, req.feedback],
+        [userId, rec.tmdbId, rec.mediaType, rec.title, rec.summary, rec.feedback],
     );
 }
 

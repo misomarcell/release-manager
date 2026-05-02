@@ -45,9 +45,6 @@
             [detailLoading]="detailLoading()"
             [imdbId]="detail()?.imdbId ?? ''"
             [jellyfinUrl]="jellyfinUrl()"
-            [title]="i.title"
-            [genre]="i.genre ?? ''"
-            [year]="i.year ?? ''"
         />
 
         @if (i.mediaInfo?.streams?.length) {

@@ -4,6 +4,7 @@ import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
 import { getRecommendations } from '../services/recommendations.service.js';
+import { fetchBasicMetadata, fetchDetailMetadata } from '../services/metadata.service.js';
 import {
     upsertFeedback,
     deleteFeedback,
@@ -54,8 +55,6 @@ router.post('/feedback', requireAuth, async (req: Request, res: Response) => {
         typeof body.tmdbId !== 'number' ||
         !body.mediaType ||
         !['movie', 'tv'].includes(body.mediaType) ||
-        typeof body.title !== 'string' ||
-        typeof body.summary !== 'string' ||
         !body.feedback ||
         !['like', 'dislike'].includes(body.feedback)
     ) {
@@ -63,8 +62,27 @@ router.post('/feedback', requireAuth, async (req: Request, res: Response) => {
         return;
     }
 
+    const { metadata } = await fetchBasicMetadata({
+        tmdbId: body.tmdbId,
+        mediaType: body.mediaType,
+        title: '',
+        year: '',
+        imdbId: '',
+    });
+    if (!metadata) {
+        res.status(404).json({ error: 'Media not found' });
+        return;
+    }
+    const detail = await fetchDetailMetadata(body.tmdbId, body.mediaType);
+    const summary = [metadata.genre, metadata.year, detail?.plot ? detail.plot.slice(0, 120) : undefined]
+        .filter(Boolean)
+        .join(', ');
+
     try {
-        await upsertFeedback(body as RecommendationFeedbackRequest, userId);
+        await upsertFeedback(
+            { tmdbId: body.tmdbId, mediaType: body.mediaType, title: metadata.title, summary, feedback: body.feedback },
+            userId,
+        );
         res.json({ ok: true });
     } catch (err) {
         logger.error('Recommendations: feedback save error', {

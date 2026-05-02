@@ -16,26 +16,12 @@ export class FeedbackButtonsComponent {
 
     tmdbId = input.required<number>();
     mediaType = input.required<MediaType>();
-    title = input<string>('');
-    genre = input<string>('');
-    year = input<string>('');
-    plot = input<string | undefined>(undefined);
 
     protected feedbackKey = computed(() => `${this.mediaType()}:${this.tmdbId()}`);
     protected currentFeedback = computed(() => this.recommendations.feedback()[this.feedbackKey()] ?? null);
     protected submitting = computed(() => this.recommendations.submitting()[this.feedbackKey()] ?? false);
 
     protected async sendFeedback(value: FeedbackValue): Promise<void> {
-        await this.recommendations.submitFeedback(
-            {
-                tmdbId: this.tmdbId(),
-                mediaType: this.mediaType(),
-                title: this.title(),
-                genre: this.genre(),
-                year: this.year(),
-                plot: this.plot(),
-            },
-            value,
-        );
+        await this.recommendations.submitFeedback({ tmdbId: this.tmdbId(), mediaType: this.mediaType() }, value);
     }
 }

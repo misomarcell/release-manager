@@ -20,9 +20,6 @@ export class MediaDetailsComponent {
     jellyfinUrl = input<string | null>(null);
     detail = input<MovieDetailMetadata | null>(null);
     detailLoading = input<boolean>(false);
-    title = input<string>('');
-    genre = input<string>('');
-    year = input<string>('');
 
     protected hasFeedback = computed(() => !!this.tmdbId() && !!this.mediaType());
 }

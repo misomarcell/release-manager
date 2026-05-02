@@ -13,10 +13,6 @@ import type { MediaType } from '@rm/shared/tmdb.models';
 interface FeedbackTarget {
     tmdbId: number;
     mediaType: MediaType;
-    title: string;
-    genre?: string;
-    year?: string;
-    plot?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -79,16 +75,10 @@ export class RecommendationsService {
 
         this.submitting.update((s) => ({ ...s, [key]: true }));
 
-        const summary = [target.genre, target.year, target.plot ? target.plot.slice(0, 120) : undefined]
-            .filter(Boolean)
-            .join(', ');
-
         try {
             await this.submitRecommendationFeedback({
                 tmdbId: target.tmdbId,
                 mediaType: target.mediaType,
-                title: target.title,
-                summary,
                 feedback: value,
             });
             this.feedback.update((f) => ({ ...f, [key]: value }));
