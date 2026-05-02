@@ -24,6 +24,13 @@
                         · {{ i.genre }}
                     }
                 </span>
+                @if (badges().length) {
+                    <div class="media-badges">
+                        @for (badge of badges(); track badge.label) {
+                            <span [class]="'badge ' + badge.cls">{{ badge.label }}</span>
+                        }
+                    </div>
+                }
             </div>
         </div>
     </mat-expansion-panel-header>
@@ -41,6 +48,17 @@
             [genre]="i.genre ?? ''"
             [year]="i.year ?? ''"
         />
+
+        @if (i.mediaInfo) {
+            <div class="media-streams">
+                @for (stream of i.mediaInfo.streams; track $index) {
+                    <div class="stream-row">
+                        <mat-icon class="stream-icon">{{ streamIcon(stream.type) }}</mat-icon>
+                        <span>{{ stream.displayTitle }}</span>
+                    </div>
+                }
+            </div>
+        }
 
         @if (jellyfinUrl()) {
             <div class="jellyfin-link-row">

@@ -1,7 +1,24 @@
 import { config } from '../config.js';
 import { logger } from '../utils/logger.js';
 import type { MediaType } from 'shared/tmdb.models';
+import type { MediaInfo, MediaStream } from 'shared/jellyfin.models';
 import { replaceLibrary, reloadCache, logSync, type JellyfinItem } from '../repositories/jellyfin.repository.js';
+
+interface JellyfinRawMediaStream {
+    Type: 'Video' | 'Audio' | 'Subtitle';
+    Codec?: string;
+    Language?: string;
+    DisplayTitle?: string;
+    VideoRangeType?: string;
+    Channels?: number;
+    AudioSpatialFormat?: string;
+    Profile?: string;
+    Width?: number;
+}
+
+interface JellyfinRawMediaSource {
+    MediaStreams?: JellyfinRawMediaStream[];
+}
 
 interface JellyfinRawItem {
     Id: string;
@@ -13,6 +30,34 @@ interface JellyfinRawItem {
         Tmdb?: string;
         [key: string]: string | undefined;
     };
+    MediaSources?: JellyfinRawMediaSource[];
+}
+
+function parseMediaInfo(mediaSources: JellyfinRawMediaSource[] | undefined): MediaInfo | null {
+    const streams = mediaSources?.[0]?.MediaStreams;
+    if (!streams?.length) return null;
+
+    const mapped: MediaStream[] = streams
+        .filter((s) => s.Type === 'Video' || s.Type === 'Audio' || s.Type === 'Subtitle')
+        .map((s) => {
+            const base: MediaStream = {
+                type: s.Type === 'Video' ? 'video' : s.Type === 'Audio' ? 'audio' : 'subtitle',
+                codec: s.Codec ?? '',
+                language: s.Language ?? '',
+                displayTitle: s.DisplayTitle ?? '',
+            };
+            if (s.Type === 'Video') {
+                base.width = s.Width;
+                base.videoRangeType = s.VideoRangeType;
+            }
+            if (s.Type === 'Audio') {
+                base.spatialFormat = s.AudioSpatialFormat;
+                base.profile = s.Profile;
+            }
+            return base;
+        });
+
+    return mapped.length ? { streams: mapped } : null;
 }
 
 function authHeaders(): Record<string, string> {
@@ -57,7 +102,7 @@ async function syncLibrary(): Promise<number> {
     const data = (await jellyfinGet(`/Users/${config.jellyfin.userId}/Items`, {
         Recursive: 'true',
         IncludeItemTypes: 'Movie,Series',
-        Fields: 'ProviderIds,Name,ProductionYear,DateCreated',
+        Fields: 'ProviderIds,Name,ProductionYear,DateCreated,MediaSources',
     })) as { Items?: JellyfinRawItem[] };
 
     const rawItems: JellyfinRawItem[] = Array.isArray(data?.Items) ? data.Items : [];
@@ -71,8 +116,9 @@ async function syncLibrary(): Promise<number> {
             const tmdbId = tmdbIdRaw ? parseInt(tmdbIdRaw, 10) || null : null;
             const year = raw.ProductionYear ? String(raw.ProductionYear) : null;
             const dateCreated = raw.DateCreated ? new Date(raw.DateCreated) : null;
+            const mediaInfo = parseMediaInfo(raw.MediaSources);
 
-            return { jellyfinId: raw.Id, tmdbId, mediaType, title: raw.Name, year, dateCreated };
+            return { jellyfinId: raw.Id, tmdbId, mediaType, title: raw.Name, year, dateCreated, mediaInfo };
         })
         .filter((item): item is JellyfinItem => item !== null);
 
