@@ -47,10 +47,7 @@ export async function getRecommendations(
     }
 
     const ratedTitles = allFeedback.map((r) => r.title);
-    const feedbackSample =
-        allFeedback.length <= FEEDBACK_SAMPLE_SIZE
-            ? allFeedback
-            : allFeedback.sort(() => Math.random() - 0.5).slice(0, FEEDBACK_SAMPLE_SIZE);
+    const feedbackSample = [...allFeedback].sort(() => Math.random() - 0.5).slice(0, FEEDBACK_SAMPLE_SIZE);
 
     const { movies: movieSuggestions, tvShows: tvSuggestions } = await getAiRecommendations(
         buildFeedbackContext(feedbackSample),
