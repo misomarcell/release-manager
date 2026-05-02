@@ -29,8 +29,6 @@ export type FeedbackValue = 'like' | 'dislike';
 export interface RecommendationFeedbackRequest {
     tmdbId: number;
     mediaType: MediaType;
-    title: string;
-    summary: string;
     feedback: FeedbackValue;
 }
 

@@ -1,5 +1,14 @@
+import { MediaType } from 'shared/tmdb.models';
 import { query } from '../db/connection.js';
-import type { AiRecommendation, RecommendationFeedbackRequest, FeedbackValue } from 'shared/recommendations.models';
+import type { AiRecommendation, FeedbackValue } from 'shared/recommendations.models';
+
+interface FeedbackRecord {
+    tmdbId: number;
+    mediaType: string;
+    title: string;
+    summary: string;
+    feedback: string;
+}
 
 interface FeedbackRow {
     tmdb_id: number;
@@ -37,19 +46,27 @@ export async function getAllFeedback(userId: number): Promise<FeedbackRow[]> {
     return result.rows;
 }
 
-export async function upsertFeedback(req: RecommendationFeedbackRequest, userId: number): Promise<void> {
+export async function upsertFeedback(rec: FeedbackRecord, userId: number): Promise<void> {
     await query(
         `INSERT INTO recommendation_feedback (user_id, tmdb_id, media_type, title, summary, feedback)
      VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (user_id, tmdb_id, media_type)
      DO UPDATE SET summary=$5, feedback=$6, created_at=NOW()`,
-        [userId, req.tmdbId, req.mediaType, req.title, req.summary, req.feedback],
+        [userId, rec.tmdbId, rec.mediaType, rec.title, rec.summary, rec.feedback],
     );
+}
+
+export async function deleteFeedback(userId: number, tmdbId: number, mediaType: string): Promise<void> {
+    await query(`DELETE FROM recommendation_feedback WHERE user_id = $1 AND tmdb_id = $2 AND media_type = $3`, [
+        userId,
+        tmdbId,
+        mediaType,
+    ]);
 }
 
 export async function getFreshCache(
     userId: number,
-    filter: 'movie' | 'tv' | null,
+    filter: MediaType | null,
 ): Promise<{ refs: AiRecommendation[]; feedbackMap: Record<string, FeedbackValue> } | null> {
     const result = await query<CacheRow>(
         `SELECT id, recommendations, generated_at,
@@ -69,7 +86,7 @@ export async function getFreshCache(
     return { refs: row.recommendations, feedbackMap };
 }
 
-export async function setCache(refs: AiRecommendation[], userId: number, filter: 'movie' | 'tv' | null): Promise<void> {
+export async function setCache(refs: AiRecommendation[], userId: number, filter: MediaType | null): Promise<void> {
     await query(
         `DELETE FROM recommendation_cache WHERE user_id = $1 AND (($2::TEXT IS NULL AND media_type_filter IS NULL) OR media_type_filter = $2)`,
         [userId, filter],
@@ -80,7 +97,7 @@ export async function setCache(refs: AiRecommendation[], userId: number, filter:
     );
 }
 
-export async function invalidateCacheForFilter(userId: number, filter: 'movie' | 'tv' | null): Promise<void> {
+export async function invalidateCacheForFilter(userId: number, filter: MediaType | null): Promise<void> {
     await query(
         `DELETE FROM recommendation_cache WHERE user_id = $1 AND (($2::TEXT IS NULL AND media_type_filter IS NULL) OR media_type_filter = $2)`,
         [userId, filter],
@@ -90,7 +107,7 @@ export async function invalidateCacheForFilter(userId: number, filter: 'movie' |
 export async function getFeedbackForItem(
     userId: number,
     tmdbId: number,
-    mediaType: 'movie' | 'tv',
+    mediaType: MediaType,
 ): Promise<FeedbackValue | null> {
     const result = await query<{ feedback: string }>(
         `SELECT feedback FROM recommendation_feedback WHERE user_id = $1 AND tmdb_id = $2 AND media_type = $3`,
