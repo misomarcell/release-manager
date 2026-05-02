@@ -9,6 +9,7 @@ import { ReleaseSearchComponent, SearchParams } from '../release-search/release-
 import { SearchService } from '../../services/search.service';
 import { ActivatedRoute } from '@angular/router';
 import type { NcoreCategoryKey, NcoreResult } from '@rm/shared/ncore.models';
+import { extractHttpError } from '../../utils/http-error';
 
 const VALID_CATEGORIES: NcoreCategoryKey[] = ['all', 'movies', 'tv'];
 
@@ -149,7 +150,7 @@ export class HomeComponent implements OnInit {
             this.results.set(response.results);
             this.totalResults.set(response.totalResults);
         } catch (e: unknown) {
-            this.error.set(e instanceof Error ? e.message : 'Search failed');
+            this.error.set(extractHttpError(e, 'Search failed'));
             this.results.set([]);
         } finally {
             this.loading.set(false);

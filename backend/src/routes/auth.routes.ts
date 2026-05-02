@@ -18,7 +18,8 @@ const RegisterStartSchema = z.object({
         .string()
         .trim()
         .min(3, 'Username must be at least 3 characters')
-        .max(32, 'Username must be at most 32 characters'),
+        .max(32, 'Username must be at most 32 characters')
+        .regex(/^[a-zA-Z0-9_\- ]+$/, 'Username may only contain letters, numbers, spaces, hyphens and underscores'),
 });
 
 const RegisterFinishSchema = z.object({
@@ -120,7 +121,7 @@ router.post('/logout', async (req: Request, res: Response) => {
 
 router.get('/me', async (req: Request, res: Response) => {
     const token = req.cookies?.['session'] as string | undefined;
-    if (!token) {
+    if (!token || token.length > 512) {
         res.status(401).json({ error: 'Not authenticated' });
         return;
     }

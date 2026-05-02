@@ -15,7 +15,7 @@ import { MediaTypeSchema, parseBody, parseParams, parseQuery } from '../middlewa
 
 const SearchQuerySchema = z.object({
     category: z.enum(['all', 'movies', 'tv']).default('all'),
-    search: z.string().default(''),
+    search: z.string().max(200).default(''),
     page: z.coerce.number().int().min(1).default(1),
     perPage: z.coerce.number().int().min(1).max(200).default(100),
     uhd: z
@@ -33,12 +33,15 @@ const MetadataQuerySchema = z.object({
 });
 
 const NfoParamsSchema = z.object({
-    id: z.string().min(1, 'NFO ID is required'),
+    id: z.string().regex(/^\d+$/, 'Invalid NFO ID'),
 });
 
 const DownloadBodySchema = z.object({
     downloadUrl: z.url('Invalid download URL'),
-    savePath: z.string().min(1, 'Save path is required'),
+    savePath: z
+        .string()
+        .min(1, 'Save path is required')
+        .refine((p) => !p.includes('..'), 'Path traversal not allowed'),
     category: z.enum(DOWNLOAD_CATEGORIES),
 });
 

@@ -10,7 +10,7 @@ import type { LibraryItem, LibraryResponse } from 'shared/jellyfin.models';
 import { parseQuery } from '../middleware/validate.js';
 
 const LibraryQuerySchema = z.object({
-    search: z.string().default(''),
+    search: z.string().max(200).default(''),
     page: z.coerce.number().int().min(1).default(1),
     perPage: z.coerce.number().int().min(1).max(100).default(30),
 });

@@ -2,6 +2,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ApiService } from './api.service';
+import { extractHttpError } from '../utils/http-error';
 import type {
     Recommendation,
     FeedbackValue,
@@ -84,7 +85,7 @@ export class RecommendationsService {
             this.feedback.update((f) => ({ ...f, [key]: value }));
             this.fetched.add(key);
             return true;
-        } catch {
+        } catch (e: unknown) {
             if (current) {
                 this.feedback.update((f) => ({ ...f, [key]: current }));
             } else {
@@ -94,7 +95,9 @@ export class RecommendationsService {
                     return next;
                 });
             }
-            this.snackBar.open('Failed to save feedback. Please try again.', 'OK', { duration: 4000 });
+            this.snackBar.open(extractHttpError(e, 'Failed to save feedback. Please try again.'), 'OK', {
+                duration: 4000,
+            });
             return false;
         } finally {
             this.submitting.update((s) => ({ ...s, [key]: false }));
@@ -116,8 +119,10 @@ export class RecommendationsService {
                 return next;
             });
             return true;
-        } catch {
-            this.snackBar.open('Failed to remove feedback. Please try again.', 'OK', { duration: 4000 });
+        } catch (e: unknown) {
+            this.snackBar.open(extractHttpError(e, 'Failed to remove feedback. Please try again.'), 'OK', {
+                duration: 4000,
+            });
             if (previous) this.feedback.update((f) => ({ ...f, [key]: previous }));
             return false;
         } finally {
