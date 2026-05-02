@@ -42,10 +42,41 @@ export function computeMediaBadges(streams: MediaStream[]): Badge[] {
         const codec = video.codec.toLowerCase();
         if (codec === 'hevc') result.push({ label: 'HEVC', cls: 'badge-codec' });
         else if (codec === 'av1') result.push({ label: 'AV1', cls: 'badge-codec' });
+        else if (codec === 'h264' || codec === 'avc') result.push({ label: 'AVC', cls: 'badge-codec' });
+        else if (codec === 'vp9') result.push({ label: 'VP9', cls: 'badge-codec' });
+        else if (codec === 'mpeg4') result.push({ label: 'MPEG-4', cls: 'badge-codec' });
     }
 
     const audioBadge = bestAudioBadge(streams);
     if (audioBadge) result.push(audioBadge);
 
     return result;
+}
+
+export function formatVideoStream(stream: MediaStream): string {
+    const parts: string[] = [];
+    const w = stream.width ?? 0;
+    if (w >= 3840) parts.push('4K UHD');
+    else if (w >= 1920) parts.push('1080p');
+    else if (w >= 1280) parts.push('720p');
+    else if (w > 0) parts.push(`${w}p`);
+
+    if (stream.codec) parts.push(stream.codec.toUpperCase());
+
+    const vrt = (stream.videoRangeType ?? '').toUpperCase();
+    if (vrt.includes('DOVI') && vrt.includes('HDR10')) {
+        parts.push('Dolby Vision + HDR10' + (vrt.includes('PLUS') ? '+' : ''));
+    } else if (vrt.includes('DOVI')) {
+        parts.push('Dolby Vision');
+    } else if (vrt === 'HDR10PLUS') {
+        parts.push('HDR10+');
+    } else if (vrt === 'HDR10') {
+        parts.push('HDR10');
+    } else if (vrt === 'HDR') {
+        parts.push('HDR');
+    } else if (vrt === 'SDR') {
+        parts.push('SDR');
+    }
+
+    return parts.join(' · ');
 }

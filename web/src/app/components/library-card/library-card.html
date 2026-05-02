@@ -37,36 +37,21 @@
 
     <mat-divider />
 
-    <div class="card-details">
+    <div class="card-body">
         <app-media-details
             [tmdbId]="i.tmdbId"
             [mediaType]="i.mediaType"
             [detail]="detail()"
             [detailLoading]="detailLoading()"
             [imdbId]="detail()?.imdbId ?? ''"
+            [jellyfinUrl]="jellyfinUrl()"
             [title]="i.title"
             [genre]="i.genre ?? ''"
             [year]="i.year ?? ''"
         />
 
-        @if (i.mediaInfo) {
-            <div class="media-streams">
-                @for (stream of i.mediaInfo.streams; track $index) {
-                    <div class="stream-row">
-                        <mat-icon class="stream-icon">{{ streamIcon(stream.type) }}</mat-icon>
-                        <span>{{ stream.displayTitle }}</span>
-                    </div>
-                }
-            </div>
-        }
-
-        @if (jellyfinUrl()) {
-            <div class="jellyfin-link-row">
-                <a [href]="jellyfinUrl()!" target="_blank" rel="noopener" mat-button (click)="$event.stopPropagation()">
-                    <mat-icon>open_in_new</mat-icon>
-                    Open in Jellyfin
-                </a>
-            </div>
+        @if (i.mediaInfo?.streams?.length) {
+            <app-media-streams [streams]="i.mediaInfo!.streams" />
         }
     </div>
 </mat-expansion-panel>

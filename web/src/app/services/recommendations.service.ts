@@ -71,9 +71,12 @@ export class RecommendationsService {
     async submitFeedback(target: FeedbackTarget, value: FeedbackValue): Promise<boolean> {
         const key = this.feedbackKey(target.tmdbId, target.mediaType);
         if (this.submitting()[key]) return false;
-        if (this.currentFeedback(target.tmdbId, target.mediaType) === value) return false;
 
-        const previous = this.currentFeedback(target.tmdbId, target.mediaType);
+        const current = this.currentFeedback(target.tmdbId, target.mediaType);
+        if (current === value) {
+            return this.removeFeedback(target.tmdbId, target.mediaType);
+        }
+
         this.submitting.update((s) => ({ ...s, [key]: true }));
 
         const summary = [target.genre, target.year, target.plot ? target.plot.slice(0, 120) : undefined]
@@ -92,8 +95,8 @@ export class RecommendationsService {
             this.fetched.add(key);
             return true;
         } catch {
-            if (previous) {
-                this.feedback.update((f) => ({ ...f, [key]: previous }));
+            if (current) {
+                this.feedback.update((f) => ({ ...f, [key]: current }));
             } else {
                 this.feedback.update((f) => {
                     const next = { ...f };
@@ -102,6 +105,30 @@ export class RecommendationsService {
                 });
             }
             this.snackBar.open('Failed to save feedback. Please try again.', 'OK', { duration: 4000 });
+            return false;
+        } finally {
+            this.submitting.update((s) => ({ ...s, [key]: false }));
+        }
+    }
+
+    async removeFeedback(tmdbId: number, mediaType: MediaType): Promise<boolean> {
+        const key = this.feedbackKey(tmdbId, mediaType);
+        if (this.submitting()[key]) return false;
+
+        const previous = this.currentFeedback(tmdbId, mediaType);
+        this.submitting.update((s) => ({ ...s, [key]: true }));
+
+        try {
+            await this.deleteRecommendationFeedback(tmdbId, mediaType);
+            this.feedback.update((f) => {
+                const next = { ...f };
+                delete next[key];
+                return next;
+            });
+            return true;
+        } catch {
+            this.snackBar.open('Failed to remove feedback. Please try again.', 'OK', { duration: 4000 });
+            if (previous) this.feedback.update((f) => ({ ...f, [key]: previous }));
             return false;
         } finally {
             this.submitting.update((s) => ({ ...s, [key]: false }));
@@ -127,5 +154,10 @@ export class RecommendationsService {
 
     async submitRecommendationFeedback(request: RecommendationFeedbackRequest): Promise<void> {
         await this.api.post<void>('/api/recommendations/feedback', request);
+    }
+
+    async deleteRecommendationFeedback(tmdbId: number, mediaType: MediaType): Promise<void> {
+        const params = new HttpParams().set('tmdbId', tmdbId.toString()).set('mediaType', mediaType);
+        await this.api.delete<void>('/api/recommendations/feedback', params);
     }
 }

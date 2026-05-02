@@ -6,6 +6,7 @@ import { logger } from '../utils/logger.js';
 import { getRecommendations } from '../services/recommendations.service.js';
 import {
     upsertFeedback,
+    deleteFeedback,
     invalidateCacheForFilter,
     getFeedbackForItem,
 } from '../repositories/recommendations.repository.js';
@@ -70,6 +71,25 @@ router.post('/feedback', requireAuth, async (req: Request, res: Response) => {
             error: err instanceof Error ? err.message : String(err),
         });
         res.status(500).json({ error: 'Failed to save feedback' });
+    }
+});
+
+router.delete('/feedback', requireAuth, async (req: Request, res: Response) => {
+    const { userId } = (req as AuthenticatedRequest).user;
+    const tmdbId = Number(req.query['tmdbId']);
+    const mediaType = req.query['mediaType'];
+    if (!Number.isFinite(tmdbId) || tmdbId <= 0 || (mediaType !== 'movie' && mediaType !== 'tv')) {
+        res.status(400).json({ error: 'Invalid parameters' });
+        return;
+    }
+    try {
+        await deleteFeedback(userId, tmdbId, mediaType);
+        res.json({ ok: true });
+    } catch (err) {
+        logger.error('Recommendations: feedback DELETE error', {
+            error: err instanceof Error ? err.message : String(err),
+        });
+        res.status(500).json({ error: 'Failed to delete feedback' });
     }
 });
 

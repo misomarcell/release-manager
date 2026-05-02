@@ -8,6 +8,10 @@
     .mat-expansion-panel-header {
         padding: 0 1.5rem 0 0;
     }
+
+    ::ng-deep .mat-expansion-panel-body {
+        padding: 0;
+    }
 }
 
 .card-summary {
@@ -134,44 +138,10 @@
     }
 }
 
-.card-details {
-    padding-top: 1rem;
+.card-body {
+    padding: 1rem;
 
-    .media-streams {
-        display: flex;
-        flex-direction: column;
-        gap: 0.3rem;
-        margin: 0.75rem 0;
-        padding: 0.625rem 0.75rem;
-        background: var(--mat-sys-surface-variant);
-        border-radius: 6px;
-
-        .stream-row {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.5rem;
-            font-size: 0.78rem;
-            color: var(--mat-sys-on-surface-variant);
-
-            .stream-icon {
-                font-size: 15px;
-                width: 15px;
-                height: 15px;
-                flex-shrink: 0;
-                margin-top: 1px;
-                opacity: 0.7;
-            }
-
-            span {
-                flex: 1;
-                min-width: 0;
-            }
-        }
-    }
-
-    .jellyfin-link-row {
-        display: flex;
-        justify-content: center;
-        margin-top: 0.5rem;
+    app-media-streams {
+        margin-top: 0.75rem;
     }
 }

@@ -47,6 +47,14 @@ export async function upsertFeedback(req: RecommendationFeedbackRequest, userId:
     );
 }
 
+export async function deleteFeedback(userId: number, tmdbId: number, mediaType: string): Promise<void> {
+    await query(`DELETE FROM recommendation_feedback WHERE user_id = $1 AND tmdb_id = $2 AND media_type = $3`, [
+        userId,
+        tmdbId,
+        mediaType,
+    ]);
+}
+
 export async function getFreshCache(
     userId: number,
     filter: 'movie' | 'tv' | null,

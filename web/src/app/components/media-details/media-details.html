@@ -1,81 +1,40 @@
 @if (detailLoading()) {
-  <div class="skeleton skeleton-plot"></div>
-  <div class="skeleton-table">
-    <div class="skeleton skeleton-row"></div>
-    <div class="skeleton skeleton-row short"></div>
-    <div class="skeleton skeleton-row"></div>
-  </div>
+    <div class="skeleton skeleton-plot"></div>
+    <div class="skeleton-table">
+        <div class="skeleton skeleton-row"></div>
+        <div class="skeleton skeleton-row short"></div>
+        <div class="skeleton skeleton-row"></div>
+    </div>
 } @else {
-  <div class="detail-strip">
-    @if (mediaType()) {
-      <span>{{ mediaType() === 'tv' ? 'TV Show' : 'Movie' }}</span>
-    }
-    @if (detail()?.rated) {
-      <span>{{ detail()!.rated }}</span>
-    }
-    @if (detail()?.runtime) {
-      <span>{{ detail()!.runtime }}</span>
-    }
-    @if (detail()?.releaseDate) {
-      <span>{{ detail()!.releaseDate }}</span>
-    }
-  </div>
+    <app-media-action-chips [imdbId]="imdbId()" [trailerKey]="detail()?.trailerKey" [jellyfinUrl]="jellyfinUrl()" />
 
-  @if (imdbId() || detail()?.trailerKey) {
-    <div class="detail-links">
-      @if (imdbId()) {
-        <a
-          class="imdb-link"
-          [href]="'https://www.imdb.com/title/' + imdbId()"
-          target="_blank"
-          rel="noopener"
-          (click)="$event.stopPropagation()"
-        >
-          <mat-icon>open_in_new</mat-icon>
-          IMDb
-        </a>
-      }
-      @if (detail()?.trailerKey) {
-        <a
-          class="trailer-link"
-          [href]="'https://www.youtube.com/watch?v=' + detail()!.trailerKey"
-          target="_blank"
-          rel="noopener"
-          (click)="$event.stopPropagation()"
-        >
-          <mat-icon>play_circle</mat-icon>
-          Trailer
-        </a>
-      }
+    <div class="detail-strip">
+        @if (mediaType()) {
+            <span>{{ mediaType() === 'tv' ? 'TV Show' : 'Movie' }}</span>
+        }
+        @if (detail()?.rated) {
+            <span>{{ detail()!.rated }}</span>
+        }
+        @if (detail()?.runtime) {
+            <span>{{ detail()!.runtime }}</span>
+        }
+        @if (detail()?.releaseDate) {
+            <span>{{ detail()!.releaseDate }}</span>
+        }
     </div>
-  }
 
-  @if (detail()?.plot) {
-    <p class="plot">{{ detail()!.plot }}</p>
-  }
+    @if (detail()?.plot) {
+        <p class="plot">{{ detail()!.plot }}</p>
+    }
 
-  @if (feedbackKey()) {
-    <div class="feedback-row">
-      <div class="feedback-btn-group">
-        <button
-          class="feedback-btn like"
-          [class.active]="recommendations.feedback()[feedbackKey()!] === 'like'"
-          [disabled]="recommendations.submitting()[feedbackKey()!]"
-          (click)="sendFeedback('like')"
-          aria-label="Like"
-        >
-          <mat-icon>thumb_up</mat-icon>
-        </button>
-        <button
-          class="feedback-btn dislike"
-          [class.active]="recommendations.feedback()[feedbackKey()!] === 'dislike'"
-          [disabled]="recommendations.submitting()[feedbackKey()!]"
-          (click)="sendFeedback('dislike')"
-          aria-label="Dislike"
-        >
-          <mat-icon>thumb_down</mat-icon>
-        </button>
-      </div>
-    </div>
-  }
+    @if (hasFeedback()) {
+        <app-feedback-buttons
+            [tmdbId]="tmdbId()!"
+            [mediaType]="mediaType()!"
+            [title]="title()"
+            [genre]="genre()"
+            [year]="year()"
+            [plot]="detail()?.plot"
+        />
+    }
 }

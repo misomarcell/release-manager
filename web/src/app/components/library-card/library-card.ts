@@ -7,13 +7,21 @@ import { SearchService } from '../../services/search.service';
 import { RecommendationsService } from '../../services/recommendations.service';
 import { PosterService } from '../../services/poster.service';
 import { MediaDetailsComponent } from '../media-details/media-details';
+import { MediaStreamsComponent } from '../media-streams/media-streams';
 import { computeMediaBadges, type Badge } from '../../utils/media-badges';
 import type { LibraryItem } from '@rm/shared/jellyfin.models';
 import type { MovieDetailMetadata } from '@rm/shared/tmdb.models';
 
 @Component({
     selector: 'app-library-card',
-    imports: [MatExpansionModule, MatButtonModule, MatIconModule, MatDividerModule, MediaDetailsComponent],
+    imports: [
+        MatExpansionModule,
+        MatButtonModule,
+        MatIconModule,
+        MatDividerModule,
+        MediaDetailsComponent,
+        MediaStreamsComponent,
+    ],
     templateUrl: './library-card.html',
     styleUrl: './library-card.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,11 +78,5 @@ export class LibraryCardComponent {
         const url = this.item().poster;
         if (!url) return;
         this.poster.open(url, this.displayTitle());
-    }
-
-    protected streamIcon(type: string): string {
-        if (type === 'video') return 'videocam';
-        if (type === 'audio') return 'volume_up';
-        return 'subtitles';
     }
 }
