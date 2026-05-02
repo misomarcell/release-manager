@@ -183,7 +183,7 @@ export async function getLibrary(search: string, page: number, perPage: number):
     const items: LibraryItem[] = dataResult.rows.map((row) => ({
         jellyfinId: row.jellyfin_id,
         tmdbId: row.tmdb_id,
-        mediaType: (row.media_type as 'movie' | 'tv') ?? null,
+        mediaType: (row.media_type as MediaType) ?? null,
         title: row.title,
         year: row.year,
         syncedAt: row.synced_at,

@@ -34,7 +34,7 @@ async function tmdbGet(path: string, params?: Record<string, string>): Promise<R
 
 interface FindResult {
     id: number;
-    type: 'movie' | 'tv';
+    type: MediaType;
     data: Record<string, unknown>;
 }
 
@@ -56,7 +56,7 @@ function extractFromFindResponse(data: Record<string, unknown>): FindResult | nu
     return null;
 }
 
-function extractFromSearchResponse(data: Record<string, unknown>, type: 'movie' | 'tv'): FindResult | null {
+function extractFromSearchResponse(data: Record<string, unknown>, type: MediaType): FindResult | null {
     const results = Array.isArray(data['results']) ? data['results'] : [];
     if (results.length > 0) {
         const rec = asRecord(results[0]);
@@ -107,7 +107,7 @@ function buildBasicMetadata(item: FindResult, lookup: MetadataLookup): MovieMeta
     };
 }
 
-function extractCertification(data: Record<string, unknown>, type: 'movie' | 'tv'): string {
+function extractCertification(data: Record<string, unknown>, type: MediaType): string {
     if (type === 'movie') {
         const releaseDates = asRecord(data['release_dates']);
         const results = Array.isArray(releaseDates['results']) ? releaseDates['results'] : [];

@@ -1,3 +1,5 @@
+import { MediaType } from './tmdb.models.js';
+
 export interface JellyfinSyncStatus {
     lastSync: string | null;
     success: boolean | null;
@@ -23,7 +25,7 @@ export interface MediaInfo {
 export interface LibraryItem {
     jellyfinId: string;
     tmdbId: number | null;
-    mediaType: 'movie' | 'tv' | null;
+    mediaType: MediaType | null;
     title: string;
     year: string | null;
     syncedAt: string;
