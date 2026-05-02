@@ -10,10 +10,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 export const appConfig: ApplicationConfig = {
     providers: [
         provideBrowserGlobalErrorListeners(),
-        provideRouter(
-            routes,
-            withRouterConfig({ onSameUrlNavigation: 'reload', defaultQueryParamsHandling: 'preserve' }),
-        ),
+        provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
         provideHttpClient(withFetch()),
         provideClientHydration(withEventReplay()),
         provideAnimationsAsync(),

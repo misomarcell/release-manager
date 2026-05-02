@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal, computed, viewChild } from '@angular/core';
+import { Location } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatAccordion } from '@angular/material/expansion';
@@ -6,7 +7,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { ReleaseCardComponent } from '../release-card/release-card';
 import { ReleaseSearchComponent, SearchParams } from '../release-search/release-search';
 import { SearchService } from '../../services/search.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import type { NcoreCategoryKey, NcoreResult } from '@rm/shared/ncore.models';
 
 const VALID_CATEGORIES: NcoreCategoryKey[] = ['all', 'movies', 'tv'];
@@ -17,6 +18,12 @@ export interface GroupedMovie {
     metadata_lookup: NcoreResult['metadata_lookup'];
     imdb_id: string;
     releases: NcoreResult[];
+}
+
+interface SearchFilters {
+    query: string;
+    category: NcoreCategoryKey;
+    uhdOnly: boolean;
 }
 
 @Component({
@@ -35,7 +42,7 @@ export interface GroupedMovie {
 })
 export class HomeComponent implements OnInit {
     private search = inject(SearchService);
-    private router = inject(Router);
+    private location = inject(Location);
     private route = inject(ActivatedRoute);
     private releaseSearch = viewChild(ReleaseSearchComponent);
 
@@ -47,9 +54,7 @@ export class HomeComponent implements OnInit {
     protected currentPage = signal(1);
     protected readonly pageSize = 100;
 
-    private searchQuery = '';
-    private selectedCategory = signal<NcoreCategoryKey>('all');
-    private uhdOnly = signal(true);
+    private filters = signal<SearchFilters>({ query: '', category: 'all', uhdOnly: true });
     private lastSearchTerm = signal('');
 
     protected groupedMovies = computed(() => {
@@ -79,46 +84,36 @@ export class HomeComponent implements OnInit {
     protected listTitle = computed(() => {
         const term = this.lastSearchTerm();
         if (term) return `Results for: ${term}`;
-        const cat = this.selectedCategory();
-        if (cat === 'movies') return 'Top Movies';
-        if (cat === 'tv') return 'Top TV Shows';
+        const { category } = this.filters();
+        if (category === 'movies') return 'Top Movies';
+        if (category === 'tv') return 'Top TV Shows';
         return 'Top Releases';
     });
 
     ngOnInit(): void {
         const params = this.route.snapshot.queryParams;
         const cat = params['category'];
-        if (cat && VALID_CATEGORIES.includes(cat)) {
-            this.selectedCategory.set(cat as NcoreCategoryKey);
-        }
-        if (params['q']) {
-            this.searchQuery = params['q'];
-        }
-        if (params['uhd'] === 'false') {
-            this.uhdOnly.set(false);
-        }
+        this.filters.set({
+            query: params['q'] ?? '',
+            category: cat && VALID_CATEGORIES.includes(cat) ? (cat as NcoreCategoryKey) : 'all',
+            uhdOnly: params['uhd'] !== 'false',
+        });
         const page = parseInt(params['page'], 10);
         if (page > 0) {
             this.currentPage.set(page);
         }
 
-        // Sync initial state to child after view init
+        // Sync initial state to child after view init without emitting a search (which would reset page to 1)
         queueMicrotask(() => {
-            const child = this.releaseSearch();
-            if (child) {
-                if (this.searchQuery) child.setQuery(this.searchQuery);
-                if (this.selectedCategory() !== 'movies') child.setCategory(this.selectedCategory());
-                if (!this.uhdOnly()) child.setUhdOnly(false);
-            }
+            const { query, category, uhdOnly } = this.filters();
+            this.releaseSearch()?.initState(query, category, uhdOnly);
         });
 
         void this.loadResults();
     }
 
     protected onSearch(params: SearchParams): void {
-        this.searchQuery = params.query;
-        this.selectedCategory.set(params.category);
-        this.uhdOnly.set(params.uhdOnly);
+        this.filters.set({ query: params.query, category: params.category, uhdOnly: params.uhdOnly });
         this.currentPage.set(1);
         void this.loadResults();
     }
@@ -140,15 +135,16 @@ export class HomeComponent implements OnInit {
         this.error.set(null);
         this.syncQueryParams();
 
+        const { query, category, uhdOnly } = this.filters();
         try {
-            const hasSearchTerm = !!this.searchQuery.trim();
-            this.lastSearchTerm.set(this.searchQuery.trim());
+            const hasSearchTerm = !!query.trim();
+            this.lastSearchTerm.set(query.trim());
             const response = await this.search.search(
-                this.selectedCategory(),
-                this.searchQuery,
+                category,
+                query,
                 this.currentPage(),
                 this.pageSize,
-                !hasSearchTerm && this.uhdOnly(),
+                !hasSearchTerm && uhdOnly,
             );
             this.results.set(response.results);
             this.totalResults.set(response.totalResults);
@@ -161,11 +157,12 @@ export class HomeComponent implements OnInit {
     }
 
     private syncQueryParams(): void {
+        const { query, category, uhdOnly } = this.filters();
         const params: Record<string, string> = {};
-        if (this.searchQuery.trim()) params['q'] = this.searchQuery.trim();
-        if (this.selectedCategory() !== 'movies') params['category'] = this.selectedCategory();
-        if (!this.uhdOnly()) params['uhd'] = 'false';
+        if (query.trim()) params['q'] = query.trim();
+        if (category !== 'all') params['category'] = category;
+        if (!uhdOnly) params['uhd'] = 'false';
         if (this.currentPage() > 1) params['page'] = String(this.currentPage());
-        this.router.navigate([], { queryParams: params, replaceUrl: true });
+        this.location.replaceState('/releases', new URLSearchParams(params).toString());
     }
 }
