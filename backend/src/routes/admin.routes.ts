@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
+import { z } from 'zod';
 import { requireAuth, requireAdmin, type AuthenticatedRequest } from '../middleware/auth.js';
 import { query } from '../db/connection.js';
 import { testConnection } from '../services/qbittorrent.service.js';
@@ -7,6 +8,13 @@ import { testConnection as testJellyfinConnection, runScheduledSync } from '../s
 import { getLastSyncStatus } from '../repositories/jellyfin.repository.js';
 import { getLogs } from '../repositories/log.repository.js';
 import { logger } from '../utils/logger.js';
+import { parseQuery } from '../middleware/validate.js';
+
+const LogsQuerySchema = z.object({
+    level: z.enum(['info', 'warn', 'error']).optional(),
+    limit: z.coerce.number().int().min(1).max(500).default(100),
+    offset: z.coerce.number().int().min(0).default(0),
+});
 
 const router = Router();
 
@@ -121,18 +129,11 @@ router.post('/jellyfin-sync', async (req: Request, res: Response) => {
 });
 
 router.get('/logs', async (req: Request, res: Response) => {
-    const level = (req.query['level'] as string) || null;
-    const limit = Math.min(parseInt((req.query['limit'] as string) ?? '100', 10), 500);
-    const offset = parseInt((req.query['offset'] as string) ?? '0', 10);
-
-    const validLevels = ['info', 'warn', 'error'];
-    if (level && !validLevels.includes(level)) {
-        res.status(400).json({ error: 'Invalid level' });
-        return;
-    }
+    const query_ = parseQuery(LogsQuerySchema, req.query, res);
+    if (!query_) return;
 
     try {
-        const result = await getLogs(level, limit, offset);
+        const result = await getLogs(query_.level ?? null, query_.limit, query_.offset);
         res.json(result);
     } catch (error: unknown) {
         res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to fetch logs' });
