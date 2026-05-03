@@ -1,72 +1,70 @@
 .container {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 1rem;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1rem;
 
-  .error {
-    color: var(--mat-sys-error);
-    font-size: 0.85rem;
-  }
+    .error {
+        color: var(--mat-sys-error);
+        font-size: 0.85rem;
+    }
 }
 
 .user-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-
-  .user-card {
-    --mat-card-subtitle-text-size: 0.8rem;
-  }
-
-  .user-avatar {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--mat-sys-on-surface-variant);
-  }
+    flex-direction: column;
+    gap: 0.75rem;
+
+    .user-card {
+        --mat-card-subtitle-text-size: 0.8rem;
+    }
+
+    .mat-mdc-card-header {
+        align-items: center;
+        padding: 16px;
+    }
+
+    .user-avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--mat-sys-on-surface-variant);
+        margin: 0;
+    }
 }
 
 .user-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding-top: 0.25rem;
-
-  .detail-row {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    font-size: 0.85rem;
-  }
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 0.25rem;
 
-  .detail-label {
-    color: var(--mat-sys-on-surface-variant);
-    flex-shrink: 0;
-  }
+    .detail-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        font-size: 0.85rem;
+    }
 
-  .ua-value {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    text-align: right;
-    min-width: 0;
-  }
+    .detail-label {
+        color: var(--mat-sys-on-surface-variant);
+        flex-shrink: 0;
+    }
 }
 
 mat-card-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  margin-top: 0.75rem;
-  border-top: 1px solid var(--mat-sys-outline-variant);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    margin-top: 0.75rem;
+    border-top: 1px solid var(--mat-sys-outline-variant);
 
-  .mdc-button {
-    flex: 1;
-  }
+    .mdc-button {
+        flex: 1;
+    }
 
-  .mat-warn:not([disabled]) {
-    --mat-icon-color: var(--mat-sys-error);
-  }
+    .mat-warn:not([disabled]) {
+        --mat-icon-color: var(--mat-sys-error);
+    }
 }

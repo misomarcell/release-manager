@@ -148,8 +148,15 @@ export async function setUserValid(userId: number, valid: boolean): Promise<bool
   return result.rowCount !== null && result.rowCount > 0;
 }
 
-export async function updateLastLogin(userId: number): Promise<void> {
-  await query('UPDATE users SET last_login = NOW() WHERE id = $1', [userId]);
+export async function updateLastLogin(
+  userId: number,
+  ipAddress?: string,
+  userAgent?: string,
+): Promise<void> {
+  await query(
+    'UPDATE users SET last_login = NOW(), ip_address = COALESCE($2, ip_address), user_agent = COALESCE($3, user_agent) WHERE id = $1',
+    [userId, ipAddress ?? null, userAgent ?? null],
+  );
 }
 
 export async function deleteUser(userId: number): Promise<boolean> {

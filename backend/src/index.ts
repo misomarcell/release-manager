@@ -17,6 +17,8 @@ import libraryRoutes from './routes/library.routes.js';
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 app.use(
     cors({
         origin: config.rp.origin,

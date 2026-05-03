@@ -89,7 +89,11 @@ export async function startAuthentication() {
   return options;
 }
 
-export async function finishAuthentication(response: AuthenticationResponseJSON) {
+export async function finishAuthentication(
+  response: AuthenticationResponseJSON,
+  ipAddress?: string,
+  userAgent?: string,
+) {
   const credId = response.id;
   const cred = await getCredentialById(credId);
   if (!cred) throw new Error('Credential not found');
@@ -117,7 +121,7 @@ export async function finishAuthentication(response: AuthenticationResponseJSON)
   if (!verification.verified) throw new Error('Authentication verification failed');
 
   await updateCredentialCounter(credId, verification.authenticationInfo.newCounter);
-  await updateLastLogin(user.id);
+  await updateLastLogin(user.id, ipAddress, userAgent);
 
   const token = crypto.randomBytes(48).toString('base64url');
   const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);

@@ -48,11 +48,7 @@ router.post('/register/start', async (req: Request, res: Response) => {
     if (!body) return;
 
     try {
-        const options = await startRegistration(
-            body.username,
-            req.ip ?? req.socket.remoteAddress,
-            req.headers['user-agent'],
-        );
+        const options = await startRegistration(body.username, req.ip, req.headers['user-agent']);
         res.json(options);
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Registration start failed';
@@ -95,7 +91,7 @@ router.post('/login/finish', async (req: Request, res: Response) => {
     if (!body) return;
 
     try {
-        const result = await finishAuthentication(body.response as never);
+        const result = await finishAuthentication(body.response as never, req.ip, req.headers['user-agent']);
         logger.info('User logged in', { username: result.username });
         res.cookie('session', result.token, {
             httpOnly: true,
