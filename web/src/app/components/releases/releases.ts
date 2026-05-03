@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal, computed, viewChild, effect } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, computed, viewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,6 +9,7 @@ import { ReleaseSearchComponent, SearchParams } from '../release-search/release-
 import { SearchService } from '../../services/search.service';
 import { TitleService } from '../../services/title.service';
 import { ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { NcoreCategoryKey, NcoreResult } from '@rm/shared/ncore.models';
 import { extractHttpError } from '../../utils/http-error';
 
@@ -22,14 +23,8 @@ export interface GroupedMovie {
     releases: NcoreResult[];
 }
 
-interface SearchFilters {
-    query: string;
-    category: NcoreCategoryKey;
-    uhdOnly: boolean;
-}
-
 @Component({
-    selector: 'app-home',
+    selector: 'app-releases',
     imports: [
         MatButtonModule,
         MatIconModule,
@@ -38,11 +33,11 @@ interface SearchFilters {
         ReleaseCardComponent,
         ReleaseSearchComponent,
     ],
-    templateUrl: './home.html',
-    styleUrl: './home.scss',
+    templateUrl: './releases.html',
+    styleUrl: './releases.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HomeComponent implements OnInit {
+export class ReleasesComponent {
     private search = inject(SearchService);
     private location = inject(Location);
     private route = inject(ActivatedRoute);
@@ -56,9 +51,6 @@ export class HomeComponent implements OnInit {
     protected totalResults = signal(0);
     protected currentPage = signal(1);
     protected readonly pageSize = 100;
-
-    private filters = signal<SearchFilters>({ query: '', category: 'all', uhdOnly: true });
-    private lastSearchTerm = signal('');
 
     protected groupedMovies = computed(() => {
         const results = this.results();
@@ -84,45 +76,24 @@ export class HomeComponent implements OnInit {
         return [...groups.values()];
     });
 
-    protected listTitle = computed(() => {
-        const term = this.lastSearchTerm();
-        if (term) return `Results for: ${term}`;
-        const { category } = this.filters();
-        if (category === 'movies') return 'Top Movies';
-        if (category === 'tv') return 'Top TV Shows';
-        return 'Top Releases';
-    });
-
     constructor() {
-        effect(() => this.titleService.setTitle(this.listTitle()));
-    }
-
-    ngOnInit(): void {
-        const params = this.route.snapshot.queryParams;
-        const cat = params['category'];
-        this.filters.set({
-            query: params['q'] ?? '',
-            category: cat && VALID_CATEGORIES.includes(cat) ? (cat as NcoreCategoryKey) : 'all',
-            uhdOnly: params['uhd'] !== 'false',
-        });
-        const page = parseInt(params['page'], 10);
-        if (page > 0) {
+        this.route.queryParams.pipe(takeUntilDestroyed()).subscribe((params) => {
+            const query: string = params['q'] ?? '';
+            const cat: string = params['category'];
+            const category: NcoreCategoryKey = (VALID_CATEGORIES as string[]).includes(cat)
+                ? (cat as NcoreCategoryKey)
+                : 'all';
+            const uhdOnly = params['uhd'] !== 'false';
+            const page = Math.max(1, parseInt(params['page'], 10) || 1);
             this.currentPage.set(page);
-        }
-
-        // Sync initial state to child after view init without emitting a search (which would reset page to 1)
-        queueMicrotask(() => {
-            const { query, category, uhdOnly } = this.filters();
-            this.releaseSearch()?.initState(query, category, uhdOnly);
+            queueMicrotask(() => this.releaseSearch()?.initState(query, category, uhdOnly));
+            void this.loadResults(query, category, uhdOnly, page);
         });
-
-        void this.loadResults();
     }
 
     protected onSearch(params: SearchParams): void {
-        this.filters.set({ query: params.query, category: params.category, uhdOnly: params.uhdOnly });
         this.currentPage.set(1);
-        void this.loadResults();
+        void this.loadResults(params.query, params.category, params.uhdOnly, 1);
     }
 
     protected onSearchByTitle(title: string): void {
@@ -130,29 +101,42 @@ export class HomeComponent implements OnInit {
     }
 
     protected onPage(event: PageEvent): void {
-        this.currentPage.set(event.pageIndex + 1);
+        const page = event.pageIndex + 1;
+        this.currentPage.set(page);
         if (typeof window !== 'undefined') {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        void this.loadResults();
+        const p = this.route.snapshot.queryParams;
+        const cat: string = p['category'];
+        void this.loadResults(
+            p['q'] ?? '',
+            (VALID_CATEGORIES as string[]).includes(cat) ? (cat as NcoreCategoryKey) : 'all',
+            p['uhd'] !== 'false',
+            page,
+        );
     }
 
-    private async loadResults(): Promise<void> {
+    private async loadResults(
+        query: string,
+        category: NcoreCategoryKey,
+        uhdOnly: boolean,
+        page: number,
+    ): Promise<void> {
         this.loading.set(true);
         this.error.set(null);
-        this.syncQueryParams();
-
-        const { query, category, uhdOnly } = this.filters();
+        this.syncQueryParams(query, category, uhdOnly, page);
+        const hasSearchTerm = !!query.trim();
+        this.titleService.setTitle(
+            hasSearchTerm
+                ? `Results for: ${query.trim()}`
+                : category === 'movies'
+                  ? 'Top Movies'
+                  : category === 'tv'
+                    ? 'Top TV Shows'
+                    : 'Top Releases',
+        );
         try {
-            const hasSearchTerm = !!query.trim();
-            this.lastSearchTerm.set(query.trim());
-            const response = await this.search.search(
-                category,
-                query,
-                this.currentPage(),
-                this.pageSize,
-                !hasSearchTerm && uhdOnly,
-            );
+            const response = await this.search.search(category, query, page, this.pageSize, !hasSearchTerm && uhdOnly);
             this.results.set(response.results);
             this.totalResults.set(response.totalResults);
         } catch (e: unknown) {
@@ -163,13 +147,12 @@ export class HomeComponent implements OnInit {
         }
     }
 
-    private syncQueryParams(): void {
-        const { query, category, uhdOnly } = this.filters();
+    private syncQueryParams(query: string, category: NcoreCategoryKey, uhdOnly: boolean, page: number): void {
         const params: Record<string, string> = {};
         if (query.trim()) params['q'] = query.trim();
         if (category !== 'all') params['category'] = category;
         if (!uhdOnly) params['uhd'] = 'false';
-        if (this.currentPage() > 1) params['page'] = String(this.currentPage());
+        if (page > 1) params['page'] = String(page);
         this.location.replaceState('/releases', new URLSearchParams(params).toString());
     }
 }

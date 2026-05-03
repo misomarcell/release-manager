@@ -20,7 +20,7 @@ export const routes: Routes = [
             {
                 path: 'releases',
                 data: { title: 'Top Releases' },
-                loadComponent: () => import('./components/home/home').then((m) => m.HomeComponent),
+                loadComponent: () => import('./components/releases/releases').then((m) => m.ReleasesComponent),
             },
             {
                 path: 'library',
