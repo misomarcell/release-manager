@@ -1,0 +1,40 @@
+@if (imdbId() || trailerKey() || jellyfinUrl()) {
+    <div class="action-bar">
+        @if (imdbId()) {
+            <a
+                class="action-chip imdb-chip"
+                [href]="'https://www.imdb.com/title/' + imdbId()"
+                target="_blank"
+                rel="noopener"
+                (click)="$event.stopPropagation()"
+            >
+                <mat-icon svgIcon="imdb"></mat-icon>
+                IMDb
+            </a>
+        }
+        @if (trailerKey()) {
+            <a
+                class="action-chip trailer-chip"
+                [href]="'https://www.youtube.com/watch?v=' + trailerKey()"
+                target="_blank"
+                rel="noopener"
+                (click)="$event.stopPropagation()"
+            >
+                <mat-icon svgIcon="youtube"></mat-icon>
+                Trailer
+            </a>
+        }
+        @if (jellyfinUrl()) {
+            <a
+                class="action-chip jellyfin-chip"
+                [href]="jellyfinUrl()!"
+                target="_blank"
+                rel="noopener"
+                (click)="$event.stopPropagation()"
+            >
+                <mat-icon>play_circle</mat-icon>
+                Open in Jellyfin
+            </a>
+        }
+    </div>
+}

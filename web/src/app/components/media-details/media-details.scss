@@ -1,163 +1,75 @@
 :host {
-  display: contents;
+    display: contents;
+
+    ::ng-deep .feedback-group {
+        --mat-button-toggle-shape: 8px;
+        width: 100%;
+        margin-top: 0.5rem;
+        margin-bottom: 0.25rem;
+
+        .mat-button-toggle {
+            flex: 1;
+        }
+
+        .like-toggle.mat-button-toggle-checked .mat-button-toggle-button {
+            background: rgba(46, 125, 50, 0.12);
+            color: #2e7d32;
+        }
+
+        .dislike-toggle.mat-button-toggle-checked .mat-button-toggle-button {
+            background: rgba(179, 38, 30, 0.1);
+            color: var(--mat-sys-error);
+        }
+    }
 }
 
 .detail-strip {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0 0.2rem;
-  font-size: 0.85rem;
-  color: var(--mat-sys-on-surface-variant);
-  margin-bottom: 0.4rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 0.2rem;
+    font-size: 0.85rem;
+    color: var(--mat-sys-on-surface-variant);
+    margin-bottom: 0.5rem;
 
-  > * + * {
-    &::before {
-      content: '·';
-      margin-right: 0.2rem;
-      opacity: 0.6;
+    > * + * {
+        &::before {
+            content: '·';
+            margin-right: 0.2rem;
+            opacity: 0.6;
+        }
     }
-  }
-}
-
-.detail-links {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.85rem;
-  margin-bottom: 1rem;
-}
-
-.imdb-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  color: var(--mat-sys-primary);
-  text-decoration: none;
-
-  mat-icon {
-    font-size: 0.85rem;
-    width: 0.85rem;
-    height: 0.85rem;
-  }
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
-.trailer-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  color: #c00;
-  text-decoration: none;
-
-  mat-icon {
-    font-size: 0.85rem;
-    width: 0.85rem;
-    height: 0.85rem;
-  }
-
-  &:hover {
-    text-decoration: underline;
-  }
 }
 
 .plot {
-  color: var(--mat-sys-on-surface-variant);
-  margin: 0 0 1rem;
-  line-height: 1.5;
-  font-size: 0.85rem;
+    color: var(--mat-sys-on-surface-variant);
+    margin: 0 0 0.75rem;
+    line-height: 1.5;
+    font-size: 0.85rem;
 }
 
-.feedback-row {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1rem;
-
-  .feedback-btn-group {
-    display: flex;
-    width: 100%;
-    border: 1px solid var(--mat-sys-outline-variant);
-    border-radius: 8px;
-    overflow: hidden;
-
-    @media (min-width: 600px) {
-      width: auto;
-      min-width: 180px;
-    }
-
-    .feedback-btn {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.45rem 0;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      color: var(--mat-sys-on-surface-variant);
-      transition:
-        background 0.15s,
-        color 0.15s;
-
-      mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
-      }
-
-      &:not(:last-child) {
-        border-right: 1px solid var(--mat-sys-outline-variant);
-      }
-
-      &:disabled {
-        opacity: 0.4;
-        cursor: default;
-      }
-
-      &.like {
-        background: rgba(46, 125, 50, 0.15);
-        color: #2e7d32;
-      }
-
-      &.like:hover:not(:disabled),
-      &.like.active {
-        background: #2e7d32;
-        color: #fff;
-      }
-
-      &.dislike {
-        background: rgba(var(--mat-sys-error-rgb, 179, 38, 30), 0.12);
-        color: var(--mat-sys-error);
-      }
-
-      &.dislike:hover:not(:disabled),
-      &.dislike.active {
-        background: var(--mat-sys-error);
-        color: #fff;
-      }
-    }
-  }
+app-feedback-buttons {
+    max-width: 650px;
+    margin-top: 0.5rem;
+    margin: 0 auto;
 }
 
 .skeleton-plot {
-  height: 3.5rem;
-  margin-bottom: 1rem;
+    height: 3.5rem;
+    margin-bottom: 1rem;
 }
 
 .skeleton-table {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .skeleton-row {
-  height: 1.2rem;
-  width: 60%;
+    height: 1.2rem;
+    width: 60%;
 
-  &.short {
-    width: 40%;
-  }
+    &.short {
+        width: 40%;
+    }
 }

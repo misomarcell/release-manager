@@ -1,0 +1,48 @@
+:host {
+    display: block;
+    padding: 0.625rem 0.75rem;
+    background: var(--mat-sys-surface-variant);
+    border-radius: 8px;
+}
+
+.stream-group {
+    & + .stream-group {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid color-mix(in srgb, var(--mat-sys-outline-variant) 60%, transparent);
+    }
+
+    .group-label {
+        display: block;
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mat-sys-on-surface-variant);
+        opacity: 0.55;
+        margin-bottom: 0.2rem;
+    }
+
+    .stream-row {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.15rem 0;
+        font-size: 0.78rem;
+        color: var(--mat-sys-on-surface-variant);
+
+        .stream-icon {
+            font-size: 15px;
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+            opacity: 0.55;
+        }
+
+        span {
+            flex: 1;
+            min-width: 0;
+            line-height: 1.4;
+        }
+    }
+}
