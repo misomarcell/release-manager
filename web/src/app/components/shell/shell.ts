@@ -53,18 +53,23 @@ export class ShellComponent implements OnInit, OnDestroy {
                 this.mobileOpen.set(false);
             }
         });
+        this.setTitleFromRoute();
         this.bpSub.add(
             this.router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)).subscribe(() => {
-                let route = this.activatedRoute.snapshot;
-                while (route.firstChild) route = route.firstChild;
-                const title = route.data['title'];
-                if (title) this.pageTitle.setTitle(title as string);
+                this.setTitleFromRoute();
             }),
         );
     }
 
     ngOnDestroy(): void {
         this.bpSub.unsubscribe();
+    }
+
+    private setTitleFromRoute(): void {
+        let route = this.activatedRoute.snapshot;
+        while (route.firstChild) route = route.firstChild;
+        const title = route.data['title'];
+        if (title) this.pageTitle.setTitle(title as string);
     }
 
     protected toggleSidenav(): void {
