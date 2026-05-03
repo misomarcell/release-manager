@@ -23,11 +23,15 @@
         }
     </div>
 
+    @if (sizeGb()) {
+        <div class="size-info">Size: {{ sizeGb() }} GB</div>
+    }
+
     @if (detail()?.plot) {
         <p class="plot">{{ detail()!.plot }}</p>
     }
 
-    @if (hasFeedback()) {
+    @if (displayFeedbackBtns()) {
         <app-feedback-buttons [tmdbId]="tmdbId()!" [mediaType]="mediaType()!" />
     }
 }

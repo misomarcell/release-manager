@@ -45,6 +45,7 @@
             [detailLoading]="detailLoading()"
             [imdbId]="detail()?.imdbId ?? ''"
             [jellyfinUrl]="jellyfinUrl()"
+            [sizeBytes]="i.sizeBytes"
         />
 
         @if (i.mediaInfo?.streams?.length) {

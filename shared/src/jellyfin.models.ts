@@ -33,6 +33,7 @@ export interface LibraryItem {
     genre: string | null;
     rating: string | null;
     mediaInfo: MediaInfo | null;
+    sizeBytes: number | null;
 }
 
 export interface LibraryResponse {

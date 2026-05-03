@@ -18,6 +18,7 @@ interface JellyfinRawMediaStream {
 
 interface JellyfinRawMediaSource {
     MediaStreams?: JellyfinRawMediaStream[];
+    Size?: number;
 }
 
 interface JellyfinRawItem {
@@ -117,8 +118,9 @@ async function syncLibrary(): Promise<number> {
             const year = raw.ProductionYear ? String(raw.ProductionYear) : null;
             const dateCreated = raw.DateCreated ? new Date(raw.DateCreated) : null;
             const mediaInfo = parseMediaInfo(raw.MediaSources);
+            const sizeBytes = raw.MediaSources?.[0]?.Size ?? null;
 
-            return { jellyfinId: raw.Id, tmdbId, mediaType, title: raw.Name, year, dateCreated, mediaInfo };
+            return { jellyfinId: raw.Id, tmdbId, mediaType, title: raw.Name, year, dateCreated, mediaInfo, sizeBytes };
         })
         .filter((item): item is JellyfinItem => item !== null);
 
