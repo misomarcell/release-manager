@@ -14,7 +14,7 @@ function bestAudioBadge(streams: MediaStream[]): Badge | null {
         let candidate: { priority: number; label: string } | null = null;
         if (codec === 'truehd') candidate = { priority: 5, label: 'TrueHD' };
         else if (spatial === 'dtsx') candidate = { priority: 4, label: 'DTS:X' };
-        else if (spatial === 'dolbyatmos') candidate = { priority: 3, label: 'Atmos' };
+        else if (spatial === 'dolbyatmos' || codec === 'atmos') candidate = { priority: 3, label: 'Atmos' };
         else if (codec === 'dts') {
             const prof = (s.profile ?? '').toUpperCase();
             candidate = prof.includes('MA') ? { priority: 2, label: 'DTS-HD MA' } : { priority: 2, label: 'DTS-HD' };
