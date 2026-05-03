@@ -15,6 +15,25 @@
         color: var(--mat-sys-error);
     }
 
+    .results-header {
+        display: flex;
+        align-items: center;
+        justify-content: end;
+        gap: 0.5rem;
+
+        .results-label {
+            flex: 1;
+            font-size: 0.875rem;
+            color: var(--mat-sys-on-surface-variant);
+        }
+
+        .results-count {
+            font-size: 0.875rem;
+            color: var(--mat-sys-on-surface-variant);
+            white-space: nowrap;
+        }
+    }
+
     .list-title {
         display: flex;
         align-items: center;

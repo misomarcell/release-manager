@@ -37,14 +37,14 @@
     }
 
     @if (!loading() && items().length > 0) {
-        <h2 class="list-title">
-            <mat-icon class="list-title-icon">video_library</mat-icon>
+        <div class="results-header">
             @if (activeSearch()) {
-                Results for: {{ activeSearch() }}
-            } @else {
-                My Library ({{ total() }})
+                <span class="results-label">
+                    Results for: <i>"{{ activeSearch() }}"</i>
+                </span>
             }
-        </h2>
+            <span class="results-count">{{ total() }} items</span>
+        </div>
         <mat-accordion class="results">
             @for (item of items(); track item.jellyfinId) {
                 <app-library-card [item]="item" [jellyfinBaseUrl]="jellyfinBaseUrl()" />

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal, computed, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal, computed, viewChild, effect } from '@angular/core';
 import { Location } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,6 +7,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { ReleaseCardComponent } from '../release-card/release-card';
 import { ReleaseSearchComponent, SearchParams } from '../release-search/release-search';
 import { SearchService } from '../../services/search.service';
+import { TitleService } from '../../services/title.service';
 import { ActivatedRoute } from '@angular/router';
 import type { NcoreCategoryKey, NcoreResult } from '@rm/shared/ncore.models';
 import { extractHttpError } from '../../utils/http-error';
@@ -46,6 +47,7 @@ export class HomeComponent implements OnInit {
     private location = inject(Location);
     private route = inject(ActivatedRoute);
     private releaseSearch = viewChild(ReleaseSearchComponent);
+    private titleService = inject(TitleService);
 
     protected loading = signal(false);
     protected error = signal<string | null>(null);
@@ -90,6 +92,10 @@ export class HomeComponent implements OnInit {
         if (category === 'tv') return 'Top TV Shows';
         return 'Top Releases';
     });
+
+    constructor() {
+        effect(() => this.titleService.setTitle(this.listTitle()));
+    }
 
     ngOnInit(): void {
         const params = this.route.snapshot.queryParams;

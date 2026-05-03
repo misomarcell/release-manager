@@ -1,170 +1,165 @@
 ﻿<main class="container">
-  <h2 class="page-title">
-    <mat-icon class="title-icon">auto_awesome</mat-icon>
-    Recommended for You
-  </h2>
+    <section class="ribbon-section">
+        <h3 class="ribbon-title">
+            <mat-icon>movie</mat-icon>
+            Movies
+        </h3>
+        @if (loadingMovies()) {
+            <div class="ribbon">
+                @for (i of skeletonItems; track i) {
+                    <div class="rec-card skeleton-card">
+                        <div class="skeleton poster-skel"></div>
+                        <div class="rec-info">
+                            <div class="skeleton skel-line skel-title"></div>
+                            <div class="skeleton skel-line skel-meta"></div>
+                        </div>
+                        <div class="skeleton-actions"></div>
+                    </div>
+                }
+            </div>
+        } @else if (movies().length > 0) {
+            <div class="ribbon">
+                @for (rec of movies(); track trackByTmdb($index, rec); let i = $index) {
+                    <div class="rec-card" #movieCard>
+                        <div class="poster-wrap" (click)="openDetail(rec)">
+                            @if (rec.poster) {
+                                <img [src]="rec.poster" [alt]="rec.title" loading="lazy" />
+                            } @else {
+                                <div class="no-poster"><mat-icon>movie</mat-icon></div>
+                            }
+                        </div>
+                        <div class="rec-info" (click)="openDetail(rec)">
+                            <span class="rec-title">
+                                @if (rec.inJellyfinLibrary) {
+                                    <mat-icon class="jellyfin-badge">library_add_check</mat-icon>
+                                }
+                                <span class="rec-title-text">{{ rec.title }}</span>
+                            </span>
+                            <span class="rec-meta">
+                                @if (rec.year) {
+                                    {{ rec.year }}
+                                }
+                                @if (rec.rating) {
+                                    &middot; &#11088; {{ rec.rating }}
+                                }
+                            </span>
+                            @if (rec.genre) {
+                                <span class="rec-genre">{{ rec.genre }}</span>
+                            }
+                        </div>
+                        <div class="rec-actions">
+                            <button
+                                class="feedback-btn like"
+                                [class.active]="recommendations.feedback()[trackByTmdb($index, rec)] === 'like'"
+                                [disabled]="recommendations.submitting()[trackByTmdb($index, rec)]"
+                                (click)="sendFeedback(rec, 'like', i, 'movie')"
+                                aria-label="Like"
+                            >
+                                <mat-icon>thumb_up</mat-icon>
+                            </button>
+                            <button
+                                class="feedback-btn dislike"
+                                [class.active]="recommendations.feedback()[trackByTmdb($index, rec)] === 'dislike'"
+                                [disabled]="recommendations.submitting()[trackByTmdb($index, rec)]"
+                                (click)="sendFeedback(rec, 'dislike', i, 'movie')"
+                                aria-label="Dislike"
+                            >
+                                <mat-icon>thumb_down</mat-icon>
+                            </button>
+                        </div>
+                    </div>
+                }
+                @if (canRefreshMovies()) {
+                    <div class="rec-card refresh-card" (click)="refreshMovies()">
+                        <mat-icon class="refresh-icon">refresh</mat-icon>
+                        <span class="refresh-label">Get new recommendations</span>
+                    </div>
+                }
+            </div>
+        } @else {
+            <p class="empty">No movie recommendations available.</p>
+        }
+    </section>
 
-  <section class="ribbon-section">
-    <h3 class="ribbon-title">
-      <mat-icon>movie</mat-icon>
-      Movies
-    </h3>
-    @if (loadingMovies()) {
-      <div class="ribbon">
-        @for (i of skeletonItems; track i) {
-          <div class="rec-card skeleton-card">
-            <div class="skeleton poster-skel"></div>
-            <div class="rec-info">
-              <div class="skeleton skel-line skel-title"></div>
-              <div class="skeleton skel-line skel-meta"></div>
-            </div>
-            <div class="skeleton-actions"></div>
-          </div>
-        }
-      </div>
-    } @else if (movies().length > 0) {
-      <div class="ribbon">
-        @for (rec of movies(); track trackByTmdb($index, rec); let i = $index) {
-          <div class="rec-card" #movieCard>
-            <div class="poster-wrap" (click)="openDetail(rec)">
-              @if (rec.poster) {
-                <img [src]="rec.poster" [alt]="rec.title" loading="lazy" />
-              } @else {
-                <div class="no-poster"><mat-icon>movie</mat-icon></div>
-              }
-            </div>
-            <div class="rec-info" (click)="openDetail(rec)">
-              <span class="rec-title">
-                @if (rec.inJellyfinLibrary) {
-                  <mat-icon class="jellyfin-badge">library_add_check</mat-icon>
+    <section class="ribbon-section">
+        <h3 class="ribbon-title">
+            <mat-icon>tv</mat-icon>
+            TV Shows
+        </h3>
+        @if (loadingTv()) {
+            <div class="ribbon">
+                @for (i of skeletonItems; track i) {
+                    <div class="rec-card skeleton-card">
+                        <div class="skeleton poster-skel"></div>
+                        <div class="rec-info">
+                            <div class="skeleton skel-line skel-title"></div>
+                            <div class="skeleton skel-line skel-meta"></div>
+                        </div>
+                        <div class="skeleton-actions"></div>
+                    </div>
                 }
-                <span class="rec-title-text">{{ rec.title }}</span>
-              </span>
-              <span class="rec-meta">
-                @if (rec.year) {
-                  {{ rec.year }}
+            </div>
+        } @else if (tvShows().length > 0) {
+            <div class="ribbon">
+                @for (rec of tvShows(); track trackByTmdb($index, rec); let i = $index) {
+                    <div class="rec-card" #tvCard>
+                        <div class="poster-wrap" (click)="openDetail(rec)">
+                            @if (rec.poster) {
+                                <img [src]="rec.poster" [alt]="rec.title" loading="lazy" />
+                            } @else {
+                                <div class="no-poster"><mat-icon>tv</mat-icon></div>
+                            }
+                        </div>
+                        <div class="rec-info" (click)="openDetail(rec)">
+                            <span class="rec-title">
+                                @if (rec.inJellyfinLibrary) {
+                                    <mat-icon class="jellyfin-badge">library_add_check</mat-icon>
+                                }
+                                <span class="rec-title-text">{{ rec.title }}</span>
+                            </span>
+                            <span class="rec-meta">
+                                @if (rec.year) {
+                                    {{ rec.year }}
+                                }
+                                @if (rec.rating) {
+                                    &middot; &#11088; {{ rec.rating }}
+                                }
+                            </span>
+                            @if (rec.genre) {
+                                <span class="rec-genre">{{ rec.genre }}</span>
+                            }
+                        </div>
+                        <div class="rec-actions">
+                            <button
+                                class="feedback-btn like"
+                                [class.active]="recommendations.feedback()[trackByTmdb($index, rec)] === 'like'"
+                                [disabled]="recommendations.submitting()[trackByTmdb($index, rec)]"
+                                (click)="sendFeedback(rec, 'like', i, 'tv')"
+                                aria-label="Like"
+                            >
+                                <mat-icon>thumb_up</mat-icon>
+                            </button>
+                            <button
+                                class="feedback-btn dislike"
+                                [class.active]="recommendations.feedback()[trackByTmdb($index, rec)] === 'dislike'"
+                                [disabled]="recommendations.submitting()[trackByTmdb($index, rec)]"
+                                (click)="sendFeedback(rec, 'dislike', i, 'tv')"
+                                aria-label="Dislike"
+                            >
+                                <mat-icon>thumb_down</mat-icon>
+                            </button>
+                        </div>
+                    </div>
                 }
-                @if (rec.rating) {
-                  &middot; &#11088; {{ rec.rating }}
+                @if (canRefreshTv()) {
+                    <div class="rec-card refresh-card" (click)="refreshTv()">
+                        <mat-icon class="refresh-icon">refresh</mat-icon>
+                        <span class="refresh-label">Get new recommendations</span>
+                    </div>
                 }
-              </span>
-              @if (rec.genre) {
-                <span class="rec-genre">{{ rec.genre }}</span>
-              }
             </div>
-            <div class="rec-actions">
-              <button
-                class="feedback-btn like"
-                [class.active]="recommendations.feedback()[trackByTmdb($index, rec)] === 'like'"
-                [disabled]="recommendations.submitting()[trackByTmdb($index, rec)]"
-                (click)="sendFeedback(rec, 'like', i, 'movie')"
-                aria-label="Like"
-              >
-                <mat-icon>thumb_up</mat-icon>
-              </button>
-              <button
-                class="feedback-btn dislike"
-                [class.active]="recommendations.feedback()[trackByTmdb($index, rec)] === 'dislike'"
-                [disabled]="recommendations.submitting()[trackByTmdb($index, rec)]"
-                (click)="sendFeedback(rec, 'dislike', i, 'movie')"
-                aria-label="Dislike"
-              >
-                <mat-icon>thumb_down</mat-icon>
-              </button>
-            </div>
-          </div>
+        } @else {
+            <p class="empty">No TV show recommendations available.</p>
         }
-        @if (canRefreshMovies()) {
-          <div class="rec-card refresh-card" (click)="refreshMovies()">
-            <mat-icon class="refresh-icon">refresh</mat-icon>
-            <span class="refresh-label">Get new recommendations</span>
-          </div>
-        }
-      </div>
-    } @else {
-      <p class="empty">No movie recommendations available.</p>
-    }
-  </section>
-
-  <section class="ribbon-section">
-    <h3 class="ribbon-title">
-      <mat-icon>tv</mat-icon>
-      TV Shows
-    </h3>
-    @if (loadingTv()) {
-      <div class="ribbon">
-        @for (i of skeletonItems; track i) {
-          <div class="rec-card skeleton-card">
-            <div class="skeleton poster-skel"></div>
-            <div class="rec-info">
-              <div class="skeleton skel-line skel-title"></div>
-              <div class="skeleton skel-line skel-meta"></div>
-            </div>
-            <div class="skeleton-actions"></div>
-          </div>
-        }
-      </div>
-    } @else if (tvShows().length > 0) {
-      <div class="ribbon">
-        @for (rec of tvShows(); track trackByTmdb($index, rec); let i = $index) {
-          <div class="rec-card" #tvCard>
-            <div class="poster-wrap" (click)="openDetail(rec)">
-              @if (rec.poster) {
-                <img [src]="rec.poster" [alt]="rec.title" loading="lazy" />
-              } @else {
-                <div class="no-poster"><mat-icon>tv</mat-icon></div>
-              }
-            </div>
-            <div class="rec-info" (click)="openDetail(rec)">
-              <span class="rec-title">
-                @if (rec.inJellyfinLibrary) {
-                  <mat-icon class="jellyfin-badge">library_add_check</mat-icon>
-                }
-                <span class="rec-title-text">{{ rec.title }}</span>
-              </span>
-              <span class="rec-meta">
-                @if (rec.year) {
-                  {{ rec.year }}
-                }
-                @if (rec.rating) {
-                  &middot; &#11088; {{ rec.rating }}
-                }
-              </span>
-              @if (rec.genre) {
-                <span class="rec-genre">{{ rec.genre }}</span>
-              }
-            </div>
-            <div class="rec-actions">
-              <button
-                class="feedback-btn like"
-                [class.active]="recommendations.feedback()[trackByTmdb($index, rec)] === 'like'"
-                [disabled]="recommendations.submitting()[trackByTmdb($index, rec)]"
-                (click)="sendFeedback(rec, 'like', i, 'tv')"
-                aria-label="Like"
-              >
-                <mat-icon>thumb_up</mat-icon>
-              </button>
-              <button
-                class="feedback-btn dislike"
-                [class.active]="recommendations.feedback()[trackByTmdb($index, rec)] === 'dislike'"
-                [disabled]="recommendations.submitting()[trackByTmdb($index, rec)]"
-                (click)="sendFeedback(rec, 'dislike', i, 'tv')"
-                aria-label="Dislike"
-              >
-                <mat-icon>thumb_down</mat-icon>
-              </button>
-            </div>
-          </div>
-        }
-        @if (canRefreshTv()) {
-          <div class="rec-card refresh-card" (click)="refreshTv()">
-            <mat-icon class="refresh-icon">refresh</mat-icon>
-            <span class="refresh-label">Get new recommendations</span>
-          </div>
-        }
-      </div>
-    } @else {
-      <p class="empty">No TV show recommendations available.</p>
-    }
-  </section>
+    </section>
 </main>
