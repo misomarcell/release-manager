@@ -1,6 +1,6 @@
 import { config } from '../config.js';
 import { logger } from '../utils/logger.js';
-import { downloadTorrentFile } from './ncore.service.js';
+import { ncoreService } from './ncore.service.js';
 import type { DownloadCategory } from 'shared/constants';
 
 let sessionCookie = '';
@@ -55,7 +55,7 @@ export async function addTorrent(downloadUrl: string, savePath: string, category
     throw new Error('qBittorrent is not configured. Set QBITTORRENT_URL.');
   }
 
-  const torrentData = await downloadTorrentFile(downloadUrl);
+  const torrentData = await ncoreService.downloadTorrentFile(downloadUrl);
   console.log('[qBittorrent]', `Torrent file size: ${torrentData.byteLength} bytes`);
 
   const formData = new FormData();

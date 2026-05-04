@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
-import { searchNcore, fetchNfo } from '../services/ncore.service.js';
+import { ncoreService, NcoreNoResultsError } from '../services/ncore.service.js';
 import { fetchBasicMetadata, getCacheKey, fetchDetailMetadata } from '../services/metadata.service.js';
 import { addTorrent } from '../services/qbittorrent.service.js';
 import { mapConcurrent } from '../utils/concurrent.js';
@@ -52,7 +52,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     if (!query) return;
 
     try {
-        const ncoreResult = await searchNcore(query);
+        const ncoreResult = await ncoreService.search(query);
 
         // Deduplicate by metadata lookup key
         const uniqueLookups = new Map<string, MetadataLookup>();
@@ -92,6 +92,11 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
         res.json(response);
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Search failed';
+        if (error instanceof NcoreNoResultsError) {
+            res.status(404).json({ error: message });
+            return;
+        }
+
         logger.error('nCore search failed', { error: message });
         res.status(502).json({ error: message });
     }
@@ -121,7 +126,7 @@ router.get('/nfo/:id', requireAuth, async (req: Request, res: Response) => {
     if (!params) return;
 
     try {
-        const html = await fetchNfo(params.id);
+        const html = await ncoreService.fetchNfo(params.id);
         res.type('html').send(html);
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'NFO fetch failed';
