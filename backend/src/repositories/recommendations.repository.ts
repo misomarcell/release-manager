@@ -1,21 +1,18 @@
-import { MediaType } from 'shared/tmdb.models';
 import { query } from '../db/connection.js';
 import type { AiRecommendation, FeedbackValue } from 'shared/recommendations.models';
+import type { MediaType } from 'shared/tmdb.models';
 
 interface FeedbackRecord {
     tmdbId: number;
-    mediaType: string;
+    mediaType: MediaType;
     title: string;
-    summary: string;
-    feedback: string;
+    feedback: FeedbackValue;
 }
 
 interface FeedbackRow {
-    tmdb_id: number;
-    media_type: string;
+    media_type: MediaType;
     title: string;
-    summary: string;
-    feedback: string;
+    feedback: FeedbackValue;
 }
 
 export type { FeedbackRow };
@@ -37,7 +34,7 @@ export async function hasFeedback(userId: number): Promise<boolean> {
 
 export async function getAllFeedback(userId: number): Promise<FeedbackRow[]> {
     const result = await query<FeedbackRow>(
-        `SELECT tmdb_id, media_type, title, COALESCE(summary, '') AS summary, feedback
+        `SELECT media_type, title, feedback
      FROM recommendation_feedback
      WHERE user_id = $1
      ORDER BY created_at DESC`,
@@ -48,15 +45,15 @@ export async function getAllFeedback(userId: number): Promise<FeedbackRow[]> {
 
 export async function upsertFeedback(rec: FeedbackRecord, userId: number): Promise<void> {
     await query(
-        `INSERT INTO recommendation_feedback (user_id, tmdb_id, media_type, title, summary, feedback)
-     VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO recommendation_feedback (user_id, tmdb_id, media_type, title, feedback)
+     VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (user_id, tmdb_id, media_type)
-     DO UPDATE SET summary=$5, feedback=$6, created_at=NOW()`,
-        [userId, rec.tmdbId, rec.mediaType, rec.title, rec.summary, rec.feedback],
+     DO UPDATE SET title=$4, feedback=$5, created_at=NOW()`,
+        [userId, rec.tmdbId, rec.mediaType, rec.title, rec.feedback],
     );
 }
 
-export async function deleteFeedback(userId: number, tmdbId: number, mediaType: string): Promise<void> {
+export async function deleteFeedback(userId: number, tmdbId: number, mediaType: MediaType): Promise<void> {
     await query(`DELETE FROM recommendation_feedback WHERE user_id = $1 AND tmdb_id = $2 AND media_type = $3`, [
         userId,
         tmdbId,
@@ -109,9 +106,9 @@ export async function getFeedbackForItem(
     tmdbId: number,
     mediaType: MediaType,
 ): Promise<FeedbackValue | null> {
-    const result = await query<{ feedback: string }>(
+    const result = await query<{ feedback: FeedbackValue }>(
         `SELECT feedback FROM recommendation_feedback WHERE user_id = $1 AND tmdb_id = $2 AND media_type = $3`,
         [userId, tmdbId, mediaType],
     );
-    return result.rows.length > 0 ? (result.rows[0].feedback as FeedbackValue) : null;
+    return result.rows.length > 0 ? result.rows[0].feedback : null;
 }

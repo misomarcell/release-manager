@@ -4,8 +4,8 @@ import { z } from 'zod';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
-import { getRecommendations } from '../services/recommendations.service.js';
-import { fetchBasicMetadata, fetchDetailMetadata } from '../services/metadata.service.js';
+import { recommendationsService } from '../services/recommendations.service.js';
+import { fetchBasicMetadata } from '../services/metadata.service.js';
 import {
     upsertFeedback,
     deleteFeedback,
@@ -45,7 +45,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     if (!query) return;
 
     try {
-        const response = await getRecommendations(authUser.userId, query.mediaType ?? null);
+        const response = await recommendationsService.getRecommendations(authUser.userId, query.mediaType ?? null);
         res.json({ ...response, canRefresh: authUser.admin ? response.canRefresh : false });
     } catch (err) {
         logger.error('Recommendations: GET error', { error: err instanceof Error ? err.message : String(err) });
@@ -85,14 +85,9 @@ router.post('/feedback', requireAuth, async (req: Request, res: Response) => {
         res.status(404).json({ error: 'Media not found' });
         return;
     }
-    const detail = await fetchDetailMetadata(body.tmdbId, body.mediaType);
-    const summary = [metadata.genre, metadata.year, detail?.plot ? detail.plot.slice(0, 120) : undefined]
-        .filter(Boolean)
-        .join(', ');
-
     try {
         await upsertFeedback(
-            { tmdbId: body.tmdbId, mediaType: body.mediaType, title: metadata.title, summary, feedback: body.feedback },
+            { tmdbId: body.tmdbId, mediaType: body.mediaType, title: metadata.title, feedback: body.feedback },
             userId,
         );
         res.json({ ok: true });
@@ -127,7 +122,7 @@ router.post('/refresh', requireAuth, requireAdmin, async (req: Request, res: Res
 
     try {
         await invalidateCacheForFilter(userId, query.mediaType ?? null);
-        const recommendations = await getRecommendations(userId, query.mediaType ?? null);
+        const recommendations = await recommendationsService.getRecommendations(userId, query.mediaType ?? null);
         res.json(recommendations);
     } catch (err) {
         logger.error('Recommendations: refresh error', { error: err instanceof Error ? err.message : String(err) });

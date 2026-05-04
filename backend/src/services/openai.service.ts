@@ -2,6 +2,10 @@ import OpenAI from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
 import { config } from '../config.js';
+import { buildRecommendationPrompt } from './recommendation-prompt.js';
+import type { MediaType } from 'shared/tmdb.models';
+
+const RECOMMENDATION_MODEL = 'gpt-5.4-mini';
 
 const SuggestionSchema = z.object({
     title: z.string(),
@@ -10,8 +14,7 @@ const SuggestionSchema = z.object({
 });
 
 const AiResponseSchema = z.object({
-    movies: z.array(SuggestionSchema),
-    tvShows: z.array(SuggestionSchema),
+    recommendations: z.array(SuggestionSchema),
 });
 
 export type AiSuggestion = z.infer<typeof SuggestionSchema>;
@@ -27,64 +30,52 @@ export function isOpenAiAvailable(): boolean {
     return !!config.openai.apiKey;
 }
 
+function cleanSuggestion(suggestion: AiSuggestion): AiSuggestion | null {
+    const title = suggestion.title.trim();
+    if (!title) return null;
+    return {
+        title,
+        year: suggestion.year.trim(),
+        reason: suggestion.reason.trim(),
+    };
+}
+
 export async function getAiRecommendations(
     feedbackContext: string,
     excludeTitles: string[],
-    perTypeCount: number,
-): Promise<{ movies: AiSuggestion[]; tvShows: AiSuggestion[] }> {
-    const empty = { movies: [], tvShows: [] };
+    count: number,
+    mediaType: MediaType,
+): Promise<AiSuggestion[]> {
+    const prompt = buildRecommendationPrompt({ feedbackContext, excludeTitles, count, mediaType });
 
-    const exclusionNote =
-        excludeTitles.length > 0
-            ? `\nDo NOT recommend any of these already-rated titles:\n${excludeTitles.map((t) => `• ${t}`).join('\n')}\n`
-            : '';
-
-    const systemPrompt = `You are an expert movie and TV show recommendation assistant with encyclopedic knowledge of cinema and television across all eras, genres, and countries.
-
-Task: Recommend exactly ${perTypeCount} movies AND ${perTypeCount} TV shows the user will genuinely love, based on their rating history.
-
-Rules:
-- Deeply analyze the user's taste from their liked titles — look for patterns in genre, tone, era, country, directors, and themes
-- Actively avoid styles, genres, and tones similar to disliked titles
-- Prioritize critically acclaimed titles, cult classics, and hidden gems over generic blockbusters
-- Prioritize titles with high (7+) IMDb ratings
-- Vary era (classic to contemporary), country of origin, and genre for a diverse, interesting selection
-- For TV shows, prefer completed or well-established long-running series
-- Include the original title as it appears in international databases (e.g. TMDB)
-${exclusionNote}
-Return exactly ${perTypeCount} items in "movies" and exactly ${perTypeCount} items in "tvShows". Each item must have title, year, and a concise one-sentence reason why it matches the user's taste.`;
-
-    const userMessage = `My viewing history:\n\n${feedbackContext}\n\nRecommend ${perTypeCount} movies and ${perTypeCount} TV shows I'll love.`;
-
-    console.log(`[OpenAI] getAiRecommendations — requesting ${perTypeCount} movies + ${perTypeCount} TV shows`);
+    console.log(`[OpenAI] recommendations - requesting ${count} ${prompt.mediaLabel}`);
 
     try {
         const response = await getClient().chat.completions.parse({
-            model: 'gpt-4o-mini',
+            model: RECOMMENDATION_MODEL,
             temperature: 0.9,
-            max_tokens: 2048,
             messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userMessage },
+                { role: 'system', content: prompt.system },
+                { role: 'user', content: prompt.user },
             ],
             response_format: zodResponseFormat(AiResponseSchema, 'recommendations'),
         });
 
         const parsed = response.choices[0]?.message.parsed;
         if (!parsed) {
-            console.error('[OpenAI] getAiRecommendations — no parsed response');
-            return empty;
+            console.error('[OpenAI] recommendations - no parsed response');
+            return [];
         }
 
-        console.log(
-            `[OpenAI] getAiRecommendations — got ${parsed.movies.length} movies, ${parsed.tvShows.length} TV shows`,
-        );
-        return {
-            movies: parsed.movies.filter((s: AiSuggestion) => s.title.length > 0),
-            tvShows: parsed.tvShows.filter((s: AiSuggestion) => s.title.length > 0),
-        };
+        const suggestions = parsed.recommendations
+            .map(cleanSuggestion)
+            .filter((suggestion): suggestion is AiSuggestion => suggestion !== null)
+            .slice(0, count);
+
+        console.log(`[OpenAI] recommendations - got ${suggestions.length} ${prompt.mediaLabel}`);
+        return suggestions;
     } catch (err) {
-        console.error('[OpenAI] getAiRecommendations — error:', err);
-        return empty;
+        console.error('[OpenAI] recommendations - error:', err);
+        return [];
     }
 }

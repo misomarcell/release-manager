@@ -1,4 +1,4 @@
-import { tmdbFetchBasic, tmdbFetchDetail, tmdbFetchTopRated } from './tmdb.service.js';
+import { tmdbService } from './tmdb.service.js';
 import {
     getCachedMetadata,
     setCachedMetadata,
@@ -18,7 +18,8 @@ interface BasicFetchResult {
 
 export function getCacheKey(lookup: MetadataLookup): string {
     if (lookup.imdbId) return `id:${lookup.imdbId}`;
-    return `title:${lookup.title.trim().toLowerCase()}|year:${lookup.year}`;
+    const typePart = lookup.mediaType ? `type:${lookup.mediaType}|` : '';
+    return `${typePart}title:${lookup.title.trim().toLowerCase()}|year:${lookup.year}`;
 }
 
 // ── Basic metadata ─────────────────────────────────────────────────────────────
@@ -50,12 +51,12 @@ async function doFetchBasicMetadata(lookup: MetadataLookup, cacheKey: string): P
     }
 
     const cached = await getCachedMetadata(cacheKey);
-    if (cached) {
+    if (cached && (!lookup.mediaType || cached.mediaType === lookup.mediaType)) {
         cached.inJellyfinLibrary = isInLibrary(cached.tmdbId, cached.title, cached.year);
         return { metadata: cached, fromCache: true };
     }
 
-    const metadata = await tmdbFetchBasic(lookup);
+    const metadata = await tmdbService.fetchBasic(lookup);
     if (!metadata) return { metadata: null, fromCache: false };
 
     await setCachedMetadata(cacheKey, metadata);
@@ -82,13 +83,13 @@ export async function fetchDetailMetadata(tmdbId: number, mediaType: MediaType):
 }
 
 async function doFetchDetailMetadata(tmdbId: number, mediaType: MediaType): Promise<MovieDetailMetadata | null> {
-    const cached = await getCachedDetailByTmdbId(tmdbId);
+    const cached = await getCachedDetailByTmdbId(tmdbId, mediaType);
     if (cached) return cached;
 
-    const detail = await tmdbFetchDetail(tmdbId, mediaType);
+    const detail = await tmdbService.fetchDetail(tmdbId, mediaType);
     if (!detail) return null;
 
-    await updateCachedDetail(tmdbId, detail);
+    await updateCachedDetail(tmdbId, mediaType, detail);
     return detail;
 }
 
@@ -98,12 +99,13 @@ export async function fetchTopRatedRecommendations(
     count: number,
     filter: MediaType | null = null,
 ): Promise<AiRecommendation[]> {
-    const recs = await tmdbFetchTopRated(count, filter);
+    const recs = await tmdbService.fetchTopRated(count, filter);
 
     // Warm metadata_cache with the batch data we already have so enrichment is all cache-hits
-    await mapConcurrent(recs, 6, (rec) =>
-        setCachedMetadata(getCacheKey({ title: rec.title, year: rec.year, imdbId: '' }), rec),
-    );
+    await mapConcurrent(recs, 6, (rec) => {
+        const mediaType = rec.mediaType as MediaType;
+        return setCachedMetadata(getCacheKey({ title: rec.title, year: rec.year, imdbId: '', mediaType }), rec);
+    });
 
     return recs.map((rec) => ({
         tmdbId: rec.tmdbId,

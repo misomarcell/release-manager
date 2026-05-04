@@ -103,7 +103,6 @@ export async function initDatabase(): Promise<void> {
       tmdb_id     INTEGER NOT NULL,
       media_type  VARCHAR(10) NOT NULL,
       title       TEXT NOT NULL,
-      summary     TEXT NOT NULL,
       feedback    VARCHAR(10) NOT NULL CHECK (feedback IN ('like', 'dislike')),
       created_at  TIMESTAMPTZ DEFAULT NOW(),
       UNIQUE (tmdb_id, media_type)
@@ -122,6 +121,11 @@ export async function initDatabase(): Promise<void> {
 
     ALTER TABLE recommendation_cache
       ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+  `);
+
+    await pool.query(`
+    ALTER TABLE recommendation_feedback
+      DROP COLUMN IF EXISTS summary;
   `);
 
     await pool.query(`
