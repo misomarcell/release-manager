@@ -46,6 +46,7 @@
             [imdbId]="detail()?.imdbId ?? ''"
             [jellyfinUrl]="jellyfinUrl()"
             [sizeBytes]="i.sizeBytes"
+            [filename]="i.filename"
         />
 
         @if (i.mediaInfo?.streams?.length) {

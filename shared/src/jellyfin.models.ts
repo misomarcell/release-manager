@@ -34,6 +34,7 @@ export interface LibraryItem {
     rating: string | null;
     mediaInfo: MediaInfo | null;
     sizeBytes: number | null;
+    filename: string | null;
 }
 
 export interface LibraryResponse {

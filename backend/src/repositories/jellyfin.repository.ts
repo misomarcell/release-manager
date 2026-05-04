@@ -16,6 +16,7 @@ export interface JellyfinItem {
     dateCreated: Date | null;
     mediaInfo: MediaInfo | null;
     sizeBytes: number | null;
+    filename: string | null;
 }
 
 // In-memory lookup sets — populated on startup and after each sync
@@ -62,9 +63,9 @@ export async function replaceLibrary(items: JellyfinItem[]): Promise<void> {
     const placeholders: string[] = [];
 
     items.forEach((item, i) => {
-        const base = i * 8;
+        const base = i * 9;
         placeholders.push(
-            `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8})`,
+            `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9})`,
         );
         values.push(
             item.jellyfinId,
@@ -75,11 +76,12 @@ export async function replaceLibrary(items: JellyfinItem[]): Promise<void> {
             item.dateCreated ?? null,
             item.mediaInfo ? JSON.stringify(item.mediaInfo) : null,
             item.sizeBytes ?? null,
+            item.filename ?? null,
         );
     });
 
     await query(
-        `INSERT INTO jellyfin_library (jellyfin_id, tmdb_id, media_type, title, year, date_created, media_info, size_bytes)
+        `INSERT INTO jellyfin_library (jellyfin_id, tmdb_id, media_type, title, year, date_created, media_info, size_bytes, filename)
      VALUES ${placeholders.join(', ')}
      ON CONFLICT (jellyfin_id) DO UPDATE
        SET tmdb_id = EXCLUDED.tmdb_id,
@@ -89,6 +91,7 @@ export async function replaceLibrary(items: JellyfinItem[]): Promise<void> {
            date_created = EXCLUDED.date_created,
            media_info = EXCLUDED.media_info,
            size_bytes = EXCLUDED.size_bytes,
+           filename = EXCLUDED.filename,
            synced_at = NOW()`,
         values,
     );
@@ -179,11 +182,12 @@ export async function getLibrary(
             synced_at: string;
             media_info: MediaInfo | null;
             size_bytes: number | null;
+            filename: string | null;
         }>(
-            `SELECT jellyfin_id, tmdb_id, media_type, title, year, synced_at, media_info, size_bytes
+            `SELECT jellyfin_id, tmdb_id, media_type, title, year, synced_at, media_info, size_bytes, filename
        FROM (
          SELECT DISTINCT ON (COALESCE(tmdb_id::text, jellyfin_id))
-           jellyfin_id, tmdb_id, media_type, title, year, synced_at, date_created, media_info, size_bytes
+           jellyfin_id, tmdb_id, media_type, title, year, synced_at, date_created, media_info, size_bytes, filename
          FROM jellyfin_library
          ${whereSql}
          ORDER BY COALESCE(tmdb_id::text, jellyfin_id), title ASC
@@ -215,6 +219,7 @@ export async function getLibrary(
         rating: null,
         mediaInfo: row.media_info ?? null,
         sizeBytes: row.size_bytes ?? null,
+        filename: row.filename ?? null,
     }));
 
     return { items, total: parseInt(countResult.rows[0].count, 10) };

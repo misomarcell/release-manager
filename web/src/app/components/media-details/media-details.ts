@@ -5,10 +5,18 @@ import { FeedbackButtonsComponent } from '../feedback-buttons/feedback-buttons';
 import { MediaActionChipsComponent } from '../media-action-chips/media-action-chips';
 import type { MovieDetailMetadata } from '@rm/shared/tmdb.models';
 import type { MediaType } from '@rm/shared/tmdb.models';
+import { MatDivider, MatDividerModule } from '@angular/material/divider';
 
 @Component({
     selector: 'app-media-details',
-    imports: [MatButtonModule, MatIconModule, FeedbackButtonsComponent, MediaActionChipsComponent],
+    imports: [
+        MatButtonModule,
+        MatIconModule,
+        MatDividerModule,
+        FeedbackButtonsComponent,
+        MediaActionChipsComponent,
+        MatDivider,
+    ],
     templateUrl: './media-details.html',
     styleUrl: './media-details.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -21,6 +29,7 @@ export class MediaDetailsComponent {
     detail = input<MovieDetailMetadata | null>(null);
     detailLoading = input<boolean>(false);
     sizeBytes = input<number | null>(null);
+    filename = input<string | null>(null);
 
     protected displayFeedbackBtns = computed(() => !!this.tmdbId() && !!this.mediaType());
 

@@ -32,6 +32,7 @@ interface JellyfinRawItem {
         [key: string]: string | undefined;
     };
     MediaSources?: JellyfinRawMediaSource[];
+    Path?: string;
 }
 
 function parseMediaInfo(mediaSources: JellyfinRawMediaSource[] | undefined): MediaInfo | null {
@@ -103,7 +104,7 @@ async function syncLibrary(): Promise<number> {
     const data = (await jellyfinGet(`/Users/${config.jellyfin.userId}/Items`, {
         Recursive: 'true',
         IncludeItemTypes: 'Movie,Series',
-        Fields: 'ProviderIds,Name,ProductionYear,DateCreated,MediaSources',
+        Fields: 'ProviderIds,Name,ProductionYear,DateCreated,MediaSources,Path',
     })) as { Items?: JellyfinRawItem[] };
 
     const rawItems: JellyfinRawItem[] = Array.isArray(data?.Items) ? data.Items : [];
@@ -119,8 +120,19 @@ async function syncLibrary(): Promise<number> {
             const dateCreated = raw.DateCreated ? new Date(raw.DateCreated) : null;
             const mediaInfo = parseMediaInfo(raw.MediaSources);
             const sizeBytes = raw.MediaSources?.[0]?.Size ?? null;
+            const filename = raw.Path ? (raw.Path.split(/[/\\]/).pop() ?? null) : null;
 
-            return { jellyfinId: raw.Id, tmdbId, mediaType, title: raw.Name, year, dateCreated, mediaInfo, sizeBytes };
+            return {
+                jellyfinId: raw.Id,
+                tmdbId,
+                mediaType,
+                title: raw.Name,
+                year,
+                dateCreated,
+                mediaInfo,
+                sizeBytes,
+                filename,
+            };
         })
         .filter((item): item is JellyfinItem => item !== null);
 
