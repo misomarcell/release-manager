@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatAccordion } from '@angular/material/expansion';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { ReleaseCardComponent } from '../release-card/release-card';
-import { ReleaseSearchComponent, SearchParams } from '../release-search/release-search';
+import { FilterSearchComponent, FilterSearchSubmit, SearchFilterDefinition } from '../filter-search/filter-search';
 import { SearchService } from '../../services/search.service';
 import { TitleService } from '../../services/title.service';
 import { ActivatedRoute } from '@angular/router';
@@ -14,6 +14,26 @@ import type { NcoreCategoryKey, NcoreResult } from '@rm/shared/ncore.models';
 import { extractHttpError } from '../../utils/http-error';
 
 const VALID_CATEGORIES: NcoreCategoryKey[] = ['all', 'movies', 'tv'];
+const RELEASE_SEARCH_FILTERS: SearchFilterDefinition[] = [
+    {
+        key: 'category',
+        label: 'Category',
+        control: 'select',
+        defaultValue: 'all',
+        options: [
+            { value: 'all', label: 'All' },
+            { value: 'movies', label: 'Movies' },
+            { value: 'tv', label: 'TV Shows' },
+        ],
+    },
+    {
+        key: 'uhdOnly',
+        label: 'Quality',
+        control: 'toggle',
+        defaultValue: true,
+        options: [{ value: 'true', label: '4K only' }],
+    },
+];
 
 export interface GroupedMovie {
     key: string;
@@ -31,7 +51,7 @@ export interface GroupedMovie {
         MatAccordion,
         MatPaginatorModule,
         ReleaseCardComponent,
-        ReleaseSearchComponent,
+        FilterSearchComponent,
     ],
     templateUrl: './releases.html',
     styleUrl: './releases.scss',
@@ -41,9 +61,10 @@ export class ReleasesComponent {
     private search = inject(SearchService);
     private location = inject(Location);
     private route = inject(ActivatedRoute);
-    private releaseSearch = viewChild(ReleaseSearchComponent);
+    private releaseSearch = viewChild(FilterSearchComponent);
     private titleService = inject(TitleService);
 
+    protected releaseFilters = RELEASE_SEARCH_FILTERS;
     protected loading = signal(false);
     protected error = signal<string | null>(null);
     private results = signal<NcoreResult[]>([]);
@@ -86,14 +107,16 @@ export class ReleasesComponent {
             const uhdOnly = params['uhd'] !== 'false';
             const page = Math.max(1, parseInt(params['page'], 10) || 1);
             this.currentPage.set(page);
-            queueMicrotask(() => this.releaseSearch()?.initState(query, category, uhdOnly));
+            queueMicrotask(() => this.releaseSearch()?.setState(query, { category, uhdOnly }));
             void this.loadResults(query, category, uhdOnly, page);
         });
     }
 
-    protected onSearch(params: SearchParams): void {
+    protected onSearch(params: FilterSearchSubmit): void {
+        const category = this.getCategoryFilter(params.filters['category']);
+        const uhdOnly = params.filters['uhdOnly'] === true;
         this.currentPage.set(1);
-        void this.loadResults(params.query, params.category, params.uhdOnly, 1);
+        void this.loadResults(params.query, category, uhdOnly, 1);
     }
 
     protected onSearchByTitle(title: string): void {
@@ -154,5 +177,11 @@ export class ReleasesComponent {
         if (!uhdOnly) params['uhd'] = 'false';
         if (page > 1) params['page'] = String(page);
         this.location.replaceState('/releases', new URLSearchParams(params).toString());
+    }
+
+    private getCategoryFilter(value: unknown): NcoreCategoryKey {
+        return typeof value === 'string' && (VALID_CATEGORIES as string[]).includes(value)
+            ? (value as NcoreCategoryKey)
+            : 'all';
     }
 }

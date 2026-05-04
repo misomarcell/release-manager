@@ -7,10 +7,11 @@ import { fetchBasicMetadata } from '../services/metadata.service.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import { config } from '../config.js';
 import type { LibraryItem, LibraryResponse } from 'shared/jellyfin.models';
-import { parseQuery } from '../middleware/validate.js';
+import { MediaTypeSchema, parseQuery } from '../middleware/validate.js';
 
 const LibraryQuerySchema = z.object({
     search: z.string().max(200).default(''),
+    type: MediaTypeSchema.optional(),
     page: z.coerce.number().int().min(1).default(1),
     perPage: z.coerce.number().int().min(1).max(100).default(30),
 });
@@ -22,7 +23,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     if (!query) return;
 
     try {
-        const { items, total } = await getLibrary(query.search, query.page, query.perPage);
+        const { items, total } = await getLibrary(query.search, query.page, query.perPage, query.type ?? null);
 
         const enriched = await mapConcurrent(items, 6, async (item): Promise<LibraryItem> => {
             if (!item.tmdbId || !item.mediaType) return item;

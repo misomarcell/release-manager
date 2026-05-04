@@ -1,22 +1,9 @@
 <main class="container">
-    <div class="search-bar">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-field">
-            <mat-icon matPrefix>search</mat-icon>
-            <input
-                matInput
-                #searchInput
-                [(ngModel)]="searchQuery"
-                (keydown.enter)="onSearch()"
-                placeholder="Search library..."
-                autocomplete="off"
-            />
-            @if (searchQuery()) {
-                <button mat-icon-button matSuffix aria-label="Clear" (click)="clearSearch()">
-                    <mat-icon>close</mat-icon>
-                </button>
-            }
-        </mat-form-field>
-    </div>
+    <app-filter-search
+        placeholder="Search library..."
+        [filters]="libraryFilters"
+        (searchSubmit)="onSearch($event)"
+    />
 
     @if (loading()) {
         <div class="release-skeletons">
@@ -62,8 +49,10 @@
         />
     } @else if (!loading() && !error()) {
         <p class="empty">
-            @if (searchQuery()) {
-                No results for "{{ searchQuery() }}".
+            @if (activeSearch()) {
+                No results for "{{ activeSearch() }}".
+            } @else if (mediaTypeFilter() !== 'all') {
+                No {{ mediaTypeLabel() }} found in your Jellyfin library.
             } @else {
                 Your Jellyfin library is empty or not yet synced.
             }

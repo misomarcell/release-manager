@@ -1,5 +1,9 @@
 <main class="container">
-    <app-release-search (searchSubmit)="onSearch($event)" />
+    <app-filter-search
+        placeholder="Search movies, TV shows..."
+        [filters]="releaseFilters"
+        (searchSubmit)="onSearch($event)"
+    />
 
     @if (loading()) {
         <div class="release-skeletons">

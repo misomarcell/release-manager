@@ -1,0 +1,60 @@
+<div class="search-bar">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-input">
+    <input
+      matInput
+      [(ngModel)]="searchQuery"
+      (keydown.enter)="onSearch()"
+      [placeholder]="placeholder()"
+      autocomplete="off"
+    />
+    <mat-icon matPrefix>search</mat-icon>
+    @if (searchQuery) {
+      <button mat-icon-button matSuffix type="button" (click)="clearAndSearch()" aria-label="Clear">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </mat-form-field>
+
+  @if (filters().length > 0) {
+    <button
+      mat-icon-button
+      type="button"
+      [matMenuTriggerFor]="filterMenu"
+      class="filter-btn"
+      [matBadge]="activeFilterCount()"
+      [matBadgeHidden]="activeFilterCount() === 0"
+      matBadgeColor="primary"
+      aria-label="Filters"
+    >
+      <mat-icon>tune</mat-icon>
+    </button>
+
+    <mat-menu #filterMenu="matMenu">
+      @for (filter of filters(); track filter.key; let isLast = $last) {
+        <div class="filter-section-label" mat-menu-item disabled>{{ filter.label }}</div>
+
+        @if (filter.control === 'select') {
+          @for (option of filter.options ?? []; track option.value) {
+            <button mat-menu-item type="button" (click)="onSelectFilter(filter.key, option.value)">
+              @if (selectedValue(filter.key) === option.value) {
+                <mat-icon>check</mat-icon>
+              }
+              <span>{{ option.label }}</span>
+            </button>
+          }
+        } @else {
+          <button mat-menu-item type="button" (click)="onToggleFilter($event, filter)">
+            @if (selectedValue(filter.key) === true) {
+              <mat-icon>check</mat-icon>
+            }
+            <span>{{ filter.options?.[0]?.label ?? filter.label }}</span>
+          </button>
+        }
+
+        @if (!isLast) {
+          <mat-divider />
+        }
+      }
+    </mat-menu>
+  }
+</div>

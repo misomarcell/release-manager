@@ -141,14 +141,33 @@ export async function needsSyncOnStartup(): Promise<boolean> {
     return new Date(syncResult.rows[0].started_at) < oneDayAgo;
 }
 
-export async function getLibrary(search: string, page: number, perPage: number): Promise<LibraryPage> {
+export async function getLibrary(
+    search: string,
+    page: number,
+    perPage: number,
+    mediaType: MediaType | null = null,
+): Promise<LibraryPage> {
     const offset = (page - 1) * perPage;
     const searchParam = search.trim() ? `%${search.trim()}%` : null;
 
-    const whereSql = searchParam ? `WHERE title ILIKE $1` : '';
+    const filters: unknown[] = [];
+    const whereParts: string[] = [];
 
-    const params: unknown[] = searchParam ? [searchParam, perPage, offset] : [perPage, offset];
-    const countParams: unknown[] = searchParam ? [searchParam] : [];
+    if (searchParam) {
+        filters.push(searchParam);
+        whereParts.push(`title ILIKE $${filters.length}`);
+    }
+
+    if (mediaType) {
+        filters.push(mediaType);
+        whereParts.push(`media_type = $${filters.length}`);
+    }
+
+    const whereSql = whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : '';
+    const params = [...filters, perPage, offset];
+    const countParams = [...filters];
+    const limitParam = filters.length + 1;
+    const offsetParam = filters.length + 2;
 
     const [dataResult, countResult] = await Promise.all([
         query<{
@@ -170,7 +189,7 @@ export async function getLibrary(search: string, page: number, perPage: number):
          ORDER BY COALESCE(tmdb_id::text, jellyfin_id), title ASC
        ) deduped
        ORDER BY date_created DESC
-       LIMIT $${searchParam ? 2 : 1} OFFSET $${searchParam ? 3 : 2}`,
+       LIMIT $${limitParam} OFFSET $${offsetParam}`,
             params,
         ),
         query<{ count: string }>(
