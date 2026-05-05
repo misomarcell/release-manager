@@ -3,7 +3,7 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { requireAuth, requireAdmin, type AuthenticatedRequest } from '../middleware/auth.js';
 import { query } from '../db/connection.js';
-import { testConnection } from '../services/qbittorrent.service.js';
+import { qbittorrentService } from '../services/qbittorrent.service.js';
 import { testConnection as testJellyfinConnection, runScheduledSync } from '../services/jellyfin.service.js';
 import { getLastSyncStatus } from '../repositories/jellyfin.repository.js';
 import { getLogs } from '../repositories/log.repository.js';
@@ -78,7 +78,7 @@ router.delete('/sessions', async (req: Request, res: Response) => {
 
 router.get('/qbittorrent-test', async (_req: Request, res: Response) => {
     try {
-        const result = await testConnection();
+        const result = await qbittorrentService.testConnection();
         res.json(result);
     } catch (error: unknown) {
         logger.error('Admin: qBittorrent connection test failed', {

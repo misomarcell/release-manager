@@ -1,94 +1,110 @@
 import { config } from '../config.js';
 import { logger } from '../utils/logger.js';
-import { ncoreService } from './ncore.service.js';
 import type { DownloadCategory } from 'shared/constants';
 
-let sessionCookie = '';
+class QbittorrentService {
+    private sessionCookie = '';
 
-async function login(): Promise<void> {
-  const { url, username, password } = config.qbittorrent;
-  console.log('[qBittorrent]', `Logging in to ${url}`);
+    async addTorrent(torrentData: ArrayBuffer, savePath: string, category: DownloadCategory): Promise<void> {
+        const formData = new FormData();
+        formData.append('torrents', new Blob([torrentData], { type: 'application/x-bittorrent' }), 'release.torrent');
+        formData.append('savepath', savePath);
+        formData.append('category', category);
 
-  const response = await fetch(`${url}/api/v2/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ username, password }),
-  });
+        logger.info('[qBittorrent] Adding new torrent', {
+            savePath,
+            category,
+            size: torrentData.byteLength,
+        });
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`qBittorrent login failed: ${response.status} ${text}`);
-  }
+        const response = await this.qbtFetch('/api/v2/torrents/add', {
+            method: 'POST',
+            body: formData,
+        });
 
-  const setCookie = response.headers.get('set-cookie');
-  const sid = setCookie?.match(/SID=([^;]+)/)?.[1];
-  if (!sid) {
-    throw new Error('qBittorrent login did not return a session cookie');
-  }
+        const responseText = await response.text();
+        logger.info('[qBittorrent] Torrent add response', { status: response.status, responseText });
 
-  console.log('[qBittorrent]', 'Login successful');
-  sessionCookie = `SID=${sid}`;
+        if (!response.ok) {
+            throw new Error(`qBittorrent add failed: ${response.status} ${responseText}`);
+        }
+    }
+
+    async testConnection(): Promise<{ version: string }> {
+        const response = await this.qbtFetch('/api/v2/app/version', { method: 'GET' });
+        if (!response.ok) {
+            throw new Error(`qBittorrent returned ${response.status}`);
+        }
+
+        const version = await response.text();
+        return { version };
+    }
+
+    private async login(): Promise<void> {
+        const { username, password } = config.qbittorrent;
+        const url = this.getBaseUrl();
+
+        logger.info('[qBittorrent] Logging in', { url });
+
+        const response = await fetch(`${url}/api/v2/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ username, password }),
+        });
+
+        const responseText = await response.text();
+        if (!response.ok) {
+            throw new Error(`qBittorrent login failed: ${response.status} ${responseText}`);
+        }
+
+        const setCookie = response.headers.get('set-cookie');
+        const sid = setCookie?.match(/SID=([^;]+)/)?.[1];
+        if (!sid) {
+            const details = responseText ? `: ${responseText}` : '';
+            throw new Error(`qBittorrent login did not return a session cookie${details}`);
+        }
+
+        this.sessionCookie = `SID=${sid}`;
+        logger.info('[qBittorrent] Login successful');
+    }
+
+    private async qbtFetch(path: string, init: RequestInit): Promise<Response> {
+        const url = this.getBaseUrl();
+
+        let response = await fetch(`${url}${path}`, {
+            ...init,
+            headers: this.getHeaders(init.headers),
+        });
+
+        if (response.status === 403) {
+            this.sessionCookie = '';
+            await this.login();
+            response = await fetch(`${url}${path}`, {
+                ...init,
+                headers: this.getHeaders(init.headers),
+            });
+        }
+
+        return response;
+    }
+
+    private getHeaders(headers?: RequestInit['headers']): Headers {
+        const nextHeaders = new Headers(headers);
+        if (this.sessionCookie) {
+            nextHeaders.set('Cookie', this.sessionCookie);
+        }
+
+        return nextHeaders;
+    }
+
+    private getBaseUrl(): string {
+        const { url } = config.qbittorrent;
+        if (!url) {
+            throw new Error('qBittorrent is not configured. Set QBITTORRENT_URL.');
+        }
+
+        return url.replace(/\/+$/, '');
+    }
 }
 
-async function qbtFetch(path: string, init: RequestInit): Promise<Response> {
-  const { url } = config.qbittorrent;
-
-  let response = await fetch(`${url}${path}`, {
-    ...init,
-    headers: { ...(init.headers as Record<string, string>), Cookie: sessionCookie },
-  });
-
-  if (response.status === 403) {
-    await login();
-    response = await fetch(`${url}${path}`, {
-      ...init,
-      headers: { ...(init.headers as Record<string, string>), Cookie: sessionCookie },
-    });
-  }
-
-  return response;
-}
-
-export async function addTorrent(downloadUrl: string, savePath: string, category: DownloadCategory): Promise<void> {
-  const { url } = config.qbittorrent;
-  if (!url) {
-    throw new Error('qBittorrent is not configured. Set QBITTORRENT_URL.');
-  }
-
-  const torrentData = await ncoreService.downloadTorrentFile(downloadUrl);
-  console.log('[qBittorrent]', `Torrent file size: ${torrentData.byteLength} bytes`);
-
-  const formData = new FormData();
-  formData.append('torrents', new Blob([torrentData], { type: 'application/x-bittorrent' }), 'release.torrent');
-  formData.append('savepath', savePath);
-  formData.append('category', category);
-
-  logger.info('[qBittorrent] Adding new torrent', { savePath, category, size: torrentData.byteLength });
-
-  const response = await qbtFetch('/api/v2/torrents/add', {
-    method: 'POST',
-    body: formData,
-  });
-
-  const responseText = await response.text();
-  logger.info('[qBittorrent] Torrent add response', { status: response.status, responseText });
-
-  if (!response.ok) {
-    throw new Error(`qBittorrent add failed: ${response.status} ${responseText}`);
-  }
-}
-
-export async function testConnection(): Promise<{ version: string }> {
-  const { url } = config.qbittorrent;
-  if (!url) {
-    throw new Error('qBittorrent is not configured. Set QBITTORRENT_URL.');
-  }
-
-  const response = await qbtFetch('/api/v2/app/version', { method: 'GET' });
-  if (!response.ok) {
-    throw new Error(`qBittorrent returned ${response.status}`);
-  }
-
-  const version = await response.text();
-  return { version };
-}
+export const qbittorrentService = new QbittorrentService();

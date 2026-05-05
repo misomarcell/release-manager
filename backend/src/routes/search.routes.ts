@@ -3,7 +3,7 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { ncoreService, NcoreNoResultsError } from '../services/ncore.service.js';
 import { fetchBasicMetadata, getCacheKey, fetchDetailMetadata } from '../services/metadata.service.js';
-import { addTorrent } from '../services/qbittorrent.service.js';
+import { qbittorrentService } from '../services/qbittorrent.service.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { DOWNLOAD_CATEGORIES } from 'shared/constants';
@@ -139,7 +139,8 @@ router.post('/download', requireAuth, requireAdmin, async (req: Request, res: Re
     if (!body) return;
 
     try {
-        await addTorrent(body.downloadUrl, body.savePath, body.category);
+        const torrentData = await ncoreService.downloadTorrentFile(body.downloadUrl);
+        await qbittorrentService.addTorrent(torrentData, body.savePath, body.category);
         const response: DownloadResponse = { success: true, message: 'Torrent sent to qBittorrent' };
         res.json(response);
     } catch (error: unknown) {
