@@ -127,8 +127,6 @@ export async function initDatabase(): Promise<void> {
       error_message TEXT
     );
 
-    DROP TABLE IF EXISTS jellyfin_sync_log;
-
     CREATE INDEX IF NOT EXISTS sync_log_service_started_at_idx ON sync_log (service, started_at DESC);
   `);
 }
