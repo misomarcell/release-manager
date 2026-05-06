@@ -182,7 +182,12 @@ export async function initDatabase(): Promise<void> {
 
     await pool.query(`
     ALTER TABLE jellyfin_library
-      ADD COLUMN IF NOT EXISTS filename TEXT;
+      ADD COLUMN IF NOT EXISTS path TEXT;
+  `);
+
+    await pool.query(`
+    ALTER TABLE jellyfin_library
+      DROP COLUMN IF EXISTS filename;
   `);
 
     await pool.query(`

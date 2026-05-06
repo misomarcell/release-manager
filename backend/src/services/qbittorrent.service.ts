@@ -1,6 +1,14 @@
 import { config } from '../config.js';
 import { logger } from '../utils/logger.js';
+import { asNumber, asRecord, asString } from '../utils/coerce.js';
 import type { DownloadCategory } from 'shared/constants';
+
+const TORRENT_HASH_PATTERN = /^[a-f0-9]{40}$/i;
+
+interface QbittorrentServerState {
+    connectionStatus: string;
+    freeSpaceOnDisk: number;
+}
 
 class QbittorrentService {
     private sessionCookie = '';
@@ -27,6 +35,41 @@ class QbittorrentService {
 
         if (!response.ok) {
             throw new Error(`qBittorrent add failed: ${response.status} ${responseText}`);
+        }
+    }
+
+    async getServerState(): Promise<QbittorrentServerState> {
+        const response = await this.qbtFetch('/api/v2/sync/maindata', { method: 'GET' });
+        if (!response.ok) {
+            const responseText = await response.text();
+            throw new Error(`qBittorrent main data failed: ${response.status} ${responseText}`);
+        }
+
+        const mainData = asRecord(await response.json());
+        const serverState = asRecord(mainData['server_state']);
+        return {
+            connectionStatus: asString(serverState['connection_status']),
+            freeSpaceOnDisk: asNumber(serverState['free_space_on_disk']),
+        };
+    }
+
+    async deleteTorrent(hash: string): Promise<void> {
+        const torrentHash = this.getTorrentHash(hash);
+        const response = await this.qbtFetch('/api/v2/torrents/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ hashes: torrentHash, deleteFiles: 'true' }),
+        });
+
+        const responseText = await response.text();
+        logger.info('[qBittorrent] Torrent delete response', {
+            hash: torrentHash,
+            status: response.status,
+            responseText,
+        });
+
+        if (!response.ok) {
+            throw new Error(`qBittorrent delete failed: ${response.status} ${responseText}`);
         }
     }
 
@@ -95,6 +138,15 @@ class QbittorrentService {
         }
 
         return nextHeaders;
+    }
+
+    private getTorrentHash(hash: string): string {
+        const torrentHash = hash.trim();
+        if (!TORRENT_HASH_PATTERN.test(torrentHash)) {
+            throw new Error('Invalid torrent hash.');
+        }
+
+        return torrentHash;
     }
 
     private getBaseUrl(): string {

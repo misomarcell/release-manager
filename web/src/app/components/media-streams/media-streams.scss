@@ -5,8 +5,8 @@
     border-radius: 8px;
 }
 
-.stream-group {
-    & + .stream-group {
+.info-group {
+    & + .info-group {
         margin-top: 0.5rem;
         padding-top: 0.5rem;
         border-top: 1px solid color-mix(in srgb, var(--mat-sys-outline-variant) 60%, transparent);
@@ -23,15 +23,16 @@
         margin-bottom: 0.2rem;
     }
 
-    .stream-row {
+    .info-row {
+        color: var(--mat-sys-on-surface-variant);
         display: flex;
         align-items: center;
         gap: 0.45rem;
         padding: 0.15rem 0;
         font-size: 0.78rem;
-        color: var(--mat-sys-on-surface-variant);
+        overflow-wrap: anywhere;
 
-        .stream-icon {
+        .info-icon {
             font-size: 15px;
             width: 15px;
             height: 15px;

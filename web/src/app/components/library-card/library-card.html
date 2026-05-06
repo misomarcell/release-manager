@@ -45,12 +45,10 @@
             [detailLoading]="detailLoading()"
             [imdbId]="detail()?.imdbId ?? ''"
             [jellyfinUrl]="jellyfinUrl()"
-            [sizeBytes]="i.sizeBytes"
-            [filename]="i.filename"
         />
 
         @if (i.mediaInfo?.streams?.length) {
-            <app-media-streams [streams]="i.mediaInfo!.streams" />
+            <app-media-streams [fileInfo]="{ sizeBytes: i.sizeBytes, path: i.path }" [streams]="i.mediaInfo!.streams" />
         }
     </div>
 </mat-expansion-panel>

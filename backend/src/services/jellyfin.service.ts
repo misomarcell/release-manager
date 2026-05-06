@@ -35,132 +35,142 @@ interface JellyfinRawItem {
     Path?: string;
 }
 
-function parseMediaInfo(mediaSources: JellyfinRawMediaSource[] | undefined): MediaInfo | null {
-    const streams = mediaSources?.[0]?.MediaStreams;
-    if (!streams?.length) return null;
-
-    const mapped: MediaStream[] = streams
-        .filter((s) => s.Type === 'Video' || s.Type === 'Audio' || s.Type === 'Subtitle')
-        .map((s) => {
-            const base: MediaStream = {
-                type: s.Type === 'Video' ? 'video' : s.Type === 'Audio' ? 'audio' : 'subtitle',
-                codec: s.Codec ?? '',
-                language: s.Language ?? '',
-                displayTitle: s.DisplayTitle ?? '',
-            };
-            if (s.Type === 'Video') {
-                base.width = s.Width;
-                base.videoRangeType = s.VideoRangeType;
-            }
-            if (s.Type === 'Audio') {
-                base.spatialFormat = s.AudioSpatialFormat;
-                base.profile = s.Profile;
-            }
-            return base;
-        });
-
-    return mapped.length ? { streams: mapped } : null;
+interface JellyfinConnectionConfig {
+    url: string;
+    apiKey: string;
+    userId: string;
 }
 
-function authHeaders(): Record<string, string> {
-    return {
-        'X-MediaBrowser-Token': config.jellyfin.apiKey,
-        Accept: 'application/json',
-    };
-}
+class JellyfinService {
+    async testConnection(): Promise<{ version: string }> {
+        this.getRequiredConfig();
 
-async function jellyfinGet(path: string, params?: Record<string, string>): Promise<unknown> {
-    const { url } = config.jellyfin;
-    const endpoint = new URL(`${url}${path}`);
-    if (params) {
-        for (const [k, v] of Object.entries(params)) {
-            endpoint.searchParams.set(k, v);
+        const data = (await this.jellyfinGet('/System/Info/Public')) as { Version?: string };
+        const version = data.Version ?? 'unknown';
+        return { version };
+    }
+
+    async syncLibrary(): Promise<number> {
+        try {
+            const { userId } = this.getRequiredConfig();
+
+            logger.info('Jellyfin sync started');
+
+            const data = (await this.jellyfinGet(`/Users/${userId}/Items`, {
+                Recursive: 'true',
+                IncludeItemTypes: 'Movie,Series',
+                Fields: 'ProviderIds,Name,ProductionYear,DateCreated,MediaSources,Path',
+            })) as { Items?: JellyfinRawItem[] };
+
+            const rawItems: JellyfinRawItem[] = Array.isArray(data.Items) ? data.Items : [];
+            const items = rawItems
+                .map((raw) => this.toJellyfinItem(raw))
+                .filter((item): item is JellyfinItem => item !== null);
+
+            await replaceLibrary(items);
+            await reloadCache();
+
+            logger.info('Jellyfin sync completed', { itemCount: items.length });
+            await logSync(true, items.length, null);
+
+            return items.length;
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error);
+            logger.error('Jellyfin sync failed', { error: message });
+            await logSync(false, null, message);
+            throw error;
         }
     }
 
-    console.log(`[Jellyfin] GET ${endpoint.pathname}${endpoint.search}`);
+    private toJellyfinItem(raw: JellyfinRawItem): JellyfinItem | null {
+        const mediaType = this.mapMediaType(raw.Type);
+        if (!mediaType || !raw.Name) return null;
 
-    const response = await fetch(endpoint, { headers: authHeaders() });
-    if (!response.ok) {
-        throw new Error(`Jellyfin responded with ${response.status} for ${path}`);
-    }
-    return response.json();
-}
+        const tmdbIdRaw = raw.ProviderIds?.['Tmdb'];
+        const tmdbId = tmdbIdRaw ? parseInt(tmdbIdRaw, 10) || null : null;
+        const year = raw.ProductionYear ? String(raw.ProductionYear) : null;
+        const dateCreated = raw.DateCreated ? new Date(raw.DateCreated) : null;
+        const mediaInfo = this.parseMediaInfo(raw.MediaSources);
+        const sizeBytes = raw.MediaSources?.[0]?.Size ?? null;
 
-function mapMediaType(jellyfinType: string): MediaType | null {
-    if (jellyfinType === 'Movie') return 'movie';
-    if (jellyfinType === 'Series') return 'tv';
-    return null;
-}
-
-async function syncLibrary(): Promise<number> {
-    const { url, apiKey } = config.jellyfin;
-    if (!url || !apiKey) {
-        throw new Error('Jellyfin is not configured. Set JELLYFIN_URL and JELLYFIN_API_KEY.');
-    }
-
-    logger.info('Jellyfin sync started');
-
-    const data = (await jellyfinGet(`/Users/${config.jellyfin.userId}/Items`, {
-        Recursive: 'true',
-        IncludeItemTypes: 'Movie,Series',
-        Fields: 'ProviderIds,Name,ProductionYear,DateCreated,MediaSources,Path',
-    })) as { Items?: JellyfinRawItem[] };
-
-    const rawItems: JellyfinRawItem[] = Array.isArray(data?.Items) ? data.Items : [];
-
-    const items: JellyfinItem[] = rawItems
-        .map((raw): JellyfinItem | null => {
-            const mediaType = mapMediaType(raw.Type);
-            if (!mediaType || !raw.Name) return null;
-
-            const tmdbIdRaw = raw.ProviderIds?.['Tmdb'];
-            const tmdbId = tmdbIdRaw ? parseInt(tmdbIdRaw, 10) || null : null;
-            const year = raw.ProductionYear ? String(raw.ProductionYear) : null;
-            const dateCreated = raw.DateCreated ? new Date(raw.DateCreated) : null;
-            const mediaInfo = parseMediaInfo(raw.MediaSources);
-            const sizeBytes = raw.MediaSources?.[0]?.Size ?? null;
-            const filename = raw.Path ? (raw.Path.split(/[/\\]/).pop() ?? null) : null;
-
-            return {
-                jellyfinId: raw.Id,
-                tmdbId,
-                mediaType,
-                title: raw.Name,
-                year,
-                dateCreated,
-                mediaInfo,
-                sizeBytes,
-                filename,
-            };
-        })
-        .filter((item): item is JellyfinItem => item !== null);
-
-    await replaceLibrary(items);
-    await reloadCache();
-
-    logger.info('Jellyfin sync completed', { itemCount: items.length });
-    return items.length;
-}
-
-export async function testConnection(): Promise<{ version: string }> {
-    const { url, apiKey } = config.jellyfin;
-    if (!url || !apiKey) {
-        throw new Error('Jellyfin is not configured. Set JELLYFIN_URL and JELLYFIN_API_KEY.');
+        return {
+            jellyfinId: raw.Id,
+            tmdbId,
+            mediaType,
+            title: raw.Name,
+            year,
+            dateCreated,
+            mediaInfo,
+            sizeBytes,
+            path: raw.Path ?? null,
+        };
     }
 
-    const data = (await jellyfinGet('/System/Info/Public')) as { Version?: string; ServerName?: string };
-    const version = data?.Version ?? 'unknown';
-    return { version };
-}
+    private parseMediaInfo(mediaSources: JellyfinRawMediaSource[] | undefined): MediaInfo | null {
+        const streams = mediaSources?.[0]?.MediaStreams;
+        if (!streams?.length) return null;
 
-export async function runScheduledSync(): Promise<void> {
-    try {
-        const itemCount = await syncLibrary();
-        await logSync(true, itemCount, null);
-    } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        logger.error('Jellyfin sync failed', { error: message });
-        await logSync(false, null, message);
+        const mapped = streams
+            .filter((s) => s.Type === 'Video' || s.Type === 'Audio' || s.Type === 'Subtitle')
+            .map((s): MediaStream => {
+                const base: MediaStream = {
+                    type: s.Type === 'Video' ? 'video' : s.Type === 'Audio' ? 'audio' : 'subtitle',
+                    codec: s.Codec ?? '',
+                    language: s.Language ?? '',
+                    displayTitle: s.DisplayTitle ?? '',
+                };
+                if (s.Type === 'Video') {
+                    base.width = s.Width;
+                    base.videoRangeType = s.VideoRangeType;
+                }
+                if (s.Type === 'Audio') {
+                    base.spatialFormat = s.AudioSpatialFormat;
+                    base.profile = s.Profile;
+                }
+                return base;
+            });
+
+        return mapped.length ? { streams: mapped } : null;
+    }
+
+    private async jellyfinGet(path: string, params?: Record<string, string>): Promise<unknown> {
+        const { url } = this.getRequiredConfig();
+        const endpoint = new URL(path, url);
+        for (const [key, value] of Object.entries(params ?? {})) {
+            endpoint.searchParams.set(key, value);
+        }
+
+        console.log(`[Jellyfin] GET ${endpoint.pathname}${endpoint.search}`);
+
+        const response = await fetch(endpoint, { headers: this.authHeaders() });
+        if (!response.ok) {
+            throw new Error(`Jellyfin responded with ${response.status} for ${path}`);
+        }
+
+        return response.json();
+    }
+
+    private authHeaders(): Record<string, string> {
+        return {
+            'X-MediaBrowser-Token': config.jellyfin.apiKey,
+            Accept: 'application/json',
+        };
+    }
+
+    private mapMediaType(jellyfinType: string): MediaType | null {
+        if (jellyfinType === 'Movie') return 'movie';
+        if (jellyfinType === 'Series') return 'tv';
+        return null;
+    }
+
+    private getRequiredConfig(): JellyfinConnectionConfig {
+        const { url, apiKey, userId } = config.jellyfin;
+        if (!url || !apiKey) {
+            throw new Error('Jellyfin is not configured. Set JELLYFIN_URL and JELLYFIN_API_KEY.');
+        }
+
+        return { url, apiKey, userId };
     }
 }
+
+export const jellyfinService = new JellyfinService();

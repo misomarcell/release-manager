@@ -28,14 +28,6 @@ export class MediaDetailsComponent {
     jellyfinUrl = input<string | null>(null);
     detail = input<MovieDetailMetadata | null>(null);
     detailLoading = input<boolean>(false);
-    sizeBytes = input<number | null>(null);
-    filename = input<string | null>(null);
 
     protected displayFeedbackBtns = computed(() => !!this.tmdbId() && !!this.mediaType());
-
-    protected sizeGb = computed(() => {
-        const bytes = this.sizeBytes();
-        if (!bytes) return null;
-        return (bytes / 1_073_741_824).toFixed(2);
-    });
 }

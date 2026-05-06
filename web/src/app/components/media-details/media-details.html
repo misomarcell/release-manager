@@ -23,14 +23,6 @@
         }
     </div>
 
-    @if (sizeGb()) {
-        <div class="file-info">Size: {{ sizeGb() }} GB</div>
-    }
-
-    @if (filename()) {
-        <div class="file-info">File name: {{ filename() }}</div>
-    }
-
     <mat-divider />
 
     @if (detail()?.plot) {

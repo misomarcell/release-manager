@@ -6,7 +6,7 @@ import cron from 'node-cron';
 import { initDatabase } from './db/connection.js';
 import { logger } from './utils/logger.js';
 import { reloadCache, needsSyncOnStartup } from './repositories/jellyfin.repository.js';
-import { runScheduledSync } from './services/jellyfin.service.js';
+import { jellyfinService } from './services/jellyfin.service.js';
 import authRoutes from './routes/auth.routes.js';
 import searchRoutes from './routes/search.routes.js';
 import userRoutes from './routes/user.routes.js';
@@ -48,7 +48,7 @@ async function start() {
         needsSyncOnStartup()
             .then((shouldSync) => {
                 if (shouldSync) {
-                    runScheduledSync().catch((err: unknown) =>
+                    jellyfinService.syncLibrary().catch((err: unknown) =>
                         logger.error('Jellyfin initial sync failed', {
                             error: err instanceof Error ? err.message : String(err),
                         }),
@@ -63,7 +63,7 @@ async function start() {
                 }),
             );
         cron.schedule(config.jellyfin.cronSchedule, () => {
-            runScheduledSync().catch((err: unknown) =>
+            jellyfinService.syncLibrary().catch((err: unknown) =>
                 logger.error('Jellyfin scheduled sync failed', {
                     error: err instanceof Error ? err.message : String(err),
                 }),

@@ -1,9 +1,9 @@
 @for (group of groups(); track group.label) {
-    <div class="stream-group">
+    <div class="info-group">
         <span class="group-label">{{ group.label }}</span>
         @for (item of group.items; track $index) {
-            <div class="stream-row">
-                <mat-icon class="stream-icon">{{ group.icon }}</mat-icon>
+            <div class="info-row">
+                <mat-icon class="info-icon">{{ group.icon }}</mat-icon>
                 <span>{{ item }}</span>
             </div>
         }
