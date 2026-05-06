@@ -7,6 +7,11 @@ export interface QbittorrentTorrent {
     addedOn: Date | null;
 }
 
+interface TorrentReference {
+    hash: string;
+    contentPath: string;
+}
+
 export async function replaceTorrents(torrents: QbittorrentTorrent[]): Promise<void> {
     await query('DELETE FROM qbittorrent_torrents');
 
@@ -31,4 +36,17 @@ export async function replaceTorrents(torrents: QbittorrentTorrent[]): Promise<v
            synced_at = NOW()`,
         values,
     );
+}
+
+export async function getTorrentReferences(): Promise<TorrentReference[]> {
+    const result = await query<{ hash: string; content_path: string }>(
+        `SELECT hash, content_path
+     FROM qbittorrent_torrents
+     ORDER BY added_on DESC NULLS LAST, synced_at DESC`,
+    );
+
+    return result.rows.map((row) => ({
+        hash: row.hash,
+        contentPath: row.content_path,
+    }));
 }

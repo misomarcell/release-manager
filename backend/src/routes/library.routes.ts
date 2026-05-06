@@ -2,7 +2,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { requireAuth } from '../middleware/auth.js';
-import { getLibrary } from '../repositories/jellyfin.repository.js';
+import { libraryService } from '../services/library.service.js';
 import { fetchBasicMetadata } from '../services/metadata.service.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import { config } from '../config.js';
@@ -23,7 +23,12 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     if (!query) return;
 
     try {
-        const { items, total } = await getLibrary(query.search, query.page, query.perPage, query.type ?? null);
+        const { items, total } = await libraryService.getLibrary({
+            search: query.search,
+            page: query.page,
+            perPage: query.perPage,
+            mediaType: query.type ?? null,
+        });
 
         const enriched = await mapConcurrent(items, 6, async (item): Promise<LibraryItem> => {
             if (!item.tmdbId || !item.mediaType) return item;

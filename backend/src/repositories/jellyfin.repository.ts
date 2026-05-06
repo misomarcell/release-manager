@@ -2,7 +2,7 @@ import { query } from '../db/connection.js';
 import type { LibraryItem, MediaInfo } from 'shared/jellyfin.models';
 import type { MediaType } from 'shared/tmdb.models';
 
-interface LibraryPage {
+export interface LibraryPage {
     items: LibraryItem[];
     total: number;
 }
@@ -97,7 +97,7 @@ export async function replaceLibrary(items: JellyfinItem[]): Promise<void> {
     );
 }
 
-export async function getLibrary(
+export async function getLibraryPage(
     search: string,
     page: number,
     perPage: number,

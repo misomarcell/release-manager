@@ -28,6 +28,7 @@ export interface LibraryItem {
     mediaInfo: MediaInfo | null;
     sizeBytes: number | null;
     path: string | null;
+    torrentHash?: string;
 }
 
 export interface LibraryResponse {
