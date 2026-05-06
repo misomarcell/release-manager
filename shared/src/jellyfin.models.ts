@@ -1,12 +1,5 @@
 import { MediaType } from './tmdb.models.js';
 
-export interface JellyfinSyncStatus {
-    lastSync: string | null;
-    success: boolean | null;
-    itemCount: number | null;
-    errorMessage: string | null;
-}
-
 export interface MediaStream {
     type: 'video' | 'audio' | 'subtitle';
     codec: string;

@@ -2,9 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
 import { ApiService } from './api.service';
 import type { LogsResponse } from '@rm/shared/log.models';
-import type { JellyfinSyncStatus } from '@rm/shared/jellyfin.models';
+import type { SyncStatus } from '@rm/shared/sync.models';
 
-export type { JellyfinSyncStatus };
+export type { SyncStatus };
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -36,11 +36,19 @@ export class AdminService {
     return this.api.get<{ version: string }>('/api/admin/jellyfin-test');
   }
 
-  async getJellyfinStatus(): Promise<JellyfinSyncStatus> {
-    return this.api.get<JellyfinSyncStatus>('/api/admin/jellyfin-status');
+  async getJellyfinStatus(): Promise<SyncStatus> {
+    return this.api.get<SyncStatus>('/api/admin/jellyfin-status');
   }
 
-  async syncJellyfin(): Promise<JellyfinSyncStatus> {
-    return this.api.post<JellyfinSyncStatus>('/api/admin/jellyfin-sync', {});
+  async syncJellyfin(): Promise<SyncStatus> {
+    return this.api.post<SyncStatus>('/api/admin/jellyfin-sync', {});
+  }
+
+  async getQbittorrentStatus(): Promise<SyncStatus> {
+    return this.api.get<SyncStatus>('/api/admin/qbittorrent-status');
+  }
+
+  async syncQbittorrent(): Promise<SyncStatus> {
+    return this.api.post<SyncStatus>('/api/admin/qbittorrent-sync', {});
   }
 }

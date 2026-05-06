@@ -1,0 +1,34 @@
+import { query } from '../db/connection.js';
+
+export interface QbittorrentTorrent {
+    hash: string;
+    name: string;
+    contentPath: string;
+    addedOn: Date | null;
+}
+
+export async function replaceTorrents(torrents: QbittorrentTorrent[]): Promise<void> {
+    await query('DELETE FROM qbittorrent_torrents');
+
+    if (torrents.length === 0) return;
+
+    const values: unknown[] = [];
+    const placeholders: string[] = [];
+
+    torrents.forEach((torrent, i) => {
+        const base = i * 4;
+        placeholders.push(`($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4})`);
+        values.push(torrent.hash, torrent.name, torrent.contentPath, torrent.addedOn);
+    });
+
+    await query(
+        `INSERT INTO qbittorrent_torrents (hash, name, content_path, added_on)
+     VALUES ${placeholders.join(', ')}
+     ON CONFLICT (hash) DO UPDATE
+       SET name = EXCLUDED.name,
+           content_path = EXCLUDED.content_path,
+           added_on = EXCLUDED.added_on,
+           synced_at = NOW()`,
+        values,
+    );
+}

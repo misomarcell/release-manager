@@ -7,7 +7,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
-import { AdminService, type JellyfinSyncStatus } from '../../services/admin.service';
+import { AdminService, type SyncStatus } from '../../services/admin.service';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { extractHttpError } from '../../utils/http-error';
 
@@ -25,18 +25,24 @@ export class AdminComponent implements OnInit {
     private snackBar = inject(MatSnackBar);
 
     protected clearing = signal<string | null>(null);
-    protected jellyfinStatus = signal<JellyfinSyncStatus | null>(null);
+    protected jellyfinStatus = signal<SyncStatus | null>(null);
+    protected qbittorrentStatus = signal<SyncStatus | null>(null);
 
     ngOnInit(): void {
-        void this.loadJellyfinStatus();
+        void this.loadSyncStatuses();
     }
 
-    private async loadJellyfinStatus(): Promise<void> {
-        try {
-            this.jellyfinStatus.set(await this.admin.getJellyfinStatus());
-        } catch {
-            // not critical — leave null
-        }
+    private async loadSyncStatuses(): Promise<void> {
+        await Promise.all([
+            this.admin
+                .getJellyfinStatus()
+                .then((status) => this.jellyfinStatus.set(status))
+                .catch(() => undefined),
+            this.admin
+                .getQbittorrentStatus()
+                .then((status) => this.qbittorrentStatus.set(status))
+                .catch(() => undefined),
+        ]);
     }
 
     protected async clearMetadataCache(): Promise<void> {
@@ -130,9 +136,24 @@ export class AdminComponent implements OnInit {
         try {
             const status = await this.admin.syncJellyfin();
             this.jellyfinStatus.set(status);
-            this.snackBar.open(`Jellyfin sync complete — ${status.itemCount ?? 0} items`, 'OK', { duration: 3000 });
+            this.snackBar.open(`Jellyfin sync complete - ${status.itemCount ?? 0} items`, 'OK', { duration: 3000 });
         } catch (e: unknown) {
             this.snackBar.open(extractHttpError(e, 'Jellyfin sync failed'), 'OK', { duration: 5000 });
+        } finally {
+            this.clearing.set(null);
+        }
+    }
+
+    protected async syncQbittorrent(): Promise<void> {
+        this.clearing.set('qbittorrent-sync');
+        try {
+            const status = await this.admin.syncQbittorrent();
+            this.qbittorrentStatus.set(status);
+            this.snackBar.open(`qBittorrent sync complete - ${status.itemCount ?? 0} torrents`, 'OK', {
+                duration: 4000,
+            });
+        } catch (e: unknown) {
+            this.snackBar.open(extractHttpError(e, 'qBittorrent sync failed'), 'OK', { duration: 5000 });
         } finally {
             this.clearing.set(null);
         }

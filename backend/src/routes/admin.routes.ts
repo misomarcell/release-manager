@@ -5,7 +5,7 @@ import { requireAuth, requireAdmin, type AuthenticatedRequest } from '../middlew
 import { query } from '../db/connection.js';
 import { qbittorrentService } from '../services/qbittorrent.service.js';
 import { jellyfinService } from '../services/jellyfin.service.js';
-import { getLastSyncStatus } from '../repositories/jellyfin.repository.js';
+import { getLastSyncStatus } from '../repositories/sync.repository.js';
 import { getLogs } from '../repositories/log.repository.js';
 import { logger } from '../utils/logger.js';
 import { parseQuery } from '../middleware/validate.js';
@@ -76,18 +76,6 @@ router.delete('/sessions', async (req: Request, res: Response) => {
     }
 });
 
-router.get('/qbittorrent-test', async (_req: Request, res: Response) => {
-    try {
-        const result = await qbittorrentService.testConnection();
-        res.json(result);
-    } catch (error: unknown) {
-        logger.error('Admin: qBittorrent connection test failed', {
-            error: error instanceof Error ? error.message : String(error),
-        });
-        res.status(502).json({ error: error instanceof Error ? error.message : 'Failed to reach qBittorrent' });
-    }
-});
-
 router.get('/jellyfin-test', async (_req: Request, res: Response) => {
     try {
         const result = await jellyfinService.testConnection();
@@ -102,7 +90,7 @@ router.get('/jellyfin-test', async (_req: Request, res: Response) => {
 
 router.get('/jellyfin-status', async (_req: Request, res: Response) => {
     try {
-        const status = await getLastSyncStatus();
+        const status = await getLastSyncStatus('jellyfin');
         res.json(status);
     } catch (error: unknown) {
         logger.error('Admin: failed to retrieve Jellyfin sync status', {
@@ -118,13 +106,53 @@ router.post('/jellyfin-sync', async (req: Request, res: Response) => {
     });
     try {
         await jellyfinService.syncLibrary();
-        const status = await getLastSyncStatus();
+        const status = await getLastSyncStatus('jellyfin');
         res.json(status);
     } catch (error: unknown) {
         logger.error('Admin: Jellyfin manual sync failed', {
             error: error instanceof Error ? error.message : String(error),
         });
         res.status(502).json({ error: error instanceof Error ? error.message : 'Jellyfin sync failed' });
+    }
+});
+
+router.get('/qbittorrent-test', async (_req: Request, res: Response) => {
+    try {
+        const result = await qbittorrentService.testConnection();
+        res.json(result);
+    } catch (error: unknown) {
+        logger.error('Admin: qBittorrent connection test failed', {
+            error: error instanceof Error ? error.message : String(error),
+        });
+        res.status(502).json({ error: error instanceof Error ? error.message : 'Failed to reach qBittorrent' });
+    }
+});
+
+router.get('/qbittorrent-status', async (_req: Request, res: Response) => {
+    try {
+        const status = await getLastSyncStatus('qbittorrent');
+        res.json(status);
+    } catch (error: unknown) {
+        logger.error('Admin: failed to retrieve qBittorrent sync status', {
+            error: error instanceof Error ? error.message : String(error),
+        });
+        res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to retrieve sync status' });
+    }
+});
+
+router.post('/qbittorrent-sync', async (req: Request, res: Response) => {
+    logger.info('Admin: qBittorrent manual sync triggered', {
+        by: (req as AuthenticatedRequest).user.username,
+    });
+    try {
+        await qbittorrentService.syncTorrents();
+        const status = await getLastSyncStatus('qbittorrent');
+        res.json(status);
+    } catch (error: unknown) {
+        logger.error('Admin: qBittorrent manual sync failed', {
+            error: error instanceof Error ? error.message : String(error),
+        });
+        res.status(502).json({ error: error instanceof Error ? error.message : 'qBittorrent sync failed' });
     }
 });
 

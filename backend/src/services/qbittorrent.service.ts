@@ -1,6 +1,8 @@
 import { config } from '../config.js';
 import { logger } from '../utils/logger.js';
 import { asNumber, asRecord, asString } from '../utils/coerce.js';
+import { replaceTorrents, type QbittorrentTorrent } from '../repositories/qbittorrent.repository.js';
+import { logSync } from '../repositories/sync.repository.js';
 import type { DownloadCategory } from 'shared/constants';
 
 const TORRENT_HASH_PATTERN = /^[a-f0-9]{40}$/i;
@@ -8,6 +10,13 @@ const TORRENT_HASH_PATTERN = /^[a-f0-9]{40}$/i;
 interface QbittorrentServerState {
     connectionStatus: string;
     freeSpaceOnDisk: number;
+}
+
+interface QbittorrentRawTorrent {
+    name: string;
+    hash: string;
+    content_path: string;
+    added_on: number;
 }
 
 class QbittorrentService {
@@ -35,6 +44,25 @@ class QbittorrentService {
 
         if (!response.ok) {
             throw new Error(`qBittorrent add failed: ${response.status} ${responseText}`);
+        }
+    }
+
+    async syncTorrents(): Promise<number> {
+        try {
+            logger.info('[qBittorrent] Torrent sync started');
+
+            const torrents = await this.fetchTorrents();
+            await replaceTorrents(torrents);
+
+            logger.info('[qBittorrent] Torrent sync completed', { itemCount: torrents.length });
+            await logSync('qbittorrent', true, torrents.length, null);
+
+            return torrents.length;
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error);
+            logger.error('[qBittorrent] Torrent sync failed', { error: message });
+            await logSync('qbittorrent', false, null, message);
+            throw error;
         }
     }
 
@@ -81,6 +109,42 @@ class QbittorrentService {
 
         const version = await response.text();
         return { version };
+    }
+
+    private async fetchTorrents(): Promise<QbittorrentTorrent[]> {
+        const response = await this.qbtFetch('/api/v2/torrents/info', { method: 'GET' });
+        if (!response.ok) {
+            const responseText = await response.text();
+            throw new Error(`qBittorrent torrent list failed: ${response.status} ${responseText}`);
+        }
+
+        return this.array(await response.json())
+            .map((item) => this.toTorrent(item))
+            .filter((torrent): torrent is QbittorrentTorrent => torrent !== null);
+    }
+
+    private toTorrent(value: unknown): QbittorrentTorrent | null {
+        const raw = this.toRawTorrent(value);
+        const hash = this.normalizeTorrentHash(raw.hash);
+        const name = raw.name.trim();
+        if (!hash || !name) return null;
+
+        return {
+            hash,
+            name,
+            contentPath: this.normalizePath(raw.content_path),
+            addedOn: this.toDate(raw.added_on),
+        };
+    }
+
+    private toRawTorrent(value: unknown): QbittorrentRawTorrent {
+        const record = asRecord(value);
+        return {
+            name: asString(record['name']),
+            hash: asString(record['hash']),
+            content_path: asString(record['content_path']),
+            added_on: asNumber(record['added_on']),
+        };
     }
 
     private async login(): Promise<void> {
@@ -140,6 +204,11 @@ class QbittorrentService {
         return nextHeaders;
     }
 
+    private normalizeTorrentHash(hash: string): string | null {
+        const torrentHash = hash.trim().toLowerCase();
+        return TORRENT_HASH_PATTERN.test(torrentHash) ? torrentHash : null;
+    }
+
     private getTorrentHash(hash: string): string {
         const torrentHash = hash.trim();
         if (!TORRENT_HASH_PATTERN.test(torrentHash)) {
@@ -147,6 +216,20 @@ class QbittorrentService {
         }
 
         return torrentHash;
+    }
+
+    private toDate(unixSeconds: number): Date | null {
+        if (!Number.isFinite(unixSeconds) || unixSeconds <= 0) return null;
+        return new Date(unixSeconds * 1000);
+    }
+
+    private normalizePath(value: string): string {
+        const normalized = value.trim().replace(/\\/g, '/');
+        return normalized.length > 1 ? normalized.replace(/\/+$/, '') : normalized;
+    }
+
+    private array(value: unknown): unknown[] {
+        return Array.isArray(value) ? value : [];
     }
 
     private getBaseUrl(): string {

@@ -1,5 +1,5 @@
 import { query } from '../db/connection.js';
-import type { JellyfinSyncStatus, LibraryItem, MediaInfo } from 'shared/jellyfin.models';
+import type { LibraryItem, MediaInfo } from 'shared/jellyfin.models';
 import type { MediaType } from 'shared/tmdb.models';
 
 interface LibraryPage {
@@ -95,53 +95,6 @@ export async function replaceLibrary(items: JellyfinItem[]): Promise<void> {
            synced_at = NOW()`,
         values,
     );
-}
-
-export async function logSync(success: boolean, itemCount: number | null, errorMessage: string | null): Promise<void> {
-    await query(`INSERT INTO jellyfin_sync_log (success, item_count, error_message) VALUES ($1, $2, $3)`, [
-        success,
-        itemCount,
-        errorMessage,
-    ]);
-}
-
-export async function getLastSyncStatus(): Promise<JellyfinSyncStatus> {
-    const result = await query<{
-        started_at: string;
-        success: boolean;
-        item_count: number | null;
-        error_message: string | null;
-    }>(
-        `SELECT started_at, success, item_count, error_message
-     FROM jellyfin_sync_log
-     ORDER BY started_at DESC
-     LIMIT 1`,
-    );
-
-    if (result.rows.length === 0) {
-        return { lastSync: null, success: null, itemCount: null, errorMessage: null };
-    }
-
-    const row = result.rows[0];
-    return {
-        lastSync: row.started_at,
-        success: row.success,
-        itemCount: row.item_count,
-        errorMessage: row.error_message,
-    };
-}
-
-export async function needsSyncOnStartup(): Promise<boolean> {
-    const countResult = await query<{ count: string }>('SELECT COUNT(*) AS count FROM jellyfin_library');
-    if (parseInt(countResult.rows[0].count, 10) === 0) return true;
-
-    const syncResult = await query<{ started_at: string }>(
-        `SELECT started_at FROM jellyfin_sync_log WHERE success = true ORDER BY started_at DESC LIMIT 1`,
-    );
-    if (syncResult.rows.length === 0) return true;
-
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    return new Date(syncResult.rows[0].started_at) < oneDayAgo;
 }
 
 export async function getLibrary(

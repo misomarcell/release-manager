@@ -100,6 +100,49 @@
 
     <mat-card class="action-card">
       <mat-card-header>
+        <mat-icon mat-card-avatar class="action-icon">downloading</mat-icon>
+        <mat-card-title>qBittorrent torrent sync</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="action-description">
+          Fetches the current torrent list from qBittorrent and stores names, hashes, content paths, and added dates for
+          later library matching.
+        </p>
+        @if (qbittorrentStatus(); as status) {
+          <div class="sync-status">
+            @if (status.lastSync) {
+              <span class="sync-meta">
+                Last sync: {{ status.lastSync | date: 'medium' }}
+                @if (status.success) {
+                  &middot; {{ status.itemCount }} torrents
+                  <mat-icon class="status-icon success">check_circle</mat-icon>
+                } @else {
+                  <mat-icon class="status-icon error">error</mat-icon>
+                  <span class="sync-error">{{ status.errorMessage }}</span>
+                }
+              </span>
+            } @else {
+              <span class="sync-meta">No sync has run yet.</span>
+            }
+          </div>
+        }
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-stroked-button (click)="syncQbittorrent()" [disabled]="clearing() !== null">
+          @if (clearing() === 'qbittorrent-sync') {
+            Syncing...
+          } @else {
+            <ng-container>
+              <mat-icon>sync</mat-icon>
+              Sync now
+            </ng-container>
+          }
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="action-card">
+      <mat-card-header>
         <mat-icon mat-card-avatar class="action-icon">video_library</mat-icon>
         <mat-card-title>Jellyfin library sync</mat-card-title>
       </mat-card-header>

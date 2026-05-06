@@ -86,6 +86,8 @@ To connect to the database, register a new server in pgAdmin:
 | `SESSION_SECRET`    | Session signing secret       | `change-me-to-a-random-string`                  |
 | `RP_ID`             | WebAuthn Relying Party ID    | `localhost`                                     |
 | `RP_ORIGIN`         | WebAuthn origin URL          | `http://localhost:4000`                         |
+| `QBITTORRENT_CRON`  | qBittorrent torrent sync cron schedule | `0 6 * * *`                            |
+| `JELLYFIN_CRON`     | Jellyfin library sync cron schedule | `0 6 * * *`                                |
 
 ## Authentication
 

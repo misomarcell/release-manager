@@ -31,6 +31,7 @@ export const config = {
         password: process.env['QBITTORRENT_PASSWORD']?.trim() || '',
         savePathMovies: process.env['DOWNLOAD_PATH_MOVIES']?.trim() || '/media/Movies',
         savePathTv: process.env['DOWNLOAD_PATH_TV']?.trim() || '/media/TV_Shows',
+        cronSchedule: process.env['QBITTORRENT_CRON']?.trim() || '0 6 * * *',
     },
     cacheExpiryMs: 7 * 24 * 60 * 60 * 1000, // 1 week
     openai: {

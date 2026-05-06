@@ -95,6 +95,15 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS logs_created_at_idx ON logs (created_at DESC);
     CREATE INDEX IF NOT EXISTS logs_level_idx ON logs (level);
 
+    CREATE TABLE IF NOT EXISTS qbittorrent_torrents (
+      id           SERIAL PRIMARY KEY,
+      hash         VARCHAR(40) UNIQUE NOT NULL,
+      name         TEXT NOT NULL,
+      content_path TEXT NOT NULL,
+      added_on     TIMESTAMPTZ,
+      synced_at    TIMESTAMPTZ DEFAULT NOW()
+    );
+
     CREATE TABLE IF NOT EXISTS jellyfin_library (
       id           SERIAL PRIMARY KEY,
       jellyfin_id  VARCHAR(255) UNIQUE NOT NULL,
@@ -109,12 +118,17 @@ export async function initDatabase(): Promise<void> {
       synced_at    TIMESTAMPTZ DEFAULT NOW()
     );
 
-    CREATE TABLE IF NOT EXISTS jellyfin_sync_log (
+    CREATE TABLE IF NOT EXISTS sync_log (
       id            SERIAL PRIMARY KEY,
+      service       VARCHAR(32) NOT NULL,
       started_at    TIMESTAMPTZ DEFAULT NOW(),
       success       BOOLEAN NOT NULL,
       item_count    INTEGER,
       error_message TEXT
     );
+
+    DROP TABLE IF EXISTS jellyfin_sync_log;
+
+    CREATE INDEX IF NOT EXISTS sync_log_service_started_at_idx ON sync_log (service, started_at DESC);
   `);
 }

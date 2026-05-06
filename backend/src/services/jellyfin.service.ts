@@ -2,7 +2,8 @@ import { config } from '../config.js';
 import { logger } from '../utils/logger.js';
 import type { MediaType } from 'shared/tmdb.models';
 import type { MediaInfo, MediaStream } from 'shared/jellyfin.models';
-import { replaceLibrary, reloadCache, logSync, type JellyfinItem } from '../repositories/jellyfin.repository.js';
+import { replaceLibrary, reloadCache, type JellyfinItem } from '../repositories/jellyfin.repository.js';
+import { logSync } from '../repositories/sync.repository.js';
 
 interface JellyfinRawMediaStream {
     Type: 'Video' | 'Audio' | 'Subtitle';
@@ -71,13 +72,13 @@ class JellyfinService {
             await reloadCache();
 
             logger.info('Jellyfin sync completed', { itemCount: items.length });
-            await logSync(true, items.length, null);
+            await logSync('jellyfin', true, items.length, null);
 
             return items.length;
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : String(error);
             logger.error('Jellyfin sync failed', { error: message });
-            await logSync(false, null, message);
+            await logSync('jellyfin', false, null, message);
             throw error;
         }
     }

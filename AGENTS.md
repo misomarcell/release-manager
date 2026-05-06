@@ -33,6 +33,8 @@
 - `shared/src/log.models.ts` — Logging types: `LogLevel`, `LogEntry`, `LogsResponse`.
 - Both frontend and backend import from `shared` — never duplicate these types.
 
+- `shared/src/sync.models.ts` — Shared sync status types: `SyncService`, `SyncStatus`.
+
 ## Backend Structure
 
 ```
@@ -108,6 +110,7 @@ backend/src/
 | `QBITTORRENT_URL`      | qBittorrent Web UI URL (e.g. `http://qbittorrent:8080`)                |
 | `QBITTORRENT_USERNAME` | qBittorrent username (default: `admin`)                                |
 | `QBITTORRENT_PASSWORD` | qBittorrent password                                                   |
+| `QBITTORRENT_CRON`     | Cron schedule for torrent sync (default: `0 6 * * *` — daily at 6 AM)  |
 | `DOWNLOAD_PATH_MOVIES` | Save path for movies (default: `/media/Movies`)                        |
 | `DOWNLOAD_PATH_TV`     | Save path for TV shows (default: `/media/TV_Shows`)                    |
 | `OPENAI_API_KEY`       | OpenAI API key for AI-powered recommendations (optional)               |
