@@ -91,6 +91,11 @@ export class LibraryComponent implements OnInit {
         void this.loadItems();
     }
 
+    protected onItemDeleted(jellyfinId: string): void {
+        this.items.update((items) => items.filter((item) => item.jellyfinId !== jellyfinId));
+        this.total.update((total) => Math.max(0, total - 1));
+    }
+
     private async loadItems(): Promise<void> {
         this.loading.set(true);
         this.error.set(null);

@@ -51,4 +51,8 @@ export class AdminService {
   async syncQbittorrent(): Promise<SyncStatus> {
     return this.api.post<SyncStatus>('/api/admin/qbittorrent-sync', {});
   }
+
+  async deleteTorrent(hash: string): Promise<{ deleted: boolean }> {
+    return this.api.delete<{ deleted: boolean }>(`/api/admin/qbittorrent-torrents/${hash}`);
+  }
 }

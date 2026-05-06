@@ -1,11 +1,43 @@
 :host {
     display: block;
-    padding: 0.625rem 0.75rem;
-    background: var(--mat-sys-surface-variant);
+    --mat-expansion-container-background-color: var(--mat-sys-surface-variant);
+    --mat-expansion-header-collapsed-state-height: 44px;
+    --mat-expansion-header-expanded-state-height: 44px;
+}
+
+mat-expansion-panel {
     border-radius: 8px;
+    box-shadow: none !important;
+
+    ::ng-deep .mat-expansion-panel-body {
+        padding: 0;
+    }
+}
+
+mat-panel-title,
+mat-panel-description {
+    align-items: center;
+    font-size: 0.82rem;
+}
+
+mat-panel-title {
+    gap: 0.4rem;
+    min-width: 0;
+
+    mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+    }
+}
+
+mat-panel-description {
+    justify-content: flex-end;
 }
 
 .info-group {
+    padding: 0 0.75rem 0.625rem;
+
     & + .info-group {
         margin-top: 0.5rem;
         padding-top: 0.5rem;

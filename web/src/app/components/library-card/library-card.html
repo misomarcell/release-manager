@@ -45,6 +45,9 @@
             [detailLoading]="detailLoading()"
             [imdbId]="detail()?.imdbId ?? ''"
             [jellyfinUrl]="jellyfinUrl()"
+            [canBeDeleted]="canBeDeleted()"
+            [deleteActionDisabled]="deleting()"
+            (deleteAction)="deleteItem()"
         />
 
         @if (i.mediaInfo?.streams?.length) {

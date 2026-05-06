@@ -50,3 +50,7 @@ export async function getTorrentReferences(): Promise<TorrentReference[]> {
         contentPath: row.content_path,
     }));
 }
+
+export async function deleteTorrentByHash(hash: string): Promise<void> {
+    await query('DELETE FROM qbittorrent_torrents WHERE hash = $1', [hash]);
+}

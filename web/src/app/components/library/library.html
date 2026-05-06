@@ -34,7 +34,11 @@
         </div>
         <mat-accordion class="results">
             @for (item of items(); track item.jellyfinId) {
-                <app-library-card [item]="item" [jellyfinBaseUrl]="jellyfinBaseUrl()" />
+                <app-library-card
+                    [item]="item"
+                    [jellyfinBaseUrl]="jellyfinBaseUrl()"
+                    (deleted)="onItemDeleted($event)"
+                />
             }
         </mat-accordion>
 

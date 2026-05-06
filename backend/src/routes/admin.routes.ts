@@ -8,12 +8,16 @@ import { jellyfinService } from '../services/jellyfin.service.js';
 import { getLastSyncStatus } from '../repositories/sync.repository.js';
 import { getLogs } from '../repositories/log.repository.js';
 import { logger } from '../utils/logger.js';
-import { parseQuery } from '../middleware/validate.js';
+import { parseParams, parseQuery } from '../middleware/validate.js';
 
 const LogsQuerySchema = z.object({
     level: z.enum(['info', 'warn', 'error']).optional(),
     limit: z.coerce.number().int().min(1).max(500).default(100),
     offset: z.coerce.number().int().min(0).default(0),
+});
+
+const TorrentHashParamsSchema = z.object({
+    hash: z.string().regex(/^[a-fA-F0-9]{40}$/, 'Invalid torrent hash.'),
 });
 
 const router = Router();
@@ -153,6 +157,27 @@ router.post('/qbittorrent-sync', async (req: Request, res: Response) => {
             error: error instanceof Error ? error.message : String(error),
         });
         res.status(502).json({ error: error instanceof Error ? error.message : 'qBittorrent sync failed' });
+    }
+});
+
+router.delete('/qbittorrent-torrents/:hash', async (req: Request, res: Response) => {
+    const params = parseParams(TorrentHashParamsSchema, req.params, res);
+    if (!params) return;
+
+    logger.warn('Admin: qBittorrent torrent delete triggered', {
+        hash: params.hash,
+        by: (req as AuthenticatedRequest).user.username,
+    });
+
+    try {
+        await qbittorrentService.deleteTorrent(params.hash);
+        res.json({ deleted: true });
+    } catch (error: unknown) {
+        logger.error('Admin: qBittorrent torrent delete failed', {
+            hash: params.hash,
+            error: error instanceof Error ? error.message : String(error),
+        });
+        res.status(502).json({ error: error instanceof Error ? error.message : 'qBittorrent torrent delete failed' });
     }
 });
 

@@ -1,7 +1,7 @@
 import { config } from '../config.js';
 import { logger } from '../utils/logger.js';
 import { asNumber, asRecord, asString } from '../utils/coerce.js';
-import { replaceTorrents, type QbittorrentTorrent } from '../repositories/qbittorrent.repository.js';
+import { deleteTorrentByHash, replaceTorrents, type QbittorrentTorrent } from '../repositories/qbittorrent.repository.js';
 import { logSync } from '../repositories/sync.repository.js';
 import type { DownloadCategory } from 'shared/constants';
 
@@ -99,6 +99,8 @@ class QbittorrentService {
         if (!response.ok) {
             throw new Error(`qBittorrent delete failed: ${response.status} ${responseText}`);
         }
+
+        await deleteTorrentByHash(torrentHash);
     }
 
     async testConnection(): Promise<{ version: string }> {
@@ -210,8 +212,8 @@ class QbittorrentService {
     }
 
     private getTorrentHash(hash: string): string {
-        const torrentHash = hash.trim();
-        if (!TORRENT_HASH_PATTERN.test(torrentHash)) {
+        const torrentHash = this.normalizeTorrentHash(hash);
+        if (!torrentHash) {
             throw new Error('Invalid torrent hash.');
         }
 
