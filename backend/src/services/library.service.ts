@@ -1,5 +1,13 @@
-import { getLibraryPage, type LibraryPage } from '../repositories/jellyfin.repository.js';
+import {
+    getLibraryPage,
+    getLibraryItem,
+    deleteLibraryItem as deleteLibraryItemRow,
+    reloadCache,
+    type LibraryPage,
+} from '../repositories/jellyfin.repository.js';
 import { getTorrentReferences } from '../repositories/qbittorrent.repository.js';
+import { qbittorrentService } from './qbittorrent.service.js';
+import { logger } from '../utils/logger.js';
 import type { LibraryItem } from 'shared/jellyfin.models';
 import type { MediaType } from 'shared/tmdb.models';
 
@@ -24,6 +32,30 @@ class LibraryService {
                 return torrentHash ? { ...item, torrentHash } : item;
             }),
         };
+    }
+
+    async deleteLibraryItem(jellyfinId: string): Promise<void> {
+        const item = await getLibraryItem(jellyfinId);
+        if (!item) {
+            throw new Error('Library item not found.');
+        }
+
+        const torrentHashesByPath = await this.buildTorrentHashLookup();
+        const contentPath = this.getContentPath(item);
+        const torrentHash = contentPath ? torrentHashesByPath.get(contentPath) : null;
+        if (!torrentHash) {
+            throw new Error('No matching torrent found for this library item.');
+        }
+
+        logger.info('Library: deleting item', {
+            jellyfinId,
+            title: item.title,
+            torrentHash,
+        });
+
+        await qbittorrentService.deleteTorrent(torrentHash);
+        await deleteLibraryItemRow(jellyfinId);
+        await reloadCache();
     }
 
     private async buildTorrentHashLookup(): Promise<Map<string, string>> {

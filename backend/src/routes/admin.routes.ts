@@ -5,6 +5,7 @@ import { requireAuth, requireAdmin, type AuthenticatedRequest } from '../middlew
 import { query } from '../db/connection.js';
 import { qbittorrentService } from '../services/qbittorrent.service.js';
 import { jellyfinService } from '../services/jellyfin.service.js';
+import { libraryService } from '../services/library.service.js';
 import { getLastSyncStatus } from '../repositories/sync.repository.js';
 import { getLogs } from '../repositories/log.repository.js';
 import { logger } from '../utils/logger.js';
@@ -16,8 +17,8 @@ const LogsQuerySchema = z.object({
     offset: z.coerce.number().int().min(0).default(0),
 });
 
-const TorrentHashParamsSchema = z.object({
-    hash: z.string().regex(/^[a-fA-F0-9]{40}$/, 'Invalid torrent hash.'),
+const LibraryItemParamsSchema = z.object({
+    jellyfinId: z.string().min(1, 'Invalid library item id.').max(128),
 });
 
 const router = Router();
@@ -160,24 +161,25 @@ router.post('/qbittorrent-sync', async (req: Request, res: Response) => {
     }
 });
 
-router.delete('/qbittorrent-torrents/:hash', async (req: Request, res: Response) => {
-    const params = parseParams(TorrentHashParamsSchema, req.params, res);
+router.delete('/library/:jellyfinId', async (req: Request, res: Response) => {
+    const params = parseParams(LibraryItemParamsSchema, req.params, res);
     if (!params) return;
 
-    logger.warn('Admin: qBittorrent torrent delete triggered', {
-        hash: params.hash,
+    logger.warn('Admin: library item delete triggered', {
+        jellyfinId: params.jellyfinId,
         by: (req as AuthenticatedRequest).user.username,
     });
 
     try {
-        await qbittorrentService.deleteTorrent(params.hash);
+        await libraryService.deleteLibraryItem(params.jellyfinId);
         res.json({ deleted: true });
     } catch (error: unknown) {
-        logger.error('Admin: qBittorrent torrent delete failed', {
-            hash: params.hash,
-            error: error instanceof Error ? error.message : String(error),
+        const message = error instanceof Error ? error.message : 'Library item delete failed';
+        logger.error('Admin: library item delete failed', {
+            jellyfinId: params.jellyfinId,
+            error: message,
         });
-        res.status(502).json({ error: error instanceof Error ? error.message : 'qBittorrent torrent delete failed' });
+        res.status(502).json({ error: message });
     }
 });
 

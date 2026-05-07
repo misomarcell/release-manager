@@ -43,7 +43,7 @@ export class LibraryCardComponent {
     protected deleting = signal(false);
     private detailLoaded = false;
 
-    protected canBeDeleted = computed(() => this.auth.admin());
+    protected canBeDeleted = computed(() => this.auth.admin() && !!this.item().torrentHash);
     protected displayTitle = computed(() => this.item().title);
 
     protected jellyfinUrl = computed(() => {
@@ -88,8 +88,7 @@ export class LibraryCardComponent {
 
     protected async deleteItem(): Promise<void> {
         const item = this.item();
-        const hash = item.torrentHash;
-        if (!hash || this.deleting()) return;
+        if (!item.torrentHash || this.deleting()) return;
 
         const confirmed = await this.confirm(
             `Delete ${item.title}`,
@@ -99,7 +98,7 @@ export class LibraryCardComponent {
 
         this.deleting.set(true);
         try {
-            await this.admin.deleteTorrent(hash);
+            await this.admin.deleteLibraryItem(item.jellyfinId);
             this.deleted.emit(item.jellyfinId);
             this.snackBar.open(`Deleted ${item.title}`, 'OK', { duration: 3000 });
         } catch (e: unknown) {

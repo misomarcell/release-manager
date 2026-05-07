@@ -177,3 +177,46 @@ export async function getLibraryPage(
 
     return { items, total: parseInt(countResult.rows[0].count, 10) };
 }
+
+export async function getLibraryItem(jellyfinId: string): Promise<LibraryItem | null> {
+    const result = await query<{
+        jellyfin_id: string;
+        tmdb_id: number | null;
+        media_type: string | null;
+        title: string;
+        year: string | null;
+        synced_at: string;
+        media_info: MediaInfo | null;
+        size_bytes: number | null;
+        path: string | null;
+    }>(
+        `SELECT jellyfin_id, tmdb_id, media_type, title, year, synced_at, media_info, size_bytes, path
+     FROM jellyfin_library
+     WHERE jellyfin_id = $1
+     LIMIT 1`,
+        [jellyfinId],
+    );
+
+    const row = result.rows[0];
+    if (!row) return null;
+
+    return {
+        jellyfinId: row.jellyfin_id,
+        tmdbId: row.tmdb_id,
+        mediaType: (row.media_type as MediaType) ?? null,
+        title: row.title,
+        year: row.year,
+        syncedAt: row.synced_at,
+        poster: null,
+        genre: null,
+        rating: null,
+        mediaInfo: row.media_info ?? null,
+        sizeBytes: row.size_bytes ?? null,
+        path: row.path ?? null,
+    };
+}
+
+export async function deleteLibraryItem(jellyfinId: string): Promise<boolean> {
+    const result = await query('DELETE FROM jellyfin_library WHERE jellyfin_id = $1', [jellyfinId]);
+    return (result.rowCount ?? 0) > 0;
+}

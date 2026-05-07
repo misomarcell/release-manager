@@ -30,5 +30,5 @@ export class MediaDetailsComponent {
         () => !!this.mediaType() || !!this.detail()?.rated || !!this.detail()?.runtime || !!this.detail()?.releaseDate,
     );
     protected hasActionLinks = computed(() => !!this.imdbId() || !!this.detail()?.trailerKey || !!this.jellyfinUrl());
-    protected hasMenuActions = computed(() => this.hasActionLinks());
+    protected hasMenuActions = computed(() => this.hasActionLinks() || this.canBeDeleted());
 }
