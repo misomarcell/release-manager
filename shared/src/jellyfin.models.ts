@@ -7,6 +7,7 @@ export interface MediaStream {
     displayTitle: string;
     width?: number; // video — needed for 4K badge
     videoRangeType?: string; // video — needed for HDR/DV badge
+    videoDoViTitle?: string; // video — Dolby Vision profile string from Jellyfin
     spatialFormat?: string; // audio — needed for Atmos/DTS:X badge
     profile?: string; // audio — needed for DTS-HD MA badge
 }

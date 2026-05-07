@@ -64,7 +64,9 @@ export function formatVideoStream(stream: MediaStream): string {
     if (stream.codec) parts.push(stream.codec.toUpperCase());
 
     const vrt = (stream.videoRangeType ?? '').toUpperCase();
-    if (vrt.includes('DOVI') && vrt.includes('HDR10')) {
+    if (vrt.includes('DOVI') && stream.videoDoViTitle) {
+        parts.push(stream.videoDoViTitle);
+    } else if (vrt.includes('DOVI') && vrt.includes('HDR10')) {
         parts.push('Dolby Vision + HDR10' + (vrt.includes('PLUS') ? '+' : ''));
     } else if (vrt.includes('DOVI')) {
         parts.push('Dolby Vision');

@@ -11,6 +11,7 @@ interface JellyfinRawMediaStream {
     Language?: string;
     DisplayTitle?: string;
     VideoRangeType?: string;
+    VideoDoViTitle?: string;
     Channels?: number;
     AudioSpatialFormat?: string;
     Profile?: string;
@@ -123,6 +124,7 @@ class JellyfinService {
                 if (s.Type === 'Video') {
                     base.width = s.Width;
                     base.videoRangeType = s.VideoRangeType;
+                    base.videoDoViTitle = s.VideoDoViTitle;
                 }
                 if (s.Type === 'Audio') {
                     base.spatialFormat = s.AudioSpatialFormat;
