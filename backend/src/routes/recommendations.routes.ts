@@ -5,7 +5,7 @@ import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
 import { recommendationsService } from '../services/recommendations.service.js';
-import { fetchBasicMetadata } from '../services/metadata.service.js';
+import { getMetadata } from '../services/metadata.service.js';
 import {
     upsertFeedback,
     deleteFeedback,
@@ -74,7 +74,7 @@ router.post('/feedback', requireAuth, async (req: Request, res: Response) => {
     const body = parseBody(FeedbackBodySchema, req.body, res);
     if (!body) return;
 
-    const { metadata } = await fetchBasicMetadata({
+    const { metadata } = await getMetadata({
         tmdbId: body.tmdbId,
         mediaType: body.mediaType,
         title: '',

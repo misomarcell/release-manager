@@ -3,7 +3,7 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { requireAuth } from '../middleware/auth.js';
 import { libraryService } from '../services/library.service.js';
-import { fetchBasicMetadata } from '../services/metadata.service.js';
+import { getMetadata } from '../services/metadata.service.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import { config } from '../config.js';
 import type { LibraryItem, LibraryResponse } from 'shared/jellyfin.models';
@@ -32,7 +32,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
 
         const enriched = await mapConcurrent(items, 6, async (item): Promise<LibraryItem> => {
             if (!item.tmdbId || !item.mediaType) return item;
-            const { metadata } = await fetchBasicMetadata({
+            const { metadata } = await getMetadata({
                 tmdbId: item.tmdbId,
                 mediaType: item.mediaType,
                 title: item.title,

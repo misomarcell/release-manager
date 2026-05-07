@@ -1,6 +1,6 @@
 import { getAiRecommendations, isOpenAiAvailable } from './openai.service.js';
 import type { AiSuggestion } from './openai.service.js';
-import { fetchTopRatedRecommendations, enrichRecommendations } from './metadata.service.js';
+import { fetchTrendingRecommendations, enrichRecommendations } from './metadata.service.js';
 import { hasFeedback, getAllFeedback, getFreshCache, setCache } from '../repositories/recommendations.repository.js';
 import type { AiRecommendation, RecommendationsResponse } from 'shared/recommendations.models';
 import type { MediaType } from 'shared/tmdb.models';
@@ -79,7 +79,7 @@ class RecommendationsService {
     }
 
     private async getTopRatedRefs(filter: MediaType | null): Promise<AiRecommendation[]> {
-        return fetchTopRatedRecommendations(RECOMMEND_COUNT, filter);
+        return fetchTrendingRecommendations(RECOMMEND_COUNT, filter);
     }
 
     private async getPersonalizedRefs(mediaType: MediaType, feedback: FeedbackRow[]): Promise<AiRecommendation[]> {

@@ -63,6 +63,14 @@ export async function initDatabase(): Promise<void> {
       expires_at   TIMESTAMPTZ NOT NULL
     );
 
+    -- TEMPORARY MIGRATION: remove after the production DB has been updated for unified metadata caching.
+    ALTER TABLE metadata_cache ADD COLUMN IF NOT EXISTS release_date TEXT DEFAULT '';
+    ALTER TABLE metadata_cache ADD COLUMN IF NOT EXISTS trailer_key VARCHAR(50);
+    ALTER TABLE metadata_cache ADD COLUMN IF NOT EXISTS imdb_id TEXT;
+
+    CREATE INDEX IF NOT EXISTS metadata_cache_tmdb_media_expires_idx
+      ON metadata_cache (tmdb_id, media_type, expires_at);
+
     CREATE TABLE IF NOT EXISTS recommendation_feedback (
       id          SERIAL PRIMARY KEY,
       user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

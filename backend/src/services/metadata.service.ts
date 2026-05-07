@@ -1,17 +1,12 @@
 import { tmdbService } from './tmdb.service.js';
-import {
-    getCachedMetadata,
-    setCachedMetadata,
-    getCachedDetailByTmdbId,
-    updateCachedDetail,
-    getCachedBasicByTmdbId,
-} from '../repositories/cache.repository.js';
+import { getCachedMetadata, getCachedMetadataByTmdbId, setCachedMetadata } from '../repositories/cache.repository.js';
 import { isInLibrary } from '../repositories/jellyfin.repository.js';
 import { mapConcurrent } from '../utils/concurrent.js';
-import type { MovieMetadata, MovieDetailMetadata, MetadataLookup, MediaType } from 'shared/tmdb.models';
+import { logger } from '../utils/logger.js';
+import type { MovieMetadata, MetadataLookup, MediaType } from 'shared/tmdb.models';
 import type { Recommendation, AiRecommendation, FeedbackValue } from 'shared/recommendations.models';
 
-interface BasicFetchResult {
+interface MetadataFetchResult {
     metadata: MovieMetadata | null;
     fromCache: boolean;
 }
@@ -22,109 +17,78 @@ export function getCacheKey(lookup: MetadataLookup): string {
     return `${typePart}title:${lookup.title.trim().toLowerCase()}|year:${lookup.year}`;
 }
 
-// ── Basic metadata ─────────────────────────────────────────────────────────────
+const inflightMetadata = new Map<string, Promise<MetadataFetchResult>>();
 
-const inflightBasic = new Map<string, Promise<BasicFetchResult>>();
-
-export async function fetchBasicMetadata(lookup: MetadataLookup): Promise<BasicFetchResult> {
+export async function getMetadata(lookup: MetadataLookup): Promise<MetadataFetchResult> {
     const cacheKey =
         lookup.tmdbId && lookup.mediaType ? `tmdbid:${lookup.mediaType}:${lookup.tmdbId}` : getCacheKey(lookup);
 
-    const existing = inflightBasic.get(cacheKey);
+    const existing = inflightMetadata.get(cacheKey);
     if (existing) return existing;
 
-    const promise = doFetchBasicMetadata(lookup, cacheKey).finally(() => {
-        inflightBasic.delete(cacheKey);
+    const promise = doGetMetadata(lookup, cacheKey).finally(() => {
+        inflightMetadata.delete(cacheKey);
     });
 
-    inflightBasic.set(cacheKey, promise);
+    inflightMetadata.set(cacheKey, promise);
     return promise;
 }
 
-async function doFetchBasicMetadata(lookup: MetadataLookup, cacheKey: string): Promise<BasicFetchResult> {
+async function doGetMetadata(lookup: MetadataLookup, cacheKey: string): Promise<MetadataFetchResult> {
     if (lookup.tmdbId && lookup.mediaType) {
-        const byId = await getCachedBasicByTmdbId(lookup.tmdbId, lookup.mediaType);
-        if (byId) {
-            byId.inJellyfinLibrary = isInLibrary(byId.tmdbId, byId.title, byId.year);
-            return { metadata: byId, fromCache: true };
-        }
+        const byId = await getCachedMetadataByTmdbId(lookup.tmdbId, lookup.mediaType);
+        if (byId) return { metadata: withLibraryState(byId), fromCache: true };
     }
 
     const cached = await getCachedMetadata(cacheKey);
     if (cached && (!lookup.mediaType || cached.mediaType === lookup.mediaType)) {
-        cached.inJellyfinLibrary = isInLibrary(cached.tmdbId, cached.title, cached.year);
-        return { metadata: cached, fromCache: true };
+        return { metadata: withLibraryState(cached), fromCache: true };
     }
 
-    const metadata = await tmdbService.fetchBasic(lookup);
+    logger.info('Metadata cache miss, fetching from TMDB', {
+        title: lookup.title,
+        mediaType: lookup.mediaType ?? 'unknown',
+    });
+
+    const metadata = await tmdbService.fetchMetadata(lookup);
     if (!metadata) return { metadata: null, fromCache: false };
 
     await setCachedMetadata(cacheKey, metadata);
-    metadata.inJellyfinLibrary = isInLibrary(metadata.tmdbId, metadata.title, metadata.year);
-    return { metadata, fromCache: false };
+    return { metadata: withLibraryState(metadata), fromCache: false };
 }
 
-// ── Detail metadata ────────────────────────────────────────────────────────────
-
-const inflightDetail = new Map<string, Promise<MovieDetailMetadata | null>>();
-
-export async function fetchDetailMetadata(tmdbId: number, mediaType: MediaType): Promise<MovieDetailMetadata | null> {
-    const key = `${mediaType}:${tmdbId}`;
-
-    const existing = inflightDetail.get(key);
-    if (existing) return existing;
-
-    const promise = doFetchDetailMetadata(tmdbId, mediaType).finally(() => {
-        inflightDetail.delete(key);
-    });
-
-    inflightDetail.set(key, promise);
-    return promise;
-}
-
-async function doFetchDetailMetadata(tmdbId: number, mediaType: MediaType): Promise<MovieDetailMetadata | null> {
-    const cached = await getCachedDetailByTmdbId(tmdbId, mediaType);
-    if (cached) return cached;
-
-    const detail = await tmdbService.fetchDetail(tmdbId, mediaType);
-    if (!detail) return null;
-
-    await updateCachedDetail(tmdbId, mediaType, detail);
-    return detail;
-}
-
-// ── Recommendations ────────────────────────────────────────────────────────────
-
-export async function fetchTopRatedRecommendations(
+export async function fetchTrendingRecommendations(
     count: number,
     filter: MediaType | null = null,
 ): Promise<AiRecommendation[]> {
-    const recs = await tmdbService.fetchTopRated(count, filter);
+    const refs = await tmdbService.fetchTopRated(count, filter);
 
-    // Warm metadata_cache with the batch data we already have so enrichment is all cache-hits
-    await mapConcurrent(recs, 6, (rec) => {
-        const mediaType = rec.mediaType as MediaType;
-        return setCachedMetadata(getCacheKey({ title: rec.title, year: rec.year, imdbId: '', mediaType }), rec);
-    });
+    await mapConcurrent(refs, 6, (ref) =>
+        getMetadata({
+            tmdbId: ref.tmdbId,
+            mediaType: ref.mediaType,
+            title: ref.title,
+            year: ref.year,
+            imdbId: '',
+        }),
+    );
 
-    return recs.map((rec) => ({
-        tmdbId: rec.tmdbId,
-        mediaType: rec.mediaType as MediaType,
-        title: rec.title,
-        year: rec.year,
+    return refs.map((ref) => ({
+        tmdbId: ref.tmdbId,
+        mediaType: ref.mediaType,
+        title: ref.title,
+        year: ref.year,
     }));
 }
 
 async function enrichRecommendation(ref: AiRecommendation, feedback?: FeedbackValue): Promise<Recommendation | null> {
-    const { metadata } = await fetchBasicMetadata({
+    const { metadata } = await getMetadata({
         title: ref.title,
         year: ref.year,
         imdbId: '',
         ...(ref.tmdbId ? { tmdbId: ref.tmdbId, mediaType: ref.mediaType } : { mediaType: ref.mediaType }),
     });
-    if (!metadata || (metadata.mediaType !== 'movie' && metadata.mediaType !== 'tv')) return null;
-
-    const detail = await fetchDetailMetadata(metadata.tmdbId, metadata.mediaType);
+    if (!metadata) return null;
 
     return {
         tmdbId: metadata.tmdbId,
@@ -134,9 +98,9 @@ async function enrichRecommendation(ref: AiRecommendation, feedback?: FeedbackVa
         poster: metadata.poster,
         genre: metadata.genre,
         rating: metadata.rating,
-        plot: detail?.plot || metadata.plot || '',
-        ...(detail?.imdbId ? { imdbId: detail.imdbId } : {}),
-        ...(detail?.trailerKey ? { trailerKey: detail.trailerKey } : {}),
+        plot: metadata.plot,
+        ...(metadata.imdbId ? { imdbId: metadata.imdbId } : {}),
+        ...(metadata.trailerKey ? { trailerKey: metadata.trailerKey } : {}),
         ...(ref.reason ? { reason: ref.reason } : {}),
         ...(feedback ? { feedback } : {}),
         inJellyfinLibrary: metadata.inJellyfinLibrary,
@@ -152,4 +116,11 @@ export async function enrichRecommendations(
         return enrichRecommendation(ref, feedback);
     });
     return results.filter((r): r is Recommendation => r !== null);
+}
+
+function withLibraryState(metadata: MovieMetadata): MovieMetadata {
+    return {
+        ...metadata,
+        inJellyfinLibrary: isInLibrary(metadata.tmdbId, metadata.title, metadata.year),
+    };
 }

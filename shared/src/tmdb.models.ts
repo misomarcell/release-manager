@@ -10,7 +10,7 @@ export interface MetadataLookup {
 
 export interface MovieMetadata {
   tmdbId: number;
-  mediaType: MediaType | '';
+  mediaType: MediaType;
   title: string;
   year: string;
   poster: string;
@@ -19,6 +19,9 @@ export interface MovieMetadata {
   plot: string;
   runtime: string;
   rated: string;
+  releaseDate: string;
+  trailerKey?: string;
+  imdbId?: string;
   inJellyfinLibrary?: boolean;
 }
 

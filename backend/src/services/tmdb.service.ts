@@ -1,11 +1,10 @@
 import { config } from '../config.js';
 import { asRecord, asString, asNumber } from '../utils/coerce.js';
 import { TMDB_GENRE_MAP } from 'shared/constants';
-import type { MovieMetadata, MovieDetailMetadata, MetadataLookup, MediaType } from 'shared/tmdb.models';
+import type { MovieMetadata, MetadataLookup, MediaType } from 'shared/tmdb.models';
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w342';
-const EMPTY_LOOKUP: MetadataLookup = { title: '', year: '', imdbId: '' };
 
 interface FindResult {
     id: number;
@@ -13,53 +12,25 @@ interface FindResult {
     data: Record<string, unknown>;
 }
 
-interface MediaFields {
+interface TopRatedItem {
+    tmdbId: number;
+    mediaType: MediaType;
     title: string;
-    originalTitle: string;
-    date: string;
-    searchYearParam: string;
-    findResults: string;
-    detailAppend: string;
+    year: string;
 }
 
-const MEDIA_FIELDS: Record<MediaType, MediaFields> = {
-    movie: {
-        title: 'title',
-        originalTitle: 'original_title',
-        date: 'release_date',
-        searchYearParam: 'year',
-        findResults: 'movie_results',
-        detailAppend: 'release_dates,videos',
-    },
-    tv: {
-        title: 'name',
-        originalTitle: 'original_name',
-        date: 'first_air_date',
-        searchYearParam: 'first_air_date_year',
-        findResults: 'tv_results',
-        detailAppend: 'content_ratings,videos,external_ids',
-    },
-};
-
 class TmdbService {
-    async fetchBasic(lookup: MetadataLookup): Promise<MovieMetadata | null> {
+    async fetchMetadata(lookup: MetadataLookup): Promise<MovieMetadata | null> {
         if (!config.tmdb.accessToken) return null;
 
         const item = await this.resolveItem(lookup);
-        return item ? this.toBasicMetadata(item, lookup) : null;
+        if (!item) return null;
+
+        const details = await this.fetchDetails(item.id, item.type);
+        return details ? this.toMetadata(item, details, lookup) : null;
     }
 
-    async fetchDetail(tmdbId: number, mediaType: MediaType): Promise<MovieDetailMetadata | null> {
-        if (!config.tmdb.accessToken) return null;
-
-        const details = await this.tmdbGet(`/${mediaType}/${tmdbId}`, {
-            append_to_response: MEDIA_FIELDS[mediaType].detailAppend,
-        });
-
-        return details ? this.toDetailMetadata(details, mediaType) : null;
-    }
-
-    async fetchTopRated(count: number, filter: MediaType | null = null): Promise<MovieMetadata[]> {
+    async fetchTopRated(count: number, filter: MediaType | null = null): Promise<TopRatedItem[]> {
         if (filter) return this.fetchTopRatedByType(filter, count);
 
         const [movies, tvShows] = await Promise.all([
@@ -72,19 +43,13 @@ class TmdbService {
 
     private async resolveItem(lookup: MetadataLookup): Promise<FindResult | null> {
         return (
-            (await this.resolveByTmdbId(lookup)) ??
-            (await this.resolveByImdbId(lookup)) ??
-            (await this.resolveByTitle(lookup))
+            this.resolveByTmdbId(lookup) ?? (await this.resolveByImdbId(lookup)) ?? (await this.resolveByTitle(lookup))
         );
     }
 
-    private async resolveByTmdbId(lookup: MetadataLookup): Promise<FindResult | null> {
+    private resolveByTmdbId(lookup: MetadataLookup): FindResult | null {
         if (!lookup.tmdbId || !lookup.mediaType) return null;
-
-        const data = await this.tmdbGet(`/${lookup.mediaType}/${lookup.tmdbId}`);
-        return data
-            ? { id: lookup.tmdbId, type: lookup.mediaType, data: this.withGenreIds(data) }
-            : null;
+        return { id: lookup.tmdbId, type: lookup.mediaType, data: {} };
     }
 
     private async resolveByImdbId(lookup: MetadataLookup): Promise<FindResult | null> {
@@ -106,7 +71,7 @@ class TmdbService {
 
     private async searchByType(lookup: MetadataLookup, type: MediaType): Promise<FindResult | null> {
         const params: Record<string, string> = { query: lookup.title };
-        if (lookup.year) params[MEDIA_FIELDS[type].searchYearParam] = lookup.year;
+        if (lookup.year) params[this.getSearchYearParam(type)] = lookup.year;
 
         const data = await this.tmdbGet(`/search/${type}`, params);
         if (!data) return null;
@@ -118,6 +83,12 @@ class TmdbService {
         return id ? { id, type, data: result } : null;
     }
 
+    private async fetchDetails(tmdbId: number, mediaType: MediaType): Promise<Record<string, unknown> | null> {
+        return this.tmdbGet(`/${mediaType}/${tmdbId}`, {
+            append_to_response: this.getDetailAppend(mediaType),
+        });
+    }
+
     private pickFindResult(data: Record<string, unknown>, preferredType?: MediaType): FindResult | null {
         if (preferredType) return this.findResultByType(data, preferredType);
 
@@ -125,7 +96,7 @@ class TmdbService {
     }
 
     private findResultByType(data: Record<string, unknown>, type: MediaType): FindResult | null {
-        const result = this.records(data[MEDIA_FIELDS[type].findResults])[0];
+        const result = this.records(data[this.getFindResultsKey(type)])[0];
         const id = result ? asNumber(result['id']) : 0;
         return id ? { id, type, data: result } : null;
     }
@@ -148,19 +119,17 @@ class TmdbService {
     }
 
     private matchesTitle(record: Record<string, unknown>, type: MediaType, title: string): boolean {
-        const fields = MEDIA_FIELDS[type];
         const normalizedTitle = this.normalizeTitle(title);
-        return [asString(record[fields.title]), asString(record[fields.originalTitle])].some(
+        return [this.getTitle(record, type), this.getOriginalTitle(record, type)].some(
             (candidate) => this.normalizeTitle(candidate) === normalizedTitle,
         );
     }
 
-    private toBasicMetadata(item: FindResult, lookup: MetadataLookup): MovieMetadata {
-        const fields = MEDIA_FIELDS[item.type];
-        const title = asString(item.data[fields.title]) || lookup.title;
-        const year = this.getYear(item.data, item.type) || lookup.year;
-        const posterPath = asString(item.data['poster_path']);
-        const voteAverage = asNumber(item.data['vote_average']);
+    private toMetadata(item: FindResult, details: Record<string, unknown>, lookup: MetadataLookup): MovieMetadata {
+        const title = this.getTitle(details, item.type) || this.getTitle(item.data, item.type) || lookup.title;
+        const year = this.getYear(details, item.type) || this.getYear(item.data, item.type) || lookup.year;
+        const posterPath = asString(details['poster_path']) || asString(item.data['poster_path']);
+        const voteAverage = asNumber(details['vote_average']) || asNumber(item.data['vote_average']);
 
         return {
             tmdbId: item.id,
@@ -168,44 +137,39 @@ class TmdbService {
             title,
             year,
             poster: posterPath ? `${IMAGE_BASE}${posterPath}` : '',
-            genre: this.resolveGenres(this.array(item.data['genre_ids'])),
+            genre: this.getGenres(details) || this.resolveGenres(this.array(item.data['genre_ids'])),
             rating: voteAverage ? String(Math.round(voteAverage * 10) / 10) : '',
-            plot: '',
-            runtime: '',
-            rated: '',
-        };
-    }
-
-    private toDetailMetadata(details: Record<string, unknown>, mediaType: MediaType): MovieDetailMetadata {
-        return {
             plot: asString(details['overview']),
-            runtime: this.getRuntime(details, mediaType),
-            rated: this.getCertification(details, mediaType),
-            releaseDate: asString(details[MEDIA_FIELDS[mediaType].date]),
+            runtime: this.getRuntime(details, item.type),
+            rated: this.getCertification(details, item.type),
+            releaseDate: this.getDate(details, item.type),
             trailerKey: this.getTrailerKey(details) || undefined,
-            imdbId: this.getImdbId(details, mediaType),
+            imdbId: this.getImdbId(details, item.type),
         };
     }
 
-    private async fetchTopRatedByType(type: MediaType, count: number): Promise<MovieMetadata[]> {
+    private async fetchTopRatedByType(type: MediaType, count: number): Promise<TopRatedItem[]> {
         const data = await this.tmdbGet(`/${type}/top_rated`, { language: 'en-US', page: '1' });
         if (!data) return [];
 
         return this.records(data['results'])
             .slice(0, count)
             .map((record) => {
-                const id = asNumber(record['id']);
-                return id ? this.toBasicMetadata({ id, type, data: record }, EMPTY_LOOKUP) : null;
+                const tmdbId = asNumber(record['id']);
+                if (!tmdbId) return null;
+
+                return {
+                    tmdbId,
+                    mediaType: type,
+                    title: this.getTitle(record, type),
+                    year: this.getYear(record, type),
+                };
             })
-            .filter((metadata): metadata is MovieMetadata => metadata !== null);
+            .filter((item): item is TopRatedItem => item !== null);
     }
 
-    private interleaveTopRated(
-        movies: MovieMetadata[],
-        tvShows: MovieMetadata[],
-        count: number,
-    ): MovieMetadata[] {
-        const combined: MovieMetadata[] = [];
+    private interleaveTopRated(movies: TopRatedItem[], tvShows: TopRatedItem[], count: number): TopRatedItem[] {
+        const combined: TopRatedItem[] = [];
         const maxLen = Math.max(movies.length, tvShows.length);
 
         for (let i = 0; i < maxLen && combined.length < count; i++) {
@@ -238,16 +202,16 @@ class TmdbService {
         }
     }
 
-    private withGenreIds(data: Record<string, unknown>): Record<string, unknown> {
-        return {
-            ...data,
-            genre_ids: this.records(data['genres']).map((genre) => asNumber(genre['id'])),
-        };
+    private getGenres(details: Record<string, unknown>): string {
+        return this.records(details['genres'])
+            .map((genre) => asString(genre['name']))
+            .filter(Boolean)
+            .join(', ');
     }
 
     private resolveGenres(genreIds: unknown[]): string {
         return genreIds
-            .map((id) => TMDB_GENRE_MAP[asNumber(id) ?? 0])
+            .map((id) => TMDB_GENRE_MAP[asNumber(id)])
             .filter(Boolean)
             .join(', ');
     }
@@ -300,7 +264,31 @@ class TmdbService {
     }
 
     private getYear(record: Record<string, unknown>, type: MediaType): string {
-        return this.extractYear(asString(record[MEDIA_FIELDS[type].date]));
+        return this.extractYear(this.getDate(record, type));
+    }
+
+    private getTitle(record: Record<string, unknown>, type: MediaType): string {
+        return asString(record[type === 'movie' ? 'title' : 'name']);
+    }
+
+    private getOriginalTitle(record: Record<string, unknown>, type: MediaType): string {
+        return asString(record[type === 'movie' ? 'original_title' : 'original_name']);
+    }
+
+    private getDate(record: Record<string, unknown>, type: MediaType): string {
+        return asString(record[type === 'movie' ? 'release_date' : 'first_air_date']);
+    }
+
+    private getSearchYearParam(type: MediaType): string {
+        return type === 'movie' ? 'year' : 'first_air_date_year';
+    }
+
+    private getFindResultsKey(type: MediaType): string {
+        return type === 'movie' ? 'movie_results' : 'tv_results';
+    }
+
+    private getDetailAppend(type: MediaType): string {
+        return type === 'movie' ? 'release_dates,videos' : 'content_ratings,videos,external_ids';
     }
 
     private extractYear(dateStr: string): string {

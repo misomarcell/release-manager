@@ -2,7 +2,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { ncoreService, NcoreNoResultsError } from '../services/ncore.service.js';
-import { fetchBasicMetadata, getCacheKey, fetchDetailMetadata } from '../services/metadata.service.js';
+import { getMetadata, getCacheKey } from '../services/metadata.service.js';
 import { qbittorrentService } from '../services/qbittorrent.service.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
@@ -63,10 +63,10 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
             }
         }
 
-        // Fetch basic metadata once per unique key (6 concurrent)
+        // Fetch metadata once per unique key (6 concurrent)
         const metadataMap = new Map<string, { metadata: NcoreResult['metadata']; fromCache: boolean }>();
         await mapConcurrent([...uniqueLookups.entries()], 6, async ([key, lookup]) => {
-            const result = await fetchBasicMetadata(lookup);
+            const result = await getMetadata(lookup);
             metadataMap.set(key, { metadata: result.metadata, fromCache: result.fromCache });
         });
 
@@ -109,12 +109,25 @@ router.get('/metadata/:tmdbId', requireAuth, async (req: Request, res: Response)
     if (!query) return;
 
     try {
-        const detail = await fetchDetailMetadata(params.tmdbId, query.type);
-        if (!detail) {
+        const { metadata } = await getMetadata({
+            tmdbId: params.tmdbId,
+            mediaType: query.type,
+            title: '',
+            year: '',
+            imdbId: '',
+        });
+        if (!metadata) {
             res.status(404).json({ error: 'Detail metadata not found' });
             return;
         }
-        res.json(detail);
+        res.json({
+            plot: metadata.plot,
+            runtime: metadata.runtime,
+            rated: metadata.rated,
+            releaseDate: metadata.releaseDate,
+            trailerKey: metadata.trailerKey,
+            imdbId: metadata.imdbId,
+        });
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Metadata fetch failed';
         res.status(502).json({ error: message });

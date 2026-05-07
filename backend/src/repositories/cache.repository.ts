@@ -1,6 +1,6 @@
 import { query } from '../db/connection.js';
 import { config } from '../config.js';
-import type { MovieMetadata, MovieDetailMetadata, MediaType } from 'shared/tmdb.models';
+import type { MovieMetadata, MediaType } from 'shared/tmdb.models';
 
 interface MetadataCacheRow {
     cache_key: string;
@@ -20,57 +20,57 @@ interface MetadataCacheRow {
     expires_at: Date;
 }
 
-export async function getCachedBasicByTmdbId(tmdbId: number, mediaType: string): Promise<MovieMetadata | null> {
+export async function getCachedMetadataByTmdbId(tmdbId: number, mediaType: MediaType): Promise<MovieMetadata | null> {
     const result = await query<MetadataCacheRow>(
-        `SELECT * FROM metadata_cache WHERE tmdb_id = $1 AND media_type = $2 AND expires_at > NOW() LIMIT 1`,
+        `SELECT *
+     FROM metadata_cache
+     WHERE tmdb_id = $1 AND media_type = $2 AND expires_at > NOW()
+     ORDER BY cached_at DESC
+     LIMIT 1`,
         [tmdbId, mediaType],
     );
     if (result.rows.length === 0) return null;
-    const row = result.rows[0];
-    return {
-        tmdbId: row.tmdb_id ?? 0,
-        mediaType: (row.media_type as MediaType | '') ?? '',
-        title: row.title ?? '',
-        year: row.year ?? '',
-        poster: row.poster ?? '',
-        genre: row.genre ?? '',
-        runtime: row.runtime ?? '',
-        rating: row.rating ?? '',
-        rated: row.rated ?? '',
-        plot: row.plot ?? '',
-    };
+    return toMetadata(result.rows[0]);
 }
 
 export async function getCachedMetadata(cacheKey: string): Promise<MovieMetadata | null> {
     const result = await query<MetadataCacheRow>(
-        `SELECT * FROM metadata_cache WHERE cache_key = $1 AND expires_at > NOW()`,
+        `SELECT *
+     FROM metadata_cache
+     WHERE cache_key = $1 AND expires_at > NOW()`,
         [cacheKey],
     );
 
     if (result.rows.length === 0) return null;
 
-    const row = result.rows[0];
-    return {
-        tmdbId: row.tmdb_id ?? 0,
-        mediaType: (row.media_type as MediaType | '') ?? '',
-        title: row.title ?? '',
-        year: row.year ?? '',
-        poster: row.poster ?? '',
-        genre: row.genre ?? '',
-        runtime: row.runtime ?? '',
-        rating: row.rating ?? '',
-        rated: row.rated ?? '',
-        plot: row.plot ?? '',
-    };
+    return toMetadata(result.rows[0]);
 }
 
 export async function setCachedMetadata(cacheKey: string, data: MovieMetadata): Promise<void> {
     const expiresAt = new Date(Date.now() + config.cacheExpiryMs);
     await query(
-        `INSERT INTO metadata_cache (cache_key, title, year, poster, genre, runtime, rating, rated, plot, tmdb_id, media_type, release_date, cached_at, expires_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), $13)
+        `INSERT INTO metadata_cache (
+       cache_key, title, year, poster, genre, runtime, rating, rated, plot,
+       tmdb_id, media_type, release_date, trailer_key, imdb_id, cached_at, expires_at
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), $15)
      ON CONFLICT (cache_key)
-     DO UPDATE SET title=$2, year=$3, poster=$4, genre=$5, runtime=$6, rating=$7, rated=$8, plot=$9, tmdb_id=$10, media_type=$11, release_date=$12, cached_at=NOW(), expires_at=$13`,
+     DO UPDATE SET
+       title = $2,
+       year = $3,
+       poster = $4,
+       genre = $5,
+       runtime = $6,
+       rating = $7,
+       rated = $8,
+       plot = $9,
+       tmdb_id = $10,
+       media_type = $11,
+       release_date = $12,
+       trailer_key = $13,
+       imdb_id = $14,
+       cached_at = NOW(),
+       expires_at = $15`,
         [
             cacheKey,
             data.title,
@@ -82,55 +82,31 @@ export async function setCachedMetadata(cacheKey: string, data: MovieMetadata): 
             data.rated,
             data.plot,
             data.tmdbId || null,
-            data.mediaType || null,
-            '',
+            data.mediaType,
+            data.releaseDate,
+            data.trailerKey ?? null,
+            data.imdbId ?? null,
             expiresAt,
         ],
     );
 }
 
-export async function getCachedDetailByTmdbId(
-    tmdbId: number,
-    mediaType: MediaType,
-): Promise<MovieDetailMetadata | null> {
-    const result = await query<MetadataCacheRow>(
-        `SELECT plot, runtime, rated, release_date, trailer_key, imdb_id
-     FROM metadata_cache
-     WHERE tmdb_id = $1 AND media_type = $2 AND expires_at > NOW() AND plot != ''`,
-        [tmdbId, mediaType],
-    );
+function toMetadata(row: MetadataCacheRow): MovieMetadata | null {
+    if (!row.tmdb_id || (row.media_type !== 'movie' && row.media_type !== 'tv')) return null;
 
-    if (result.rows.length === 0) return null;
-
-    const row = result.rows[0];
     return {
-        plot: row.plot ?? '',
+        tmdbId: row.tmdb_id,
+        mediaType: row.media_type,
+        title: row.title ?? '',
+        year: row.year ?? '',
+        poster: row.poster ?? '',
+        genre: row.genre ?? '',
         runtime: row.runtime ?? '',
+        rating: row.rating ?? '',
         rated: row.rated ?? '',
+        plot: row.plot ?? '',
         releaseDate: row.release_date ?? '',
         trailerKey: row.trailer_key ?? undefined,
         imdbId: row.imdb_id ?? undefined,
     };
-}
-
-export async function updateCachedDetail(
-    tmdbId: number,
-    mediaType: MediaType,
-    detail: MovieDetailMetadata,
-): Promise<void> {
-    await query(
-        `UPDATE metadata_cache
-     SET plot = $3, runtime = $4, rated = $5, release_date = $6, trailer_key = $7, imdb_id = $8
-     WHERE tmdb_id = $1 AND media_type = $2`,
-        [
-            tmdbId,
-            mediaType,
-            detail.plot,
-            detail.runtime,
-            detail.rated,
-            detail.releaseDate,
-            detail.trailerKey ?? null,
-            detail.imdbId ?? null,
-        ],
-    );
 }
