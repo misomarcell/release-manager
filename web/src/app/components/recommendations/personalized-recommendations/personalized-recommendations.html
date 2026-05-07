@@ -1,0 +1,10 @@
+<app-recommendation-ribbons
+    [movies]="movies()"
+    [tvShows]="tvShows()"
+    [loadingMovies]="loadingMovies()"
+    [loadingTv]="loadingTv()"
+    [showRefreshMovies]="canRefreshMovies()"
+    [showRefreshTv]="canRefreshTv()"
+    (refreshMovies)="refreshMovies()"
+    (refreshTv)="refreshTv()"
+/>

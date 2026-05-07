@@ -1,8 +1,10 @@
 import { getAiRecommendations, isOpenAiAvailable } from './openai.service.js';
 import type { AiSuggestion } from './openai.service.js';
-import { fetchTrendingRecommendations, enrichRecommendations } from './metadata.service.js';
-import { hasFeedback, getAllFeedback, getFreshCache, setCache } from '../repositories/recommendations.repository.js';
-import type { AiRecommendation, RecommendationsResponse } from 'shared/recommendations.models';
+import { getMetadata } from './metadata.service.js';
+import { tmdbService } from './tmdb.service.js';
+import { getFeedbackForMediaType, getFreshCache, setCache } from '../repositories/recommendations.repository.js';
+import { mapConcurrent } from '../utils/concurrent.js';
+import type { Recommendation, RecommendationRef, RecommendationsResponse } from 'shared/recommendations.models';
 import type { MediaType } from 'shared/tmdb.models';
 import type { FeedbackRow } from '../repositories/recommendations.repository.js';
 
@@ -10,33 +12,33 @@ const RECOMMEND_COUNT = 10;
 const FEEDBACK_SAMPLE_SIZE = 100;
 const MIN_AI_SUGGESTIONS = 3;
 
-const MIXED_MEDIA_TYPES: [MediaType, MediaType] = ['movie', 'tv'];
-
 class RecommendationsService {
-    async getRecommendations(userId: number, filter: MediaType | null = null): Promise<RecommendationsResponse> {
-        const canRefresh = await hasFeedback(userId);
+    async getPersonalizedRecommendations(
+        userId: number,
+        mediaType: MediaType,
+    ): Promise<RecommendationsResponse> {
+        const feedback = await getFeedbackForMediaType(userId, mediaType);
+        const canRefresh = feedback.length > 0;
 
-        const cached = await getFreshCache(userId, filter);
+        const cached = await getFreshCache(userId, mediaType);
         if (cached) {
-            return { recommendations: await enrichRecommendations(cached.refs, cached.feedbackMap), canRefresh };
+            return { recommendations: await this.enrichRecommendations(cached.refs), canRefresh };
         }
 
-        const allFeedback = await getAllFeedback(userId);
-
-        if (allFeedback.length === 0 || !isOpenAiAvailable()) {
-            const refs = await this.getTopRatedRefs(filter);
-            return { recommendations: await enrichRecommendations(refs), canRefresh: false };
+        if (feedback.length === 0 || !isOpenAiAvailable()) {
+            const refs = await this.getTopRatedRefs(mediaType);
+            return { recommendations: await this.enrichRecommendations(refs), canRefresh: false };
         }
 
-        if (filter) {
-            const refs = await this.getPersonalizedRefs(filter, allFeedback);
-            return this.buildAndCacheResponse(refs, userId, filter);
-        }
+        const refs = await this.getPersonalizedRefs(mediaType, feedback);
+        return this.buildAndCacheResponse(refs, userId, mediaType);
+    }
 
-        const [movieRefs, tvRefs] = await Promise.all(
-            MIXED_MEDIA_TYPES.map((mediaType) => this.getPersonalizedRefs(mediaType, allFeedback)),
-        );
-        return this.buildAndCacheResponse(this.interleaveRefs(movieRefs, tvRefs), userId, null);
+    async getTrendingRecommendations(
+        mediaType: MediaType,
+    ): Promise<RecommendationsResponse> {
+        const refs = await this.getTrendingRefs(mediaType);
+        return { recommendations: await this.enrichRecommendations(refs), canRefresh: false };
     }
 
     private buildFeedbackContext(feedback: FeedbackRow[]): string {
@@ -50,12 +52,8 @@ class RecommendationsService {
         return parts.join('\n\n');
     }
 
-    private toAiRefs(suggestions: AiSuggestion[], mediaType: MediaType): AiRecommendation[] {
+    private toRecommendationRefs(suggestions: AiSuggestion[], mediaType: MediaType): RecommendationRef[] {
         return suggestions.map((s) => ({ title: s.title, year: s.year, mediaType, reason: s.reason }));
-    }
-
-    private getMediaFeedback(feedback: FeedbackRow[], mediaType: MediaType): FeedbackRow[] {
-        return feedback.filter((row) => row.media_type === mediaType);
     }
 
     private sampleFeedback(feedback: FeedbackRow[]): FeedbackRow[] {
@@ -66,45 +64,66 @@ class RecommendationsService {
         return [...new Set(feedback.map((row) => row.title))];
     }
 
-    private interleaveRefs(first: AiRecommendation[], second: AiRecommendation[]): AiRecommendation[] {
-        const refs: AiRecommendation[] = [];
-        const maxLen = Math.max(first.length, second.length);
-
-        for (let i = 0; i < maxLen; i++) {
-            if (first[i]) refs.push(first[i]);
-            if (second[i]) refs.push(second[i]);
-        }
-
-        return refs;
+    private async getTopRatedRefs(mediaType: MediaType): Promise<RecommendationRef[]> {
+        return tmdbService.fetchTopRated(RECOMMEND_COUNT, mediaType);
     }
 
-    private async getTopRatedRefs(filter: MediaType | null): Promise<AiRecommendation[]> {
-        return fetchTrendingRecommendations(RECOMMEND_COUNT, filter);
+    private async getTrendingRefs(mediaType: MediaType): Promise<RecommendationRef[]> {
+        return tmdbService.fetchTrending(RECOMMEND_COUNT, mediaType);
     }
 
-    private async getPersonalizedRefs(mediaType: MediaType, feedback: FeedbackRow[]): Promise<AiRecommendation[]> {
-        const mediaFeedback = this.getMediaFeedback(feedback, mediaType);
-        if (mediaFeedback.length === 0) return this.getTopRatedRefs(mediaType);
+    private async getPersonalizedRefs(mediaType: MediaType, feedback: FeedbackRow[]): Promise<RecommendationRef[]> {
+        if (feedback.length === 0) return this.getTopRatedRefs(mediaType);
 
         const suggestions = await getAiRecommendations(
-            this.buildFeedbackContext(this.sampleFeedback(mediaFeedback)),
-            this.getRatedTitles(mediaFeedback),
+            this.buildFeedbackContext(this.sampleFeedback(feedback)),
+            this.getRatedTitles(feedback),
             RECOMMEND_COUNT,
             mediaType,
         );
 
         return suggestions.length >= MIN_AI_SUGGESTIONS
-            ? this.toAiRefs(suggestions, mediaType)
+            ? this.toRecommendationRefs(suggestions, mediaType)
             : this.getTopRatedRefs(mediaType);
     }
 
     private async buildAndCacheResponse(
-        refs: AiRecommendation[],
+        refs: RecommendationRef[],
         userId: number,
-        filter: MediaType | null,
+        mediaType: MediaType,
     ): Promise<RecommendationsResponse> {
-        await setCache(refs, userId, filter);
-        return { recommendations: await enrichRecommendations(refs), canRefresh: true };
+        await setCache(refs, userId, mediaType);
+        return { recommendations: await this.enrichRecommendations(refs), canRefresh: true };
+    }
+
+    private async enrichRecommendations(refs: RecommendationRef[]): Promise<Recommendation[]> {
+        const results = await mapConcurrent(refs, 4, (ref) => this.enrichRecommendation(ref));
+        return results.filter((result): result is Recommendation => result !== null);
+    }
+
+    private async enrichRecommendation(ref: RecommendationRef): Promise<Recommendation | null> {
+        const { metadata } = await getMetadata({
+            title: ref.title,
+            year: ref.year,
+            imdbId: '',
+            ...(ref.tmdbId ? { tmdbId: ref.tmdbId, mediaType: ref.mediaType } : { mediaType: ref.mediaType }),
+        });
+        if (!metadata) return null;
+
+        return {
+            tmdbId: metadata.tmdbId,
+            mediaType: metadata.mediaType,
+            title: metadata.title,
+            year: metadata.year,
+            poster: metadata.poster,
+            genre: metadata.genre,
+            rating: metadata.rating,
+            plot: metadata.plot,
+            ...(metadata.imdbId ? { imdbId: metadata.imdbId } : {}),
+            ...(metadata.trailerKey ? { trailerKey: metadata.trailerKey } : {}),
+            ...(ref.reason ? { reason: ref.reason } : {}),
+            inJellyfinLibrary: metadata.inJellyfinLibrary,
+        };
     }
 }
 

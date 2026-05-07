@@ -71,10 +71,7 @@ export class ShellComponent implements OnInit, OnDestroy {
     }
 
     private setTitleFromRoute(): void {
-        let route = this.activatedRoute.snapshot;
-        while (route.firstChild) route = route.firstChild;
-        const title = route.data['title'];
-        if (title) this.pageTitle.setTitle(title as string);
+        this.pageTitle.setTitleFromRoute(this.activatedRoute.snapshot);
     }
 
     protected toggleSidenav(): void {

@@ -9,7 +9,7 @@ import { getMetadata } from '../services/metadata.service.js';
 import {
     upsertFeedback,
     deleteFeedback,
-    invalidateCacheForFilter,
+    invalidateCacheForMediaType,
     getFeedbackForItem,
 } from '../repositories/recommendations.repository.js';
 import {
@@ -18,12 +18,13 @@ import {
     TmdbIdSchema,
     TmdbIdQuerySchema,
     parseBody,
+    parseParams,
     parseQuery,
 } from '../middleware/validate.js';
 import type { RecommendationFeedbackRequest } from 'shared/recommendations.models';
 
-const RecommendationsQuerySchema = z.object({
-    mediaType: MediaTypeSchema.optional(),
+const MediaTypeParamsSchema = z.object({
+    mediaType: MediaTypeSchema,
 });
 
 const FeedbackQuerySchema = z.object({
@@ -39,17 +40,37 @@ const FeedbackBodySchema = z.object({
 
 const router = Router();
 
-router.get('/', requireAuth, async (req: Request, res: Response) => {
+router.get('/personalized/:mediaType', requireAuth, async (req: Request, res: Response) => {
     const authUser = (req as AuthenticatedRequest).user;
-    const query = parseQuery(RecommendationsQuerySchema, req.query, res);
-    if (!query) return;
+    const params = parseParams(MediaTypeParamsSchema, req.params, res);
+    if (!params) return;
 
     try {
-        const response = await recommendationsService.getRecommendations(authUser.userId, query.mediaType ?? null);
+        const response = await recommendationsService.getPersonalizedRecommendations(
+            authUser.userId,
+            params.mediaType,
+        );
         res.json({ ...response, canRefresh: authUser.admin ? response.canRefresh : false });
     } catch (err) {
-        logger.error('Recommendations: GET error', { error: err instanceof Error ? err.message : String(err) });
+        logger.error('Recommendations: personalized GET error', {
+            error: err instanceof Error ? err.message : String(err),
+        });
         res.status(500).json({ error: 'Failed to fetch recommendations' });
+    }
+});
+
+router.get('/trending/:mediaType', requireAuth, async (req: Request, res: Response) => {
+    const params = parseParams(MediaTypeParamsSchema, req.params, res);
+    if (!params) return;
+
+    try {
+        const response = await recommendationsService.getTrendingRecommendations(params.mediaType);
+        res.json(response);
+    } catch (err) {
+        logger.error('Recommendations: trending GET error', {
+            error: err instanceof Error ? err.message : String(err),
+        });
+        res.status(500).json({ error: 'Failed to fetch trending recommendations' });
     }
 });
 
@@ -115,14 +136,17 @@ router.delete('/feedback', requireAuth, async (req: Request, res: Response) => {
     }
 });
 
-router.post('/refresh', requireAuth, requireAdmin, async (req: Request, res: Response) => {
+router.post('/personalized/:mediaType/refresh', requireAuth, requireAdmin, async (req: Request, res: Response) => {
     const { userId } = (req as AuthenticatedRequest).user;
-    const query = parseQuery(RecommendationsQuerySchema, req.query, res);
-    if (!query) return;
+    const params = parseParams(MediaTypeParamsSchema, req.params, res);
+    if (!params) return;
 
     try {
-        await invalidateCacheForFilter(userId, query.mediaType ?? null);
-        const recommendations = await recommendationsService.getRecommendations(userId, query.mediaType ?? null);
+        await invalidateCacheForMediaType(userId, params.mediaType);
+        const recommendations = await recommendationsService.getPersonalizedRecommendations(
+            userId,
+            params.mediaType,
+        );
         res.json(recommendations);
     } catch (err) {
         logger.error('Recommendations: refresh error', { error: err instanceof Error ? err.message : String(err) });

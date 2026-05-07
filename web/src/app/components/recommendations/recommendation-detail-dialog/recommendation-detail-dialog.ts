@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -19,13 +19,17 @@ interface DialogData {
     styleUrl: './recommendation-detail-dialog.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RecommendationDetailDialogComponent {
+export class RecommendationDetailDialogComponent implements OnInit {
     private data = inject(MAT_DIALOG_DATA) as DialogData;
     private dialogRef = inject(MatDialogRef<RecommendationDetailDialogComponent, string | null>);
     private poster = inject(PosterService);
-    protected recommendationsService = inject(RecommendationsService);
+    private recommendationsService = inject(RecommendationsService);
 
     protected rec = this.data.rec;
+
+    ngOnInit(): void {
+        void this.recommendationsService.fetchFeedback(this.rec.tmdbId, this.rec.mediaType);
+    }
 
     protected openPoster(): void {
         if (!this.rec.poster) return;

@@ -29,9 +29,30 @@ export const routes: Routes = [
             },
             {
                 path: 'recommendations',
-                data: { title: 'Recommended for You' },
+                data: { title: 'Recommendations' },
                 loadComponent: () =>
                     import('./components/recommendations/recommendations').then((m) => m.RecommendationsComponent),
+                children: [
+                    {
+                        path: '',
+                        redirectTo: 'trending',
+                        pathMatch: 'full',
+                    },
+                    {
+                        path: 'trending',
+                        loadComponent: () =>
+                            import('./components/recommendations/trending-recommendations/trending-recommendations').then(
+                                (m) => m.TrendingRecommendationsComponent,
+                            ),
+                    },
+                    {
+                        path: 'personalized',
+                        loadComponent: () =>
+                            import('./components/recommendations/personalized-recommendations/personalized-recommendations').then(
+                                (m) => m.PersonalizedRecommendationsComponent,
+                            ),
+                    },
+                ],
             },
             {
                 path: 'users',

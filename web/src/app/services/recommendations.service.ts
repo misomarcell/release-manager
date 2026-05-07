@@ -4,7 +4,6 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { ApiService } from './api.service';
 import { extractHttpError } from '../utils/http-error';
 import type {
-    Recommendation,
     FeedbackValue,
     RecommendationFeedbackRequest,
     RecommendationsResponse,
@@ -37,29 +36,19 @@ export class RecommendationsService {
         return this.submitting()[this.feedbackKey(tmdbId, mediaType)] ?? false;
     }
 
-    seedFeedback(recs: Recommendation[]): void {
-        const updates: Record<string, FeedbackValue> = {};
-        for (const rec of recs) {
-            const key = this.feedbackKey(rec.tmdbId, rec.mediaType);
-            this.fetched.add(key);
-            if (rec.feedback) {
-                updates[key] = rec.feedback;
-            }
-        }
-        if (Object.keys(updates).length > 0) {
-            this.feedback.update((f) => ({ ...f, ...updates }));
-        }
-    }
-
     async fetchFeedback(tmdbId: number, mediaType: MediaType): Promise<void> {
         const key = this.feedbackKey(tmdbId, mediaType);
         if (this.fetched.has(key)) return;
         this.fetched.add(key);
         try {
             const result = await this.getFeedback(tmdbId, mediaType);
-            if (result.feedback) {
-                this.feedback.update((f) => ({ ...f, [key]: result.feedback! }));
-            }
+            this.feedback.update((f) => {
+                if (result.feedback) return { ...f, [key]: result.feedback };
+
+                const next = { ...f };
+                delete next[key];
+                return next;
+            });
         } catch {
             this.fetched.delete(key);
         }
@@ -130,16 +119,16 @@ export class RecommendationsService {
         }
     }
 
-    async getRecommendations(mediaType?: MediaType): Promise<RecommendationsResponse> {
-        let params = new HttpParams();
-        if (mediaType) params = params.set('mediaType', mediaType);
-        return this.api.get<RecommendationsResponse>('/api/recommendations', params);
+    async getPersonalized(mediaType: MediaType): Promise<RecommendationsResponse> {
+        return this.api.get<RecommendationsResponse>(`/api/recommendations/personalized/${mediaType}`);
     }
 
-    async refreshRecommendations(mediaType?: MediaType): Promise<RecommendationsResponse> {
-        let params = new HttpParams();
-        if (mediaType) params = params.set('mediaType', mediaType);
-        return this.api.post<RecommendationsResponse>('/api/recommendations/refresh', {}, params);
+    async getTrending(mediaType: MediaType): Promise<RecommendationsResponse> {
+        return this.api.get<RecommendationsResponse>(`/api/recommendations/trending/${mediaType}`);
+    }
+
+    async refreshPersonalized(mediaType: MediaType): Promise<RecommendationsResponse> {
+        return this.api.post<RecommendationsResponse>(`/api/recommendations/personalized/${mediaType}/refresh`, {});
     }
 
     async getFeedback(tmdbId: number, mediaType: MediaType): Promise<{ feedback: FeedbackValue | null }> {

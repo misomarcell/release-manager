@@ -1,6 +1,6 @@
 import type { MediaType } from './tmdb.models.js';
 
-export interface AiRecommendation {
+export interface RecommendationRef {
     tmdbId?: number;
     mediaType: MediaType;
     title: string;
@@ -20,7 +20,6 @@ export interface Recommendation {
     imdbId?: string;
     trailerKey?: string;
     reason?: string;
-    feedback?: FeedbackValue;
     inJellyfinLibrary?: boolean;
 }
 

@@ -12,7 +12,7 @@ interface FindResult {
     data: Record<string, unknown>;
 }
 
-interface TopRatedItem {
+interface TmdbRecommendationRef {
     tmdbId: number;
     mediaType: MediaType;
     title: string;
@@ -30,15 +30,14 @@ class TmdbService {
         return details ? this.toMetadata(item, details, lookup) : null;
     }
 
-    async fetchTopRated(count: number, filter: MediaType | null = null): Promise<TopRatedItem[]> {
-        if (filter) return this.fetchTopRatedByType(filter, count);
+    async fetchTopRated(count: number, mediaType: MediaType): Promise<TmdbRecommendationRef[]> {
+        const data = await this.tmdbGet(`/${mediaType}/top_rated`, { language: 'en-US', page: '1' });
+        return this.toRefs(data, mediaType, count);
+    }
 
-        const [movies, tvShows] = await Promise.all([
-            this.fetchTopRatedByType('movie', count),
-            this.fetchTopRatedByType('tv', count),
-        ]);
-
-        return this.interleaveTopRated(movies, tvShows, count);
+    async fetchTrending(count: number, mediaType: MediaType): Promise<TmdbRecommendationRef[]> {
+        const data = await this.tmdbGet(`/trending/${mediaType}/week`, { language: 'en-US' });
+        return this.toRefs(data, mediaType, count, true);
     }
 
     private async resolveItem(lookup: MetadataLookup): Promise<FindResult | null> {
@@ -148,11 +147,20 @@ class TmdbService {
         };
     }
 
-    private async fetchTopRatedByType(type: MediaType, count: number): Promise<TopRatedItem[]> {
-        const data = await this.tmdbGet(`/${type}/top_rated`, { language: 'en-US', page: '1' });
+    private toRefs(
+        data: Record<string, unknown> | null,
+        type: MediaType,
+        count: number,
+        sortByPopularity = false,
+    ): TmdbRecommendationRef[] {
         if (!data) return [];
 
-        return this.records(data['results'])
+        const records = this.records(data['results']);
+        if (sortByPopularity) {
+            records.sort((a, b) => asNumber(b['popularity']) - asNumber(a['popularity']));
+        }
+
+        return records
             .slice(0, count)
             .map((record) => {
                 const tmdbId = asNumber(record['id']);
@@ -165,19 +173,7 @@ class TmdbService {
                     year: this.getYear(record, type),
                 };
             })
-            .filter((item): item is TopRatedItem => item !== null);
-    }
-
-    private interleaveTopRated(movies: TopRatedItem[], tvShows: TopRatedItem[], count: number): TopRatedItem[] {
-        const combined: TopRatedItem[] = [];
-        const maxLen = Math.max(movies.length, tvShows.length);
-
-        for (let i = 0; i < maxLen && combined.length < count; i++) {
-            if (movies[i]) combined.push(movies[i]);
-            if (combined.length < count && tvShows[i]) combined.push(tvShows[i]);
-        }
-
-        return combined;
+            .filter((item): item is TmdbRecommendationRef => item !== null);
     }
 
     private async tmdbGet(path: string, params?: Record<string, string>): Promise<Record<string, unknown> | null> {

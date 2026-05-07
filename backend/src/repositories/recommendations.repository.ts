@@ -1,5 +1,5 @@
 import { query } from '../db/connection.js';
-import type { AiRecommendation, FeedbackValue } from 'shared/recommendations.models';
+import type { RecommendationRef, FeedbackValue } from 'shared/recommendations.models';
 import type { MediaType } from 'shared/tmdb.models';
 
 interface FeedbackRecord {
@@ -10,7 +10,6 @@ interface FeedbackRecord {
 }
 
 interface FeedbackRow {
-    media_type: MediaType;
     title: string;
     feedback: FeedbackValue;
 }
@@ -19,26 +18,18 @@ export type { FeedbackRow };
 
 interface CacheRow {
     id: number;
-    recommendations: AiRecommendation[];
+    recommendations: RecommendationRef[];
     generated_at: Date;
-    feedback_map: Record<string, string> | null;
 }
 
-export async function hasFeedback(userId: number): Promise<boolean> {
-    const result = await query<{ exists: boolean }>(
-        `SELECT EXISTS(SELECT 1 FROM recommendation_feedback WHERE user_id = $1) AS exists`,
-        [userId],
-    );
-    return result.rows[0].exists;
-}
-
-export async function getAllFeedback(userId: number): Promise<FeedbackRow[]> {
+export async function getFeedbackForMediaType(userId: number, mediaType: MediaType): Promise<FeedbackRow[]> {
     const result = await query<FeedbackRow>(
-        `SELECT media_type, title, feedback
+        `SELECT title, feedback
      FROM recommendation_feedback
      WHERE user_id = $1
+       AND media_type = $2
      ORDER BY created_at DESC`,
-        [userId],
+        [userId, mediaType],
     );
     return result.rows;
 }
@@ -63,41 +54,37 @@ export async function deleteFeedback(userId: number, tmdbId: number, mediaType: 
 
 export async function getFreshCache(
     userId: number,
-    filter: MediaType | null,
-): Promise<{ refs: AiRecommendation[]; feedbackMap: Record<string, FeedbackValue> } | null> {
+    mediaType: MediaType,
+): Promise<{ refs: RecommendationRef[] } | null> {
     const result = await query<CacheRow>(
-        `SELECT id, recommendations, generated_at,
-       (SELECT jsonb_object_agg(rf.tmdb_id::text || ':' || rf.media_type, rf.feedback)
-        FROM recommendation_feedback rf
-        WHERE rf.user_id = $1) AS feedback_map
+        `SELECT id, recommendations, generated_at
      FROM recommendation_cache
      WHERE user_id = $1
-       AND (($2::TEXT IS NULL AND media_type_filter IS NULL) OR media_type_filter = $2)
+       AND media_type_filter = $2
        AND generated_at > NOW() - INTERVAL '12 hours'
      ORDER BY id DESC LIMIT 1`,
-        [userId, filter],
+        [userId, mediaType],
     );
     if (result.rows.length === 0) return null;
     const row = result.rows[0];
-    const feedbackMap = (row.feedback_map ?? {}) as Record<string, FeedbackValue>;
-    return { refs: row.recommendations, feedbackMap };
+    return { refs: row.recommendations };
 }
 
-export async function setCache(refs: AiRecommendation[], userId: number, filter: MediaType | null): Promise<void> {
+export async function setCache(refs: RecommendationRef[], userId: number, mediaType: MediaType): Promise<void> {
     await query(
-        `DELETE FROM recommendation_cache WHERE user_id = $1 AND (($2::TEXT IS NULL AND media_type_filter IS NULL) OR media_type_filter = $2)`,
-        [userId, filter],
+        `DELETE FROM recommendation_cache WHERE user_id = $1 AND media_type_filter = $2`,
+        [userId, mediaType],
     );
     await query(
         `INSERT INTO recommendation_cache (user_id, recommendations, generated_at, media_type_filter) VALUES ($1, $2, NOW(), $3)`,
-        [userId, JSON.stringify(refs), filter],
+        [userId, JSON.stringify(refs), mediaType],
     );
 }
 
-export async function invalidateCacheForFilter(userId: number, filter: MediaType | null): Promise<void> {
+export async function invalidateCacheForMediaType(userId: number, mediaType: MediaType): Promise<void> {
     await query(
-        `DELETE FROM recommendation_cache WHERE user_id = $1 AND (($2::TEXT IS NULL AND media_type_filter IS NULL) OR media_type_filter = $2)`,
-        [userId, filter],
+        `DELETE FROM recommendation_cache WHERE user_id = $1 AND media_type_filter = $2`,
+        [userId, mediaType],
     );
 }
 

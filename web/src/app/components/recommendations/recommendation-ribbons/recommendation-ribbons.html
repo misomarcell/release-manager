@@ -1,0 +1,121 @@
+<section class="ribbon-section">
+    <h3 class="ribbon-title">
+        <mat-icon>movie</mat-icon>
+        Movies
+    </h3>
+    @if (loadingMovies()) {
+        <div class="ribbon">
+            @for (i of skeletonItems; track i) {
+                <div class="rec-card skeleton-card">
+                    <div class="skeleton poster-skel"></div>
+                    <div class="rec-info">
+                        <div class="skeleton skel-line skel-title"></div>
+                        <div class="skeleton skel-line skel-meta"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    } @else if (movies().length > 0) {
+        <div class="ribbon">
+            @for (rec of movies(); track trackByTmdb($index, rec)) {
+                <div class="rec-card">
+                    <div class="poster-wrap" (click)="openDetail(rec)">
+                        @if (rec.poster) {
+                            <img [src]="rec.poster" [alt]="rec.title" loading="lazy" />
+                        } @else {
+                            <div class="no-poster"><mat-icon>movie</mat-icon></div>
+                        }
+                    </div>
+                    <div class="rec-info" (click)="openDetail(rec)">
+                        <span class="rec-title">
+                            @if (rec.inJellyfinLibrary) {
+                                <mat-icon class="jellyfin-badge">library_add_check</mat-icon>
+                            }
+                            <span class="rec-title-text">{{ rec.title }}</span>
+                        </span>
+                        <span class="rec-meta">
+                            @if (rec.year) {
+                                {{ rec.year }}
+                            }
+                            @if (rec.rating) {
+                                &middot; &#11088; {{ rec.rating }}
+                            }
+                        </span>
+                        @if (rec.genre) {
+                            <span class="rec-genre">{{ rec.genre }}</span>
+                        }
+                    </div>
+                </div>
+            }
+            @if (showRefreshMovies()) {
+                <div class="rec-card refresh-card" (click)="refreshMovies.emit()">
+                    <mat-icon class="refresh-icon">refresh</mat-icon>
+                    <span class="refresh-label">Get new recommendations</span>
+                </div>
+            }
+        </div>
+    } @else {
+        <p class="empty">{{ emptyMovieText() }}</p>
+    }
+</section>
+
+<section class="ribbon-section">
+    <h3 class="ribbon-title">
+        <mat-icon>tv</mat-icon>
+        TV Shows
+    </h3>
+    @if (loadingTv()) {
+        <div class="ribbon">
+            @for (i of skeletonItems; track i) {
+                <div class="rec-card skeleton-card">
+                    <div class="skeleton poster-skel"></div>
+                    <div class="rec-info">
+                        <div class="skeleton skel-line skel-title"></div>
+                        <div class="skeleton skel-line skel-meta"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    } @else if (tvShows().length > 0) {
+        <div class="ribbon">
+            @for (rec of tvShows(); track trackByTmdb($index, rec)) {
+                <div class="rec-card">
+                    <div class="poster-wrap" (click)="openDetail(rec)">
+                        @if (rec.poster) {
+                            <img [src]="rec.poster" [alt]="rec.title" loading="lazy" />
+                        } @else {
+                            <div class="no-poster"><mat-icon>tv</mat-icon></div>
+                        }
+                    </div>
+                    <div class="rec-info" (click)="openDetail(rec)">
+                        <span class="rec-title">
+                            @if (rec.inJellyfinLibrary) {
+                                <mat-icon class="jellyfin-badge">library_add_check</mat-icon>
+                            }
+                            <span class="rec-title-text">{{ rec.title }}</span>
+                        </span>
+                        <span class="rec-meta">
+                            @if (rec.year) {
+                                {{ rec.year }}
+                            }
+                            @if (rec.rating) {
+                                &middot; &#11088; {{ rec.rating }}
+                            }
+                        </span>
+                        @if (rec.genre) {
+                            <span class="rec-genre">{{ rec.genre }}</span>
+                        }
+                    </div>
+                </div>
+            }
+            @if (showRefreshTv()) {
+                <div class="rec-card refresh-card" (click)="refreshTv.emit()">
+                    <mat-icon class="refresh-icon">refresh</mat-icon>
+                    <span class="refresh-label">Get new recommendations</span>
+                </div>
+            }
+        </div>
+    } @else {
+        <p class="empty">{{ emptyTvText() }}</p>
+    }
+</section>
