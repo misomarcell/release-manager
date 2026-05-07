@@ -35,9 +35,9 @@ class TmdbService {
         return this.toRefs(data, mediaType, count);
     }
 
-    async fetchTrending(count: number, mediaType: MediaType): Promise<TmdbRecommendationRef[]> {
+    async fetchTrending(mediaType: MediaType): Promise<TmdbRecommendationRef[]> {
         const data = await this.tmdbGet(`/trending/${mediaType}/week`, { language: 'en-US' });
-        return this.toRefs(data, mediaType, count, true);
+        return this.toRefs(data, mediaType, undefined, true);
     }
 
     private async resolveItem(lookup: MetadataLookup): Promise<FindResult | null> {
@@ -150,7 +150,7 @@ class TmdbService {
     private toRefs(
         data: Record<string, unknown> | null,
         type: MediaType,
-        count: number,
+        count?: number,
         sortByPopularity = false,
     ): TmdbRecommendationRef[] {
         if (!data) return [];
@@ -161,7 +161,7 @@ class TmdbService {
         }
 
         return records
-            .slice(0, count)
+            .slice(0, count ?? records.length)
             .map((record) => {
                 const tmdbId = asNumber(record['id']);
                 if (!tmdbId) return null;

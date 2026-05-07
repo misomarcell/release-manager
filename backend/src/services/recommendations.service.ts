@@ -8,7 +8,7 @@ import type { Recommendation, RecommendationRef, RecommendationsResponse } from 
 import type { MediaType } from 'shared/tmdb.models';
 import type { FeedbackRow } from '../repositories/recommendations.repository.js';
 
-const RECOMMEND_COUNT = 10;
+const PERSONALIZED_RECOMMEND_COUNT = 10;
 const FEEDBACK_SAMPLE_SIZE = 100;
 const MIN_AI_SUGGESTIONS = 3;
 
@@ -65,11 +65,11 @@ class RecommendationsService {
     }
 
     private async getTopRatedRefs(mediaType: MediaType): Promise<RecommendationRef[]> {
-        return tmdbService.fetchTopRated(RECOMMEND_COUNT, mediaType);
+        return tmdbService.fetchTopRated(PERSONALIZED_RECOMMEND_COUNT, mediaType);
     }
 
     private async getTrendingRefs(mediaType: MediaType): Promise<RecommendationRef[]> {
-        return tmdbService.fetchTrending(RECOMMEND_COUNT, mediaType);
+        return tmdbService.fetchTrending(mediaType);
     }
 
     private async getPersonalizedRefs(mediaType: MediaType, feedback: FeedbackRow[]): Promise<RecommendationRef[]> {
@@ -78,7 +78,7 @@ class RecommendationsService {
         const suggestions = await getAiRecommendations(
             this.buildFeedbackContext(this.sampleFeedback(feedback)),
             this.getRatedTitles(feedback),
-            RECOMMEND_COUNT,
+            PERSONALIZED_RECOMMEND_COUNT,
             mediaType,
         );
 
