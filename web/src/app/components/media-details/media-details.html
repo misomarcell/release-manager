@@ -41,7 +41,7 @@
                             rel="noopener"
                         >
                             <mat-icon svgIcon="imdb"></mat-icon>
-                            <span>IMDb</span>
+                            <span>Open IMDb page</span>
                         </a>
                     }
                     @if (detail()?.trailerKey) {
@@ -52,7 +52,7 @@
                             rel="noopener"
                         >
                             <mat-icon svgIcon="youtube"></mat-icon>
-                            <span>Trailer</span>
+                            <span>Watch Trailer</span>
                         </a>
                     }
                     @if (jellyfinUrl()) {
@@ -71,7 +71,7 @@
                             (click)="deleteAction.emit()"
                         >
                             <mat-icon>delete</mat-icon>
-                            <span>{{ 'Delete item' }}</span>
+                            <span>Delete item</span>
                         </button>
                     }
                 </mat-menu>
