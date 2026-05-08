@@ -8,12 +8,16 @@ import { ReleaseCardComponent } from '../release-card/release-card';
 import { FilterSearchComponent, FilterSearchSubmit, SearchFilterDefinition } from '../filter-search/filter-search';
 import { SearchService } from '../../services/search.service';
 import { TitleService } from '../../services/title.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { NcoreCategoryKey, NcoreResult } from '@rm/shared/ncore.models';
 import { extractHttpError } from '../../utils/http-error';
+import { FilterStateStorage } from '../../services/filter-state-storage.service';
 
 const VALID_CATEGORIES: NcoreCategoryKey[] = ['all', 'movies', 'tv'];
+const LEGACY_RELEASE_FILTER_STORAGE_KEY = 'movie-releases.releases.filters';
+const RELEASE_FILTER_STORAGE_KEY = 'movie-releases.releases.filters.v2';
+const RELEASE_FILTER_QUERY_KEYS = ['q', 'category', 'uhd'];
 const RELEASE_SEARCH_FILTERS: SearchFilterDefinition[] = [
     {
         key: 'category',
@@ -30,10 +34,18 @@ const RELEASE_SEARCH_FILTERS: SearchFilterDefinition[] = [
         key: 'uhdOnly',
         label: 'Quality',
         control: 'toggle',
-        defaultValue: true,
+        defaultValue: false,
         options: [{ value: 'true', label: '4K only' }],
     },
 ];
+
+interface ReleaseSearchState {
+    query: string;
+    filters: {
+        category?: NcoreCategoryKey;
+        uhdOnly?: boolean;
+    };
+}
 
 export interface GroupedMovie {
     key: string;
@@ -63,6 +75,7 @@ export class ReleasesComponent {
     private route = inject(ActivatedRoute);
     private releaseSearch = viewChild(FilterSearchComponent);
     private titleService = inject(TitleService);
+    private filterStateStorage = inject(FilterStateStorage);
 
     protected releaseFilters = RELEASE_SEARCH_FILTERS;
     protected loading = signal(false);
@@ -72,6 +85,9 @@ export class ReleasesComponent {
     protected totalResults = signal(0);
     protected currentPage = signal(1);
     protected readonly pageSize = 100;
+    private activeSearch = signal('');
+    private categoryFilter = signal<NcoreCategoryKey>('all');
+    private uhdOnlyFilter = signal(false);
 
     protected groupedMovies = computed(() => {
         const results = this.results();
@@ -98,25 +114,31 @@ export class ReleasesComponent {
     });
 
     constructor() {
+        this.filterStateStorage.remove(LEGACY_RELEASE_FILTER_STORAGE_KEY);
         this.route.queryParams.pipe(takeUntilDestroyed()).subscribe((params) => {
-            const query: string = params['q'] ?? '';
-            const cat: string = params['category'];
-            const category: NcoreCategoryKey = (VALID_CATEGORIES as string[]).includes(cat)
-                ? (cat as NcoreCategoryKey)
-                : 'all';
-            const uhdOnly = params['uhd'] !== 'false';
-            const page = Math.max(1, parseInt(params['page'], 10) || 1);
-            this.currentPage.set(page);
-            queueMicrotask(() => this.releaseSearch()?.setState(query, { category, uhdOnly }));
-            void this.loadResults(query, category, uhdOnly, page);
+            const state = this.resolveSearchState(params);
+            this.applySearchState(state);
+            this.currentPage.set(this.getPageParam(params['page']));
+            queueMicrotask(() =>
+                this.releaseSearch()?.setState(state.query, {
+                    category: this.categoryFilter(),
+                    uhdOnly: this.uhdOnlyFilter(),
+                }),
+            );
+            void this.loadResults();
         });
     }
 
     protected onSearch(params: FilterSearchSubmit): void {
-        const category = this.getCategoryFilter(params.filters['category']);
-        const uhdOnly = params.filters['uhdOnly'] === true;
+        this.applySearchState({
+            query: params.query,
+            filters: {
+                category: this.getCategoryFilter(params.filters['category']),
+                uhdOnly: params.filters['uhdOnly'] === true,
+            },
+        });
         this.currentPage.set(1);
-        void this.loadResults(params.query, category, uhdOnly, 1);
+        void this.loadResults();
     }
 
     protected onSearchByTitle(title: string): void {
@@ -129,25 +151,19 @@ export class ReleasesComponent {
         if (typeof window !== 'undefined') {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        const p = this.route.snapshot.queryParams;
-        const cat: string = p['category'];
-        void this.loadResults(
-            p['q'] ?? '',
-            (VALID_CATEGORIES as string[]).includes(cat) ? (cat as NcoreCategoryKey) : 'all',
-            p['uhd'] !== 'false',
-            page,
-        );
+        void this.loadResults();
     }
 
-    private async loadResults(
-        query: string,
-        category: NcoreCategoryKey,
-        uhdOnly: boolean,
-        page: number,
-    ): Promise<void> {
+    private async loadResults(): Promise<void> {
+        const query = this.activeSearch();
+        const category = this.categoryFilter();
+        const uhdOnly = this.uhdOnlyFilter();
+        const page = this.currentPage();
+
         this.loading.set(true);
         this.error.set(null);
         this.syncQueryParams(query, category, uhdOnly, page);
+        this.persistSearchState(query, category, uhdOnly);
         const hasSearchTerm = !!query.trim();
         this.titleService.setTitle(
             hasSearchTerm
@@ -170,13 +186,61 @@ export class ReleasesComponent {
         }
     }
 
+    private resolveSearchState(params: Params): ReleaseSearchState {
+        const queryState = this.searchStateFromQueryParams(params);
+        if (this.hasFilterQueryParams(params)) {
+            return queryState;
+        }
+
+        return this.filterStateStorage.read(RELEASE_FILTER_STORAGE_KEY, isReleaseSearchState) ?? queryState;
+    }
+
+    private searchStateFromQueryParams(params: Params): ReleaseSearchState {
+        return {
+            query: typeof params['q'] === 'string' ? params['q'].trim() : '',
+            filters: {
+                category: this.getCategoryFilter(params['category']),
+                uhdOnly: params['uhd'] === 'true',
+            },
+        };
+    }
+
+    private applySearchState(state: ReleaseSearchState): void {
+        this.activeSearch.set(state.query.trim());
+        this.categoryFilter.set(this.getCategoryFilter(state.filters.category));
+        this.uhdOnlyFilter.set(state.filters.uhdOnly === true);
+    }
+
     private syncQueryParams(query: string, category: NcoreCategoryKey, uhdOnly: boolean, page: number): void {
         const params: Record<string, string> = {};
         if (query.trim()) params['q'] = query.trim();
         if (category !== 'all') params['category'] = category;
-        if (!uhdOnly) params['uhd'] = 'false';
+        if (uhdOnly) params['uhd'] = 'true';
         if (page > 1) params['page'] = String(page);
         this.location.replaceState('/releases', new URLSearchParams(params).toString());
+    }
+
+    private persistSearchState(query: string, category: NcoreCategoryKey, uhdOnly: boolean): void {
+        const filters: ReleaseSearchState['filters'] = {};
+        if (category !== 'all') {
+            filters.category = category;
+        }
+        if (uhdOnly) {
+            filters.uhdOnly = true;
+        }
+
+        this.filterStateStorage.write(RELEASE_FILTER_STORAGE_KEY, {
+            query: query.trim(),
+            filters,
+        } satisfies ReleaseSearchState);
+    }
+
+    private hasFilterQueryParams(params: Params): boolean {
+        return RELEASE_FILTER_QUERY_KEYS.some((key) => Object.prototype.hasOwnProperty.call(params, key));
+    }
+
+    private getPageParam(value: unknown): number {
+        return Math.max(1, parseInt(typeof value === 'string' ? value : '', 10) || 1);
     }
 
     private getCategoryFilter(value: unknown): NcoreCategoryKey {
@@ -184,4 +248,20 @@ export class ReleasesComponent {
             ? (value as NcoreCategoryKey)
             : 'all';
     }
+}
+
+function isReleaseSearchState(value: unknown): value is ReleaseSearchState {
+    if (!value || typeof value !== 'object') {
+        return false;
+    }
+
+    const state = value as Partial<ReleaseSearchState>;
+    const filters = state.filters as Partial<ReleaseSearchState['filters']> | undefined;
+    return (
+        typeof state.query === 'string' &&
+        !!filters &&
+        (filters.category === undefined ||
+            (typeof filters.category === 'string' && (VALID_CATEGORIES as string[]).includes(filters.category))) &&
+        (filters.uhdOnly === undefined || typeof filters.uhdOnly === 'boolean')
+    );
 }

@@ -1,17 +1,21 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { MatAccordion } from '@angular/material/expansion';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { LibraryCardComponent } from '../library-card/library-card';
 import { FilterSearchComponent, FilterSearchSubmit, SearchFilterDefinition } from '../filter-search/filter-search';
 import { LibraryService } from '../../services/library.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { LibraryItem } from '@rm/shared/jellyfin.models';
 import type { MediaType } from '@rm/shared/tmdb.models';
+import { FilterStateStorage } from '../../services/filter-state-storage.service';
 
 const PAGE_SIZE = 30;
 type LibraryMediaFilter = MediaType | 'all';
 const VALID_MEDIA_FILTERS: LibraryMediaFilter[] = ['all', 'movie', 'tv'];
+const LIBRARY_FILTER_STORAGE_KEY = 'movie-releases.library.filters';
+const LIBRARY_FILTER_QUERY_KEYS = ['q', 'type'];
 const LIBRARY_SEARCH_FILTERS: SearchFilterDefinition[] = [
     {
         key: 'mediaType',
@@ -26,6 +30,13 @@ const LIBRARY_SEARCH_FILTERS: SearchFilterDefinition[] = [
     },
 ];
 
+interface LibrarySearchState {
+    query: string;
+    filters: {
+        mediaType: LibraryMediaFilter;
+    };
+}
+
 @Component({
     selector: 'app-library',
     imports: [
@@ -38,11 +49,12 @@ const LIBRARY_SEARCH_FILTERS: SearchFilterDefinition[] = [
     styleUrl: './library.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LibraryComponent implements OnInit {
+export class LibraryComponent {
     private libraryService = inject(LibraryService);
     private location = inject(Location);
     private route = inject(ActivatedRoute);
     private librarySearch = viewChild(FilterSearchComponent);
+    private filterStateStorage = inject(FilterStateStorage);
 
     protected libraryFilters = LIBRARY_SEARCH_FILTERS;
     protected loading = signal(false);
@@ -56,25 +68,23 @@ export class LibraryComponent implements OnInit {
     protected readonly pageSize = PAGE_SIZE;
     protected readonly skeletonItems = [0, 1, 2, 3, 4];
 
-    ngOnInit(): void {
-        const params = this.route.snapshot.queryParams;
-        const search = typeof params['q'] === 'string' ? params['q'] : '';
-        const mediaType = this.getMediaTypeFilter(params['type']);
-        this.activeSearch.set(search);
-        this.mediaTypeFilter.set(mediaType);
-
-        const page = parseInt(params['page'], 10);
-        if (page > 0) {
-            this.currentPage.set(page);
-        }
-
-        queueMicrotask(() => this.librarySearch()?.setState(search, { mediaType }));
-        void this.loadItems();
+    constructor() {
+        this.route.queryParams.pipe(takeUntilDestroyed()).subscribe((params) => {
+            const state = this.resolveSearchState(params);
+            this.applySearchState(state);
+            this.currentPage.set(this.getPageParam(params['page']));
+            queueMicrotask(() => this.librarySearch()?.setState(state.query, state.filters));
+            void this.loadItems();
+        });
     }
 
     protected onSearch(params: FilterSearchSubmit): void {
-        this.activeSearch.set(params.query);
-        this.mediaTypeFilter.set(this.getMediaTypeFilter(params.filters['mediaType']));
+        this.applySearchState({
+            query: params.query,
+            filters: {
+                mediaType: this.getMediaTypeFilter(params.filters['mediaType']),
+            },
+        });
         this.currentPage.set(1);
         void this.loadItems();
     }
@@ -100,6 +110,7 @@ export class LibraryComponent implements OnInit {
         this.loading.set(true);
         this.error.set(null);
         this.syncQueryParams();
+        this.persistSearchState();
 
         try {
             const mediaType = this.mediaTypeFilter();
@@ -120,6 +131,29 @@ export class LibraryComponent implements OnInit {
         }
     }
 
+    private resolveSearchState(params: Params): LibrarySearchState {
+        const queryState = this.searchStateFromQueryParams(params);
+        if (this.hasFilterQueryParams(params)) {
+            return queryState;
+        }
+
+        return this.filterStateStorage.read(LIBRARY_FILTER_STORAGE_KEY, isLibrarySearchState) ?? queryState;
+    }
+
+    private searchStateFromQueryParams(params: Params): LibrarySearchState {
+        return {
+            query: typeof params['q'] === 'string' ? params['q'].trim() : '',
+            filters: {
+                mediaType: this.getMediaTypeFilter(params['type']),
+            },
+        };
+    }
+
+    private applySearchState(state: LibrarySearchState): void {
+        this.activeSearch.set(state.query.trim());
+        this.mediaTypeFilter.set(state.filters.mediaType);
+    }
+
     private syncQueryParams(): void {
         const params: Record<string, string> = {};
         if (this.activeSearch().trim()) params['q'] = this.activeSearch().trim();
@@ -129,9 +163,39 @@ export class LibraryComponent implements OnInit {
         this.location.replaceState('/library', qs);
     }
 
+    private persistSearchState(): void {
+        this.filterStateStorage.write(LIBRARY_FILTER_STORAGE_KEY, {
+            query: this.activeSearch().trim(),
+            filters: { mediaType: this.mediaTypeFilter() },
+        } satisfies LibrarySearchState);
+    }
+
+    private hasFilterQueryParams(params: Params): boolean {
+        return LIBRARY_FILTER_QUERY_KEYS.some((key) => Object.prototype.hasOwnProperty.call(params, key));
+    }
+
+    private getPageParam(value: unknown): number {
+        return Math.max(1, parseInt(typeof value === 'string' ? value : '', 10) || 1);
+    }
+
     private getMediaTypeFilter(value: unknown): LibraryMediaFilter {
         return typeof value === 'string' && (VALID_MEDIA_FILTERS as string[]).includes(value)
             ? (value as LibraryMediaFilter)
             : 'all';
     }
+}
+
+function isLibrarySearchState(value: unknown): value is LibrarySearchState {
+    if (!value || typeof value !== 'object') {
+        return false;
+    }
+
+    const state = value as Partial<LibrarySearchState>;
+    const filters = state.filters as Partial<LibrarySearchState['filters']> | undefined;
+    return (
+        typeof state.query === 'string' &&
+        !!filters &&
+        typeof filters.mediaType === 'string' &&
+        (VALID_MEDIA_FILTERS as string[]).includes(filters.mediaType)
+    );
 }
