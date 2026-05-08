@@ -37,6 +37,7 @@ export class ReleaseCardComponent {
     protected auth = inject(AuthService);
 
     movie = input.required<GroupedMovie>();
+    searchQuery = input('');
     searchTitle = output<string>();
 
     protected detail = signal<MovieDetailMetadata | null>(null);
@@ -48,12 +49,26 @@ export class ReleaseCardComponent {
         return m.metadata?.title || m.metadata_lookup.title;
     });
 
+    protected searchAction = computed(() => {
+        const query = this.normalizeSearchTerm(this.searchQuery());
+        if (!query) {
+            const target = this.cleanSearchTerm(this.displayTitle());
+            return target ? { label: target, target } : null;
+        }
+
+        const target = this.titleWithYear();
+        if (!target || this.normalizeSearchTerm(target) === query) {
+            return null;
+        }
+
+        return { label: target, target };
+    });
+
     protected onSearchTitle(): void {
-        const clean = this.displayTitle()
-            .replace(/[^\p{L}\p{N} ]/gu, '')
-            .replace(/\s+/g, ' ')
-            .trim();
-        this.searchTitle.emit(clean);
+        const target = this.searchAction()?.target;
+        if (target) {
+            this.searchTitle.emit(target);
+        }
     }
 
     protected async onPanelOpened(): Promise<void> {
@@ -133,5 +148,21 @@ export class ReleaseCardComponent {
         const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
         const val = bytes / 1024 ** i;
         return `${val.toFixed(i === 0 ? 0 : 2)} ${units[i]}`;
+    }
+
+    private titleWithYear(): string {
+        const year = this.movie().metadata?.year || this.movie().metadata_lookup.year;
+        return this.cleanSearchTerm([this.displayTitle(), year].filter(Boolean).join(' '));
+    }
+
+    private cleanSearchTerm(value: string): string {
+        return value
+            .replace(/[^\p{L}\p{N} ]/gu, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    private normalizeSearchTerm(value: string): string {
+        return this.cleanSearchTerm(value).toLocaleLowerCase();
     }
 }

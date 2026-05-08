@@ -50,10 +50,12 @@
             [detailLoading]="detailLoading()"
         />
 
-        <button mat-button class="search-title-btn" (click)="onSearchTitle()">
-            <mat-icon>search</mat-icon>
-            <span class="btn-label">Search for "{{ displayTitle() }}"</span>
-        </button>
+        @if (searchAction(); as action) {
+            <button mat-button class="search-title-btn" (click)="onSearchTitle()">
+                <mat-icon>search</mat-icon>
+                <span class="btn-label">Search for "{{ action.label }}"</span>
+            </button>
+        }
 
         <h4 class="releases-title">Releases on this page</h4>
         <div class="releases-list">

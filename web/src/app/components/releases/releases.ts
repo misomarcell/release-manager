@@ -85,7 +85,7 @@ export class ReleasesComponent {
     protected totalResults = signal(0);
     protected currentPage = signal(1);
     protected readonly pageSize = 100;
-    private activeSearch = signal('');
+    protected activeSearch = signal('');
     private categoryFilter = signal<NcoreCategoryKey>('all');
     private uhdOnlyFilter = signal(false);
 
