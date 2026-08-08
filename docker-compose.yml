@@ -45,6 +45,7 @@ services:
     environment:
       PORT: '8085'
       BACKEND_URL: http://backend:3000
+      NG_ALLOWED_HOSTS: releases.example.com
     ports:
       - '8085:8085'
     depends_on:
