@@ -1,7 +1,8 @@
 :host {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    block-size: 100vh;
+    block-size: 100dvh;
     overflow: hidden;
 }
 
@@ -25,8 +26,13 @@
 
 .sidenav-container {
     --mat-sidenav-container-shape: 0;
-    flex: 1;
+    flex: 1 1 auto;
+    min-block-size: 0;
     overflow: hidden;
+}
+
+mat-sidenav-content {
+    overscroll-behavior-y: contain;
 }
 
 mat-sidenav {
