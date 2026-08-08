@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -26,7 +26,6 @@ const TV_BASE = '/media/TV_Shows';
     imports: [MatExpansionModule, MatButtonModule, MatIconModule, MatDividerModule, MediaDetailsComponent],
     templateUrl: './release-card.html',
     styleUrl: './release-card.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReleaseCardComponent {
     private dialog = inject(MatDialog);

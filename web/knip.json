@@ -1,13 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "project": ["src/**/*.ts", "src/**/*.html"],
-  "ignoreDependencies": [
-    "@angular/animations",
-    "@angular/compiler",
-    "@angular/platform-server",
-    "@angular/cli",
-    "@angular/compiler-cli",
-    "tslib"
-  ],
-  "ignoreBinaries": ["ng", "eslint", "knip"]
+  "ignoreDependencies": ["angular-eslint"],
+  "ignoreBinaries": ["eslint", "knip"]
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -34,7 +34,6 @@ export interface DownloadDialogData {
     ],
     templateUrl: './download-dialog.html',
     styleUrl: './download-dialog.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DownloadDialogComponent {
     private search = inject(SearchService);

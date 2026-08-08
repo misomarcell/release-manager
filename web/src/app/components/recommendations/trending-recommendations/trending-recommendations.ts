@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { RecommendationRibbonsComponent } from '../recommendation-ribbons/recommendation-ribbons';
 import { RecommendationsService } from '../../../services/recommendations.service';
 import type { Recommendation } from '@rm/shared/recommendations.models';
@@ -8,7 +8,6 @@ import type { Recommendation } from '@rm/shared/recommendations.models';
     imports: [RecommendationRibbonsComponent],
     templateUrl: './trending-recommendations.html',
     styleUrl: './trending-recommendations.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrendingRecommendationsComponent implements OnInit {
     private recommendations = inject(RecommendationsService);

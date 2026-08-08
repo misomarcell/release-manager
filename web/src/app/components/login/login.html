@@ -24,12 +24,12 @@
     <mat-expansion-panel-header>
       <mat-panel-title>Create an account</mat-panel-title>
     </mat-expansion-panel-header>
-    <form class="register-form" (ngSubmit)="register()">
+    <form class="register-form" [formRoot]="registrationForm">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>Username</mat-label>
-        <input matInput [(ngModel)]="regUsername" name="username" />
+        <input matInput [formField]="registrationForm.username" />
       </mat-form-field>
-      <button mat-stroked-button type="submit" [disabled]="loading() || !regUsername">
+      <button mat-stroked-button type="submit" [disabled]="loading() || registrationForm().invalid()">
         <mat-icon>person_add</mat-icon>
         Register
       </button>

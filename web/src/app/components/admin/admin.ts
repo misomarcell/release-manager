@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,7 +16,6 @@ import { extractHttpError } from '../../utils/http-error';
     imports: [DatePipe, MatButtonModule, MatIconModule, MatCardModule],
     templateUrl: './admin.html',
     styleUrl: './admin.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminComponent implements OnInit {
     private admin = inject(AdminService);

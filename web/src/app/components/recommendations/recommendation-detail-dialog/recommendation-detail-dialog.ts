@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,7 +17,6 @@ interface DialogData {
     imports: [MatDialogModule, MatButtonModule, MatIconModule, FeedbackButtonsComponent, MediaActionChipsComponent],
     templateUrl: './recommendation-detail-dialog.html',
     styleUrl: './recommendation-detail-dialog.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RecommendationDetailDialogComponent implements OnInit {
     private data = inject(MAT_DIALOG_DATA) as DialogData;

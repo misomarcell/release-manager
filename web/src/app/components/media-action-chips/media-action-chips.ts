@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
@@ -6,7 +6,6 @@ import { MatIconModule } from '@angular/material/icon';
     imports: [MatIconModule],
     templateUrl: './media-action-chips.html',
     styleUrl: './media-action-chips.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MediaActionChipsComponent {
     imdbId = input<string | undefined>(undefined);

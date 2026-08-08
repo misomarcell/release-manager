@@ -1,8 +1,10 @@
 // @ts-check
+const { createRequire } = require('node:module');
 const eslint = require('@eslint/js');
 const { defineConfig } = require('eslint/config');
 const tseslint = require('typescript-eslint');
-const angular = require('angular-eslint');
+const requireFromWeb = createRequire(require.resolve('./web/package.json'));
+const angular = requireFromWeb('angular-eslint');
 
 module.exports = defineConfig([
   {

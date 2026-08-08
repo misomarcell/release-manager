@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatExpansionModule } from '@angular/material/expansion';
 import type { MediaStream } from '@rm/shared/jellyfin.models';
@@ -20,7 +20,6 @@ interface FileInfo {
     imports: [MatIconModule, MatExpansionModule],
     templateUrl: './media-streams.html',
     styleUrls: ['./media-streams.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MediaStreamsComponent {
     streams = input.required<MediaStream[]>();

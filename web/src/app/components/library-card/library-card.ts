@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
@@ -23,7 +23,6 @@ import type { MovieDetailMetadata } from '@rm/shared/tmdb.models';
     imports: [MatExpansionModule, MatIconModule, MatDividerModule, MediaDetailsComponent, MediaStreamsComponent],
     templateUrl: './library-card.html',
     styleUrl: './library-card.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LibraryCardComponent {
     private search = inject(SearchService);

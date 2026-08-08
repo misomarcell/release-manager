@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { RecommendationsService } from '../../services/recommendations.service';
 import type { MediaType } from '@rm/shared/tmdb.models';
@@ -9,7 +9,6 @@ import type { FeedbackValue } from '@rm/shared/recommendations.models';
     imports: [MatIconModule],
     templateUrl: './feedback-buttons.html',
     styleUrl: './feedback-buttons.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeedbackButtonsComponent {
     private recommendations = inject(RecommendationsService);

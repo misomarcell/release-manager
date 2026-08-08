@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { form, FormField, FormRoot, required } from '@angular/forms/signals';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,10 +10,15 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../services/auth.service';
 import { extractHttpError } from '../../utils/http-error';
 
+interface RegistrationModel {
+  username: string;
+}
+
 @Component({
   selector: 'app-login',
   imports: [
-    FormsModule,
+    FormField,
+    FormRoot,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
@@ -23,7 +28,6 @@ import { extractHttpError } from '../../utils/http-error';
   ],
   templateUrl: './login.html',
   styleUrl: './login.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
   private auth = inject(AuthService);
@@ -32,7 +36,12 @@ export class LoginComponent {
   protected loading = signal(false);
   protected error = signal<string | null>(null);
   protected success = signal<string | null>(null);
-  protected regUsername = '';
+  protected registrationModel = signal<RegistrationModel>({ username: '' });
+  protected registrationForm = form(
+    this.registrationModel,
+    (path) => required(path.username),
+    { submission: { action: () => this.register() } },
+  );
 
   protected async login(): Promise<void> {
     this.loading.set(true);
@@ -48,17 +57,19 @@ export class LoginComponent {
     }
   }
 
-  protected async register(): Promise<void> {
-    if (!this.regUsername.trim()) return;
+  private async register(): Promise<void> {
+    const username = this.registrationModel().username.trim();
+    if (!username) return;
+
     this.loading.set(true);
     this.error.set(null);
     this.success.set(null);
     try {
-      await this.auth.register(this.regUsername.trim());
+      await this.auth.register(username);
       this.success.set(
         'Account created. You can sign in after an administrator has confirmed your account.',
       );
-      this.regUsername = '';
+      this.registrationForm().reset({ username: '' });
     } catch (e: unknown) {
       this.error.set(extractHttpError(e, 'Registration failed'));
     } finally {

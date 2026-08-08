@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { UpdateService } from './services/update.service';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -23,8 +23,7 @@ const ICONS: IconDefinition[] = [
 @Component({
     selector: 'app-root',
     imports: [RouterOutlet],
-    template: '<router-outlet />',
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    templateUrl: './app.html',
 })
 export class App {
     private iconRegistry = inject(MatIconRegistry);

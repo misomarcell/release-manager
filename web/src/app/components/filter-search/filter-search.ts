@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
@@ -44,7 +44,6 @@ export interface FilterSearchSubmit {
     ],
     templateUrl: './filter-search.html',
     styleUrl: './filter-search.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FilterSearchComponent {
     placeholder = input('Search...');

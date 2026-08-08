@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal, computed, viewChild } from '@angular/core';
+import { Component, inject, signal, computed, viewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -67,7 +67,6 @@ export interface GroupedMovie {
     ],
     templateUrl: './releases.html',
     styleUrl: './releases.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReleasesComponent {
     private search = inject(SearchService);

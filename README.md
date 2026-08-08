@@ -15,7 +15,7 @@ A self-hosted web app for browsing and searching Hungarian nCore torrents, enric
 
 | Layer    | Technology                        |
 | -------- | --------------------------------- |
-| Frontend | Angular 21, Material 3, SSR       |
+| Frontend | Angular 22, Material 3, SSR       |
 | Backend  | Express 5, TypeScript, Node.js 22 |
 | Database | PostgreSQL 17                     |
 | Auth     | WebAuthn (SimpleWebAuthn)         |

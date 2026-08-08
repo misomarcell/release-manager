@@ -3,10 +3,10 @@
     <mat-expansion-panel-header>
         <div class="card-summary">
             <div class="poster-thumb">
-                @if (m.metadata?.poster) {
+                @if (m.metadata?.poster; as poster) {
                     <img
-                        [src]="m.metadata?.poster"
-                        [alt]="m.metadata?.title || m.metadata_lookup.title"
+                        [src]="poster"
+                        [alt]="m.metadata.title || m.metadata_lookup.title"
                         loading="lazy"
                         (click)="openPoster($event)"
                     />
@@ -19,14 +19,14 @@
             <div class="card-info">
                 <span class="title">{{ m.metadata?.title || m.metadata_lookup.title }}</span>
                 <span class="meta">
-                    @if (m.metadata?.year) {
-                        {{ m.metadata?.year }}
+                    @if (m.metadata?.year; as year) {
+                        {{ year }}
                     }
-                    @if (m.metadata?.rating) {
-                        · ⭐ {{ m.metadata?.rating }}
+                    @if (m.metadata?.rating; as rating) {
+                        · ⭐ {{ rating }}
                     }
-                    @if (m.metadata?.genre) {
-                        · {{ m.metadata?.genre }}
+                    @if (m.metadata?.genre; as genre) {
+                        · {{ genre }}
                     }
                 </span>
                 @if (m.metadata?.inJellyfinLibrary) {

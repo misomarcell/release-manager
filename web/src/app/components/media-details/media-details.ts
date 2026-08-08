@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -12,7 +12,6 @@ import { MatDividerModule } from '@angular/material/divider';
     imports: [MatButtonModule, MatIconModule, MatDividerModule, MatMenuModule, FeedbackButtonsComponent],
     templateUrl: './media-details.html',
     styleUrl: './media-details.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MediaDetailsComponent {
     tmdbId = input<number | null>(null);

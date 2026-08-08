@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe, JsonPipe } from '@angular/common';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -26,7 +26,6 @@ const PAGE_SIZE = 100;
     ],
     templateUrl: './logs.html',
     styleUrl: './logs.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LogsComponent implements OnInit {
     private admin = inject(AdminService);

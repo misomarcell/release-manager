@@ -1,5 +1,4 @@
 import {
-    ChangeDetectionStrategy,
     Component,
     inject,
     input,
@@ -16,7 +15,6 @@ import type { Recommendation } from '@rm/shared/recommendations.models';
     imports: [MatIconModule],
     templateUrl: './recommendation-ribbons.html',
     styleUrl: './recommendation-ribbons.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RecommendationRibbonsComponent {
     private dialog = inject(MatDialog);

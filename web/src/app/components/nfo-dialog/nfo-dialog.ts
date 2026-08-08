@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 
@@ -7,7 +7,6 @@ import { MatButtonModule } from '@angular/material/button';
   imports: [MatDialogModule, MatButtonModule],
   templateUrl: './nfo-dialog.html',
   styleUrl: './nfo-dialog.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NfoDialogComponent {
   protected data = inject(MAT_DIALOG_DATA) as { html: string };

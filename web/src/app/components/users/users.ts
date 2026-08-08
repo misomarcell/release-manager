@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,7 +17,6 @@ import type { UserInfo } from '@rm/shared/user.models';
     imports: [DatePipe, MatButtonModule, MatIconModule, MatProgressBarModule, MatCardModule],
     templateUrl: './users.html',
     styleUrl: './users.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UsersComponent implements OnInit {
     private usersService = inject(UsersService);

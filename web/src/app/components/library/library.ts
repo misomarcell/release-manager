@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
+import { Component, inject, signal, viewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { MatAccordion } from '@angular/material/expansion';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -47,7 +47,6 @@ interface LibrarySearchState {
     ],
     templateUrl: './library.html',
     styleUrl: './library.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LibraryComponent {
     private libraryService = inject(LibraryService);

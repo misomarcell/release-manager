@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 
 interface PosterDialogData {
@@ -12,7 +12,6 @@ interface PosterDialogData {
   imports: [MatDialogModule],
   templateUrl: './poster-dialog.html',
   styleUrl: './poster-dialog.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PosterDialogComponent implements OnInit {
   protected data = inject(MAT_DIALOG_DATA) as PosterDialogData;
