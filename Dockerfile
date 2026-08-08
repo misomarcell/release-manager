@@ -8,8 +8,7 @@ COPY backend/package.json backend/
 COPY web/package.json web/
 RUN npm ci
 
-FROM base AS build-backend
-COPY --from=deps /app/node_modules ./node_modules
+FROM deps AS build-backend
 COPY tsconfig.base.json ./
 COPY shared/ shared/
 RUN cd shared && npx tsc --build --force tsconfig.json && ls dist/
@@ -17,14 +16,13 @@ RUN rm -rf node_modules/shared && ln -s /app/shared node_modules/shared
 COPY backend/ backend/
 RUN cd backend && npx tsc -p tsconfig.json
 
-FROM base AS build-web
-COPY --from=deps /app/node_modules ./node_modules
+FROM deps AS build-web
 COPY tsconfig.base.json ./
 COPY shared/ shared/
 RUN cd shared && npx tsc --build --force tsconfig.json && ls dist/
 RUN rm -rf node_modules/shared && ln -s /app/shared node_modules/shared
 COPY web/ web/
-RUN cd web && npx ng build --configuration production
+RUN npm run build --workspace web -- --configuration production
 
 # --- Backend runtime ---
 FROM base AS backend
@@ -40,6 +38,7 @@ CMD ["node", "backend/dist/index.js"]
 FROM base AS frontend
 ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/web/node_modules ./web/node_modules
 COPY --from=build-web /app/shared ./node_modules/shared
 COPY --from=build-web /app/web/dist ./web/dist
 EXPOSE 4000
