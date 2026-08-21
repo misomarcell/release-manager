@@ -30,7 +30,14 @@
                     Results for: <i>"{{ activeSearch() }}"</i>
                 </span>
             }
-            <span class="results-count">{{ total() }} items</span>
+            <span class="results-count">
+                {{ total() }} items
+                @if (!activeSearch()) {
+                    @if (remainingSpace(); as freeSpace) {
+                        · {{ freeSpace.amount | number: '1.2-2' }} {{ freeSpace.unit }} remaining
+                    }
+                }
+            </span>
         </div>
         <mat-accordion class="results">
             @for (item of items(); track item.jellyfinId) {

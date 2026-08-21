@@ -23,7 +23,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     if (!query) return;
 
     try {
-        const { items, total } = await libraryService.getLibrary({
+        const { items, total, freeSpaceOnDisk } = await libraryService.getLibrary({
             search: query.search,
             page: query.page,
             perPage: query.perPage,
@@ -54,6 +54,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
             page: query.page,
             perPage: query.perPage,
             jellyfinBaseUrl: config.jellyfin.url,
+            freeSpaceOnDisk,
         };
 
         res.json(response);

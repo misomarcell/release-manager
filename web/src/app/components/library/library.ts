@@ -1,5 +1,5 @@
-import { Component, inject, signal, viewChild } from '@angular/core';
-import { Location } from '@angular/common';
+import { Component, computed, inject, signal, viewChild } from '@angular/core';
+import { DecimalPipe, Location } from '@angular/common';
 import { MatAccordion } from '@angular/material/expansion';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { LibraryCardComponent } from '../library-card/library-card';
@@ -12,6 +12,8 @@ import type { MediaType } from '@rm/shared/tmdb.models';
 import { FilterStateStorage } from '../../services/filter-state-storage.service';
 
 const PAGE_SIZE = 30;
+const GIBIBYTE = 1_073_741_824;
+const TEBIBYTE = 1_024 * GIBIBYTE;
 type LibraryMediaFilter = MediaType | 'all';
 const VALID_MEDIA_FILTERS: LibraryMediaFilter[] = ['all', 'movie', 'tv'];
 const LIBRARY_FILTER_STORAGE_KEY = 'movie-releases.library.filters';
@@ -42,6 +44,7 @@ interface LibrarySearchState {
     imports: [
         MatAccordion,
         MatPaginatorModule,
+        DecimalPipe,
         FilterSearchComponent,
         LibraryCardComponent,
     ],
@@ -60,6 +63,15 @@ export class LibraryComponent {
     protected error = signal<string | null>(null);
     protected items = signal<LibraryItem[]>([]);
     protected total = signal(0);
+    protected freeSpaceOnDisk = signal<number | null>(null);
+    protected remainingSpace = computed(() => {
+        const bytes = this.freeSpaceOnDisk();
+        if (bytes === null) return null;
+
+        return bytes >= TEBIBYTE
+            ? { amount: bytes / TEBIBYTE, unit: 'TiB' }
+            : { amount: bytes / GIBIBYTE, unit: 'GiB' };
+    });
     protected currentPage = signal(1);
     protected jellyfinBaseUrl = signal('');
     protected activeSearch = signal('');
@@ -121,10 +133,12 @@ export class LibraryComponent {
             );
             this.items.set(response.items);
             this.total.set(response.total);
+            this.freeSpaceOnDisk.set(response.freeSpaceOnDisk);
             this.jellyfinBaseUrl.set(response.jellyfinBaseUrl);
         } catch (e: unknown) {
             this.error.set(e instanceof Error ? e.message : 'Failed to load library');
             this.items.set([]);
+            this.freeSpaceOnDisk.set(null);
         } finally {
             this.loading.set(false);
         }

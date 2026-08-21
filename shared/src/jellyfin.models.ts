@@ -38,4 +38,5 @@ export interface LibraryResponse {
     page: number;
     perPage: number;
     jellyfinBaseUrl: string;
+    freeSpaceOnDisk: number | null;
 }

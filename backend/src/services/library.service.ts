@@ -18,14 +18,20 @@ interface LibraryQuery {
     mediaType: MediaType | null;
 }
 
+interface LibraryResult extends LibraryPage {
+    freeSpaceOnDisk: number | null;
+}
+
 class LibraryService {
-    async getLibrary({ search, page, perPage, mediaType }: LibraryQuery): Promise<LibraryPage> {
+    async getLibrary({ search, page, perPage, mediaType }: LibraryQuery): Promise<LibraryResult> {
         const libraryPage = await getLibraryPage(search, page, perPage, mediaType);
-        if (libraryPage.items.length === 0) return libraryPage;
+        const freeSpaceOnDisk = search || libraryPage.items.length === 0 ? null : await this.getFreeSpaceOnDisk();
+        if (libraryPage.items.length === 0) return { ...libraryPage, freeSpaceOnDisk };
 
         const torrentHashesByPath = await this.buildTorrentHashLookup();
         return {
             ...libraryPage,
+            freeSpaceOnDisk,
             items: libraryPage.items.map((item) => {
                 const contentPath = this.getContentPath(item);
                 const torrentHash = contentPath ? torrentHashesByPath.get(contentPath) : null;
@@ -56,6 +62,17 @@ class LibraryService {
         await qbittorrentService.deleteTorrent(torrentHash);
         await deleteLibraryItemRow(jellyfinId);
         await reloadCache();
+    }
+
+    private async getFreeSpaceOnDisk(): Promise<number | null> {
+        try {
+            return (await qbittorrentService.getServerState()).freeSpaceOnDisk;
+        } catch (error: unknown) {
+            logger.warn('Library: free space lookup failed', {
+                error: error instanceof Error ? error.message : String(error),
+            });
+            return null;
+        }
     }
 
     private async buildTorrentHashLookup(): Promise<Map<string, string>> {
