@@ -155,7 +155,7 @@ class JellyfinService {
 
     private authHeaders(): Record<string, string> {
         return {
-            'X-MediaBrowser-Token': config.jellyfin.apiKey,
+            Authorization: `MediaBrowser Token="${config.jellyfin.apiKey}"`,
             Accept: 'application/json',
         };
     }
