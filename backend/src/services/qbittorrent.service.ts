@@ -167,13 +167,13 @@ class QbittorrentService {
         }
 
         const setCookie = response.headers.get('set-cookie');
-        const sid = setCookie?.match(/SID=([^;]+)/)?.[1];
-        if (!sid) {
+        const match = setCookie?.match(/(?:^|,\s*)(QBT_SID_[^=;]+|SID)=([^;]+)/);
+        if (!match) {
             const details = responseText ? `: ${responseText}` : '';
             throw new Error(`qBittorrent login did not return a session cookie${details}`);
         }
 
-        this.sessionCookie = `SID=${sid}`;
+        this.sessionCookie = `${match[1]}=${match[2]}`;
         logger.info('[qBittorrent] Login successful');
     }
 
