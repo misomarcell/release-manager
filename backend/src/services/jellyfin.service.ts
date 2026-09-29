@@ -5,6 +5,9 @@ import type { MediaInfo, MediaStream } from 'shared/jellyfin.models';
 import { replaceLibrary, reloadCache, type JellyfinItem } from '../repositories/jellyfin.repository.js';
 import { logSync } from '../repositories/sync.repository.js';
 
+const REQUEST_TIMEOUT_MS = 15_000;
+const SYNC_TIMEOUT_MS = 180_000;
+
 interface JellyfinRawMediaStream {
     Type: 'Video' | 'Audio' | 'Subtitle';
     Codec?: string;
@@ -58,11 +61,16 @@ class JellyfinService {
 
             logger.info('Jellyfin sync started');
 
-            const data = (await this.jellyfinGet(`/Users/${userId}/Items`, {
-                Recursive: 'true',
-                IncludeItemTypes: 'Movie,Series',
-                Fields: 'ProviderIds,Name,ProductionYear,DateCreated,MediaSources,Path',
-            })) as { Items?: JellyfinRawItem[] };
+            const data = (await this.jellyfinGet(
+                '/Items',
+                {
+                    Recursive: 'true',
+                    IncludeItemTypes: 'Movie,Series',
+                    Fields: 'ProviderIds,Name,ProductionYear,DateCreated,MediaSources,Path',
+                    ...(userId ? { userId } : {}),
+                },
+                SYNC_TIMEOUT_MS,
+            )) as { Items?: JellyfinRawItem[] };
 
             const rawItems: JellyfinRawItem[] = Array.isArray(data.Items) ? data.Items : [];
             const items = rawItems
@@ -136,7 +144,11 @@ class JellyfinService {
         return mapped.length ? { streams: mapped } : null;
     }
 
-    private async jellyfinGet(path: string, params?: Record<string, string>): Promise<unknown> {
+    private async jellyfinGet(
+        path: string,
+        params?: Record<string, string>,
+        timeoutMs = REQUEST_TIMEOUT_MS,
+    ): Promise<unknown> {
         const { url } = this.getRequiredConfig();
         const endpoint = new URL(path, url);
         for (const [key, value] of Object.entries(params ?? {})) {
@@ -145,7 +157,10 @@ class JellyfinService {
 
         console.log(`[Jellyfin] GET ${endpoint.pathname}${endpoint.search}`);
 
-        const response = await fetch(endpoint, { headers: this.authHeaders() });
+        const response = await fetch(endpoint, {
+            headers: this.authHeaders(),
+            signal: AbortSignal.timeout(timeoutMs),
+        });
         if (!response.ok) {
             throw new Error(`Jellyfin responded with ${response.status} for ${path}`);
         }

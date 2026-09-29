@@ -13,6 +13,7 @@ const SUPPORTED_CATEGORIES: Record<NcoreCategoryKey, string> = {
 const SEARCH_ACCEPT = 'application/json,text/plain,*/*';
 const HTML_ACCEPT = 'text/html,text/plain,*/*';
 const TORRENT_ID_PATTERN = /^\d+$/;
+const REQUEST_TIMEOUT_MS = 20_000;
 
 export class NcoreNoResultsError extends Error {
     constructor() {
@@ -107,6 +108,7 @@ class NcoreService {
 
         const response = await fetch(url, {
             headers: { Cookie: this.getCookieHeader(ncore) },
+            signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         });
 
         if (!response.ok) throw new Error(`Failed to download torrent file: ${response.status}`);
@@ -175,6 +177,7 @@ class NcoreService {
         const response = await fetch(url, {
             method: 'GET',
             headers,
+            signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         });
 
         const body = await response.text();

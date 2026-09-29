@@ -34,7 +34,7 @@ export async function fetchLatestCommit(): Promise<VersionInfo> {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(url, { headers });
+  const res = await fetch(url, { headers, signal: AbortSignal.timeout(10_000) });
   if (!res.ok) {
     throw new Error(`GitHub API responded with ${res.status}`);
   }
