@@ -94,18 +94,18 @@ router.post('/feedback', requireAuth, async (req: Request, res: Response) => {
     const body = parseBody(FeedbackBodySchema, req.body, res);
     if (!body) return;
 
-    const { metadata } = await getMetadata({
-        tmdbId: body.tmdbId,
-        mediaType: body.mediaType,
-        title: '',
-        year: '',
-        imdbId: '',
-    });
-    if (!metadata) {
-        res.status(404).json({ error: 'Media not found' });
-        return;
-    }
     try {
+        const { metadata } = await getMetadata({
+            tmdbId: body.tmdbId,
+            mediaType: body.mediaType,
+            title: '',
+            year: '',
+            imdbId: '',
+        });
+        if (!metadata) {
+            res.status(404).json({ error: 'Media not found' });
+            return;
+        }
         await upsertFeedback(
             { tmdbId: body.tmdbId, mediaType: body.mediaType, title: metadata.title, feedback: body.feedback },
             userId,
