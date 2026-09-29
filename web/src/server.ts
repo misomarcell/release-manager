@@ -5,6 +5,7 @@ import {
     writeResponseToNodeResponse,
 } from '@angular/ssr/node';
 import express from 'express';
+import { isIP } from 'node:net';
 import { join } from 'node:path';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
@@ -13,33 +14,25 @@ const backendUrl = process.env['BACKEND_URL'] || 'http://localhost:3000';
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
-// Proxy API requests to the backend service
-app.use('/api', async (req, res) => {
+app.use('/api', express.raw({ type: '*/*' }), async (req, res) => {
     try {
         const url = new URL(req.originalUrl, backendUrl);
         const headers: Record<string, string> = {};
         const contentType = getHeader(req.headers['content-type']);
         const cookie = getHeader(req.headers['cookie']);
-        const clientIp = normalizeIp(req.socket.remoteAddress);
+        const userAgent = getHeader(req.headers['user-agent']);
+        const clientIp = resolveClientIp(req);
 
         if (contentType) headers['content-type'] = contentType;
         if (cookie) headers['cookie'] = cookie;
+        if (userAgent) headers['user-agent'] = userAgent;
         if (clientIp) headers['x-forwarded-for'] = clientIp;
 
-        const fetchOptions: RequestInit = {
+        const upstream = await fetch(url, {
             method: req.method,
             headers,
-        };
-
-        if (req.method !== 'GET' && req.method !== 'HEAD') {
-            const chunks: Buffer[] = [];
-            for await (const chunk of req) {
-                chunks.push(Buffer.from(chunk as ArrayBuffer));
-            }
-            fetchOptions.body = Buffer.concat(chunks).toString('utf-8');
-        }
-
-        const upstream = await fetch(url, fetchOptions);
+            body: Buffer.isBuffer(req.body) ? new Uint8Array(req.body) : undefined,
+        });
         res.status(upstream.status);
 
         for (const [key, value] of upstream.headers.entries()) {
@@ -80,12 +73,15 @@ if (isMainModule(import.meta.url) || process.env['pm_id']) {
     });
 }
 
-export default createNodeRequestHandler(app);
-
 export const reqHandler = createNodeRequestHandler(app);
 
 function getHeader(header: string | string[] | undefined): string | undefined {
     return Array.isArray(header) ? header[0] : header;
+}
+
+function resolveClientIp(req: express.Request): string | undefined {
+    const cfIp = getHeader(req.headers['cf-connecting-ip'])?.trim();
+    return normalizeIp(cfIp && isIP(cfIp) ? cfIp : req.socket.remoteAddress);
 }
 
 function normalizeIp(ip: string | undefined): string | undefined {
