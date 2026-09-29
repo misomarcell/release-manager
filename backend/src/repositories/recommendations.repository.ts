@@ -1,4 +1,4 @@
-import { query } from '../db/connection.js';
+import { query, withTransaction } from '../db/connection.js';
 import type { RecommendationRef, FeedbackValue } from 'shared/recommendations.models';
 import type { MediaType } from 'shared/tmdb.models';
 
@@ -81,14 +81,16 @@ export async function getCache(
 }
 
 export async function setCache(refs: RecommendationRef[], userId: number, mediaType: MediaType): Promise<void> {
-    await query(
-        `DELETE FROM recommendation_cache WHERE user_id = $1 AND media_type_filter = $2`,
-        [userId, mediaType],
-    );
-    await query(
-        `INSERT INTO recommendation_cache (user_id, recommendations, generated_at, media_type_filter) VALUES ($1, $2, NOW(), $3)`,
-        [userId, JSON.stringify(refs), mediaType],
-    );
+    await withTransaction(async (client) => {
+        await client.query(`DELETE FROM recommendation_cache WHERE user_id = $1 AND media_type_filter = $2`, [
+            userId,
+            mediaType,
+        ]);
+        await client.query(
+            `INSERT INTO recommendation_cache (user_id, recommendations, generated_at, media_type_filter) VALUES ($1, $2, NOW(), $3)`,
+            [userId, JSON.stringify(refs), mediaType],
+        );
+    });
 }
 
 export async function getFeedbackForItem(
