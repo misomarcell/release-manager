@@ -1,11 +1,14 @@
 import OpenAI from 'openai';
-import { zodResponseFormat } from 'openai/helpers/zod';
+import { zodTextFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
 import { config } from '../config.js';
+import { logger } from '../utils/logger.js';
 import { buildRecommendationPrompt } from './recommendation-prompt.js';
+import type { PromptTitle, RatedTitle } from './recommendation-prompt.js';
 import type { MediaType } from 'shared/tmdb.models';
 
-const RECOMMENDATION_MODEL = 'gpt-5.4-mini';
+const RECOMMENDATION_MODEL = 'gpt-6-luna';
+const RECOMMENDATION_REASONING_EFFORT = 'medium';
 
 const SuggestionSchema = z.object({
     title: z.string(),
@@ -18,6 +21,15 @@ const AiResponseSchema = z.object({
 });
 
 export type AiSuggestion = z.infer<typeof SuggestionSchema>;
+
+interface AiRecommendationRequest {
+    userId: number;
+    mediaType: MediaType;
+    count: number;
+    rated: RatedTitle[];
+    owned: PromptTitle[];
+    previouslySuggested: PromptTitle[];
+}
 
 let client: OpenAI | null = null;
 
@@ -40,42 +52,44 @@ function cleanSuggestion(suggestion: AiSuggestion): AiSuggestion | null {
     };
 }
 
-export async function getAiRecommendations(
-    feedbackContext: string,
-    excludeTitles: string[],
-    count: number,
-    mediaType: MediaType,
-): Promise<AiSuggestion[]> {
-    const prompt = buildRecommendationPrompt({ feedbackContext, excludeTitles, count, mediaType });
-
-    console.log(`[OpenAI] recommendations - requesting ${count} ${prompt.mediaLabel}`);
+export async function getAiRecommendations(request: AiRecommendationRequest): Promise<AiSuggestion[]> {
+    const prompt = buildRecommendationPrompt(request);
 
     try {
-        const response = await getClient().chat.completions.parse({
+        const response = await getClient().responses.parse({
             model: RECOMMENDATION_MODEL,
-            temperature: 0.9,
-            messages: [
-                { role: 'system', content: prompt.system },
-                { role: 'user', content: prompt.user },
-            ],
-            response_format: zodResponseFormat(AiResponseSchema, 'recommendations'),
+            instructions: prompt.instructions,
+            input: prompt.input,
+            reasoning: { effort: RECOMMENDATION_REASONING_EFFORT },
+            text: { format: zodTextFormat(AiResponseSchema, 'recommendations'), verbosity: 'low' },
+            prompt_cache_key: `recommendations:${request.userId}:${request.mediaType}`,
+            store: false,
         });
 
-        const parsed = response.choices[0]?.message.parsed;
+        logger.info('OpenAI: recommendations generated', {
+            model: response.model,
+            mediaType: request.mediaType,
+            rated: request.rated.length,
+            owned: request.owned.length,
+            inputTokens: response.usage?.input_tokens,
+            cachedTokens: response.usage?.input_tokens_details.cached_tokens,
+            outputTokens: response.usage?.output_tokens,
+            reasoningTokens: response.usage?.output_tokens_details.reasoning_tokens,
+        });
+
+        const parsed = response.output_parsed;
         if (!parsed) {
-            console.error('[OpenAI] recommendations - no parsed response');
+            logger.error('OpenAI: recommendations response could not be parsed', { status: response.status });
             return [];
         }
 
-        const suggestions = parsed.recommendations
+        return parsed.recommendations
             .map(cleanSuggestion)
-            .filter((suggestion): suggestion is AiSuggestion => suggestion !== null)
-            .slice(0, count);
-
-        console.log(`[OpenAI] recommendations - got ${suggestions.length} ${prompt.mediaLabel}`);
-        return suggestions;
+            .filter((suggestion): suggestion is AiSuggestion => suggestion !== null);
     } catch (err) {
-        console.error('[OpenAI] recommendations - error:', err);
+        logger.error('OpenAI: recommendations request failed', {
+            error: err instanceof Error ? err.message : String(err),
+        });
         return [];
     }
 }

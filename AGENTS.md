@@ -57,13 +57,15 @@ backend/src/
     tmdb.service.ts     # TMDB API + PostgreSQL caching; enriches all results with inJellyfinLibrary
     qbittorrent.service.ts # qBittorrent Web API integration
     jellyfin.service.ts # Jellyfin API: library sync + connection test
-    recommendations.service.ts # OpenAI + TMDB top-rated recommendations
+    recommendations.service.ts # AI personalized recs (filtered by TMDB id) + TMDB top-rated/trending
+    openai.service.ts   # OpenAI Responses API client (gpt-6-luna, structured output)
+    recommendation-prompt.ts # Builds instructions + compact taste profile input
   repositories/
     cache.repository.ts # Metadata cache database operations
     user.repository.ts  # User/credential/session database operations
     recommendations.repository.ts # Feedback and recommendation cache DB operations
     log.repository.ts           # Log query database operations
-    jellyfin.repository.ts      # Jellyfin library DB operations + in-memory lookup cache
+    jellyfin.repository.ts      # Jellyfin library DB operations + in-memory lookup cache + owned titles for recs
   utils/
     coerce.ts           # Type coercion helpers
     concurrent.ts       # Concurrent promise mapper
