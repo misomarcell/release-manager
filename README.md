@@ -19,6 +19,7 @@ A self-hosted web app for browsing and searching Hungarian nCore torrents, enric
 | Backend  | Express 5, TypeScript, Node.js 22 |
 | Database | PostgreSQL 17                     |
 | Auth     | WebAuthn (SimpleWebAuthn)         |
+| Tooling  | pnpm workspaces                   |
 | Deploy   | Docker Compose                    |
 
 ## Quick Start (Docker)
@@ -43,17 +44,17 @@ docker compose build --no-cache backend frontend && docker compose up -d
 ## Development Setup
 
 ```bash
-# Install dependencies
-npm install
+# Install dependencies (requires pnpm, version pinned via `packageManager` in package.json)
+pnpm install
 
 # Start PostgreSQL and pgAdmin (database UI)
 docker compose up db pgadmin -d
 
 # Start backend (port 3000)
-npm run start:backend
+pnpm start:backend
 
 # Start frontend (port 4200, proxies /api to backend)
-npm start
+pnpm start
 ```
 
 ### pgAdmin (Database UI)
@@ -123,7 +124,7 @@ To connect to the database, register a new server in pgAdmin:
 ## Validation
 
 ```bash
-npm run validate   # Runs lint + build + knip
+pnpm validate   # Runs lint + build + knip
 ```
 
 ## CI/CD

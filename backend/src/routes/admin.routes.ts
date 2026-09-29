@@ -21,7 +21,7 @@ const LibraryItemParamsSchema = z.object({
     jellyfinId: z.string().min(1, 'Invalid library item id.').max(128),
 });
 
-const router = Router();
+const router: Router = Router();
 
 router.use(requireAuth);
 router.use(requireAdmin);

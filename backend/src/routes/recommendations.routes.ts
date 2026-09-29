@@ -38,7 +38,7 @@ const FeedbackBodySchema = z.object({
     feedback: FeedbackValueSchema,
 }) satisfies z.ZodType<RecommendationFeedbackRequest>;
 
-const router = Router();
+const router: Router = Router();
 
 router.get('/personalized/:mediaType', requireAuth, async (req: Request, res: Response) => {
     const authUser = (req as AuthenticatedRequest).user;

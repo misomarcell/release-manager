@@ -2,7 +2,7 @@
 
 ## Architecture
 
-- Monorepo workspace with three folders:
+- pnpm workspace monorepo (`pnpm-workspace.yaml`, `pnpm-lock.yaml`, pnpm version pinned via `packageManager`) with three folders:
   - `web/`: Angular SSR + Material app (frontend)
   - `backend/`: Express API server with PostgreSQL
   - `shared/`: shared TypeScript models used by both app and backend
@@ -90,7 +90,8 @@ backend/src/
 - `docker-compose.yml` runs four services: `db` (PostgreSQL), `backend` (Express), `frontend` (Angular SSR), `pgadmin` (pgAdmin 4 database UI).
 - Backend is on both `default` and `media` networks — `media` is an external Docker network shared with qBittorrent.
 - Configuration via `.env` file at project root.
-- `Dockerfile` uses multi-stage builds with separate targets for backend and frontend.
+- `Dockerfile` uses multi-stage builds with separate targets for backend and frontend. pnpm is only used in build stages; the backend runtime gets a `--prod` install filtered to `backend...`, the frontend runtime only ships the self-contained Angular SSR bundle.
+- New native dependencies with install scripts must be allowed under `allowBuilds` in `pnpm-workspace.yaml`.
 - For development, start only `db` and `pgadmin`: `docker compose up db pgadmin -d`.
 
 ## Environment Variables
@@ -121,11 +122,11 @@ backend/src/
 ## Validation Rules
 
 - Mandatory local quality gates after code changes:
-  1. `npm run lint`
-  2. `npm run build`
-  3. `npm run knip`
-- `npm run validate` runs all checks and should pass before pushing.
-- Always run `npm run validate` at the end of every task to catch errors early.
+  1. `pnpm lint`
+  2. `pnpm build`
+  3. `pnpm knip`
+- `pnpm validate` runs all checks and should pass before pushing.
+- Always run `pnpm validate` at the end of every task to catch errors early.
 
 ## Pre-commit Hook
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "project": ["src/**/*.ts"],
-  "ignoreBinaries": ["tsc", "eslint", "knip", "tsx"],
-  "ignoreDependencies": ["shared", "tsx"]
+  "ignoreBinaries": ["eslint", "knip"],
+  "ignoreDependencies": ["shared"]
 }

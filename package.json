@@ -1,22 +1,17 @@
 {
   "name": "release-manager-workspace",
   "private": true,
-  "packageManager": "npm@11.7.0",
+  "packageManager": "pnpm@12.5.1",
   "engines": {
     "node": ">=22.22.3 <23"
   },
-  "workspaces": [
-    "shared",
-    "backend",
-    "web"
-  ],
   "scripts": {
-    "start": "npm run start --workspace web",
-    "start:backend": "npm run dev --workspace backend",
-    "build": "npm run build --workspace shared && npm run build --workspace backend && npm run build --workspace web",
-    "lint": "npm run lint --workspace shared && npm run lint --workspace backend && npm run lint --workspace web",
-    "knip": "npm run knip --workspace shared && npm run knip --workspace backend && npm run knip --workspace web",
-    "validate": "npm run lint && npm run build && npm run knip",
+    "start": "pnpm --filter web start",
+    "start:backend": "pnpm --filter backend dev",
+    "build": "pnpm --filter shared build && pnpm --filter backend build && pnpm --filter web build",
+    "lint": "pnpm -r lint",
+    "knip": "pnpm -r knip",
+    "validate": "pnpm lint && pnpm build && pnpm knip",
     "lint:staged": "lint-staged",
     "prepare": "husky"
   },

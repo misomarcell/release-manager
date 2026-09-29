@@ -45,7 +45,7 @@ const DownloadBodySchema = z.object({
     category: z.enum(DOWNLOAD_CATEGORIES),
 });
 
-const router = Router();
+const router: Router = Router();
 
 router.get('/', requireAuth, async (req: Request, res: Response) => {
     const query = parseQuery(SearchQuerySchema, req.query, res);

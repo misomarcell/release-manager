@@ -16,7 +16,7 @@ const LibraryQuerySchema = z.object({
     perPage: z.coerce.number().int().min(1).max(100).default(30),
 });
 
-const router = Router();
+const router: Router = Router();
 
 router.get('/', requireAuth, async (req: Request, res: Response) => {
     const query = parseQuery(LibraryQuerySchema, req.query, res);

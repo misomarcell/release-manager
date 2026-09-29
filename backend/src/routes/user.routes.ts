@@ -18,7 +18,7 @@ const SetAdminBodySchema = z.object({
     admin: z.boolean(),
 });
 
-const router = Router();
+const router: Router = Router();
 
 router.use(requireAuth);
 router.use(requireAdmin);

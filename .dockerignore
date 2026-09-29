@@ -1,6 +1,7 @@
-node_modules
-dist
-.angular
+**/node_modules
+**/dist
+**/.angular
+**/*.tsbuildinfo
 .git
 *.md
 .env

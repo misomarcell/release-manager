@@ -7,8 +7,9 @@ dist/
 /bazel-out
 
 # Node
-/node_modules
+node_modules/
 npm-debug.log
+pnpm-debug.log*
 yarn-error.log
 
 # IDEs and editors
@@ -50,5 +51,4 @@ Thumbs.db
 shared/tsconfig.tsbuildinfo
 shared/tsconfig.tsbuildinfo
 shared/tsconfig.tsbuildinfo
-/web/node_modules
 *.tsbuildinfo
