@@ -24,57 +24,15 @@
             </div>
 
             @if (hasMenuActions()) {
-                <button
-                    mat-icon-button
-                    class="actions-menu-trigger"
-                    [matMenuTriggerFor]="mediaActionsMenu"
-                    aria-label="Media actions"
-                >
-                    <mat-icon>more_horiz</mat-icon>
-                </button>
-                <mat-menu #mediaActionsMenu="matMenu">
-                    @if (imdbId()) {
-                        <a
-                            mat-menu-item
-                            [href]="'https://www.imdb.com/title/' + imdbId()"
-                            target="_blank"
-                            rel="noopener"
-                        >
-                            <mat-icon svgIcon="imdb"></mat-icon>
-                            <span>Open IMDb page</span>
-                        </a>
-                    }
-                    @if (detail()?.trailerKey) {
-                        <a
-                            mat-menu-item
-                            [href]="'https://www.youtube.com/watch?v=' + detail()!.trailerKey"
-                            target="_blank"
-                            rel="noopener"
-                        >
-                            <mat-icon svgIcon="youtube"></mat-icon>
-                            <span>Watch Trailer</span>
-                        </a>
-                    }
-                    @if (jellyfinUrl()) {
-                        <a mat-menu-item [href]="jellyfinUrl()!" target="_blank" rel="noopener">
-                            <mat-icon>play_circle</mat-icon>
-                            <span>Open in Jellyfin</span>
-                        </a>
-                    }
-
-                    @if (canBeDeleted()) {
-                        <mat-divider />
-                        <button
-                            mat-menu-item
-                            class="delete-menu-item"
-                            [disabled]="deleteActionDisabled()"
-                            (click)="deleteAction.emit()"
-                        >
-                            <mat-icon>delete</mat-icon>
-                            <span>Delete item</span>
-                        </button>
-                    }
-                </mat-menu>
+                <app-media-actions-menu
+                    [title]="title()"
+                    [imdbId]="imdbId()"
+                    [trailerKey]="detail()?.trailerKey"
+                    [jellyfinUrl]="jellyfinUrl()"
+                    [canBeDeleted]="canBeDeleted()"
+                    [deleteActionDisabled]="deleteActionDisabled()"
+                    (deleteAction)="deleteAction.emit()"
+                />
             }
         </div>
     }

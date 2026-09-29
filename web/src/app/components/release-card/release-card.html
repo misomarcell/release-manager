@@ -45,6 +45,7 @@
         <app-media-details
             [tmdbId]="m.metadata?.tmdbId ?? null"
             [mediaType]="m.metadata?.mediaType || null"
+            [title]="m.metadata?.title || m.metadata_lookup.title"
             [imdbId]="m.imdb_id"
             [detail]="detail()"
             [detailLoading]="detailLoading()"

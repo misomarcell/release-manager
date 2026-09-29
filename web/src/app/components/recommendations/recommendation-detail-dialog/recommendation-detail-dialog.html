@@ -17,7 +17,7 @@
             @if (rec.genre) {
                 <p class="dialog-genre">{{ rec.genre }}</p>
             }
-            <app-media-action-chips [imdbId]="rec.imdbId" [trailerKey]="rec.trailerKey" />
+            <app-media-actions-menu [title]="rec.title" [imdbId]="rec.imdbId" [trailerKey]="rec.trailerKey" />
         </div>
     </div>
     @if (rec.plot) {

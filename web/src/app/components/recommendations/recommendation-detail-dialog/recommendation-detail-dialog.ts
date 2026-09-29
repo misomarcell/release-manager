@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { PosterService } from '../../../services/poster.service';
 import { RecommendationsService } from '../../../services/recommendations.service';
 import { FeedbackButtonsComponent } from '../../feedback-buttons/feedback-buttons';
-import { MediaActionChipsComponent } from '../../media-action-chips/media-action-chips';
+import { MediaActionsMenuComponent } from '../../media-actions-menu/media-actions-menu';
 import type { Recommendation } from '@rm/shared/recommendations.models';
 
 interface DialogData {
@@ -14,7 +14,7 @@ interface DialogData {
 
 @Component({
     selector: 'app-recommendation-detail-dialog',
-    imports: [MatDialogModule, MatButtonModule, MatIconModule, FeedbackButtonsComponent, MediaActionChipsComponent],
+    imports: [MatDialogModule, MatButtonModule, MatIconModule, FeedbackButtonsComponent, MediaActionsMenuComponent],
     templateUrl: './recommendation-detail-dialog.html',
     styleUrl: './recommendation-detail-dialog.scss',
 })

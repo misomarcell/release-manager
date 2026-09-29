@@ -1,21 +1,19 @@
 import { Component, computed, input, output } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
 import { FeedbackButtonsComponent } from '../feedback-buttons/feedback-buttons';
+import { MediaActionsMenuComponent } from '../media-actions-menu/media-actions-menu';
 import type { MovieDetailMetadata } from '@rm/shared/tmdb.models';
 import type { MediaType } from '@rm/shared/tmdb.models';
-import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
     selector: 'app-media-details',
-    imports: [MatButtonModule, MatIconModule, MatDividerModule, MatMenuModule, FeedbackButtonsComponent],
+    imports: [FeedbackButtonsComponent, MediaActionsMenuComponent],
     templateUrl: './media-details.html',
     styleUrl: './media-details.scss',
 })
 export class MediaDetailsComponent {
     tmdbId = input<number | null>(null);
     mediaType = input<MediaType | null>(null);
+    title = input<string>('');
     imdbId = input<string>('');
     jellyfinUrl = input<string | null>(null);
     detail = input<MovieDetailMetadata | null>(null);
@@ -28,6 +26,8 @@ export class MediaDetailsComponent {
     protected hasDetailStrip = computed(
         () => !!this.mediaType() || !!this.detail()?.rated || !!this.detail()?.runtime || !!this.detail()?.releaseDate,
     );
-    protected hasActionLinks = computed(() => !!this.imdbId() || !!this.detail()?.trailerKey || !!this.jellyfinUrl());
+    protected hasActionLinks = computed(
+        () => !!this.title() || !!this.imdbId() || !!this.detail()?.trailerKey || !!this.jellyfinUrl(),
+    );
     protected hasMenuActions = computed(() => this.hasActionLinks() || this.canBeDeleted());
 }
