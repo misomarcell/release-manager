@@ -14,7 +14,7 @@ export class MediaActionsMenuComponent {
     title = input<string>('');
     imdbId = input<string | undefined>();
     trailerKey = input<string | undefined>();
-    jellyfinUrl = input<string | undefined>();
+    jellyfinUrl = input<string | null | undefined>();
     canBeDeleted = input<boolean>(false);
     deleteActionDisabled = input<boolean>(false);
     deleteAction = output<void>();
