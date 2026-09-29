@@ -9,7 +9,6 @@ import { getMetadata } from '../services/metadata.service.js';
 import {
     upsertFeedback,
     deleteFeedback,
-    invalidateCacheForMediaType,
     getFeedbackForItem,
 } from '../repositories/recommendations.repository.js';
 import {
@@ -142,10 +141,10 @@ router.post('/personalized/:mediaType/refresh', requireAuth, requireAdmin, async
     if (!params) return;
 
     try {
-        await invalidateCacheForMediaType(userId, params.mediaType);
         const recommendations = await recommendationsService.getPersonalizedRecommendations(
             userId,
             params.mediaType,
+            true,
         );
         res.json(recommendations);
     } catch (err) {

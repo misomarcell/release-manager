@@ -10,7 +10,10 @@ interface FeedbackRecord {
 }
 
 interface FeedbackRow {
+    tmdbId: number;
     title: string;
+    year: string | null;
+    genre: string | null;
     feedback: FeedbackValue;
 }
 
@@ -20,15 +23,23 @@ interface CacheRow {
     id: number;
     recommendations: RecommendationRef[];
     generated_at: Date;
+    fresh: boolean;
 }
 
 export async function getFeedbackForMediaType(userId: number, mediaType: MediaType): Promise<FeedbackRow[]> {
     const result = await query<FeedbackRow>(
-        `SELECT title, feedback
-     FROM recommendation_feedback
-     WHERE user_id = $1
-       AND media_type = $2
-     ORDER BY created_at DESC`,
+        `SELECT f.tmdb_id AS "tmdbId", f.title, m.year, m.genre, f.feedback
+     FROM recommendation_feedback f
+     LEFT JOIN LATERAL (
+       SELECT year, genre
+       FROM metadata_cache
+       WHERE tmdb_id = f.tmdb_id AND media_type = f.media_type
+       ORDER BY cached_at DESC
+       LIMIT 1
+     ) m ON TRUE
+     WHERE f.user_id = $1
+       AND f.media_type = $2
+     ORDER BY f.created_at ASC`,
         [userId, mediaType],
     );
     return result.rows;
@@ -52,22 +63,21 @@ export async function deleteFeedback(userId: number, tmdbId: number, mediaType: 
     ]);
 }
 
-export async function getFreshCache(
+export async function getCache(
     userId: number,
     mediaType: MediaType,
-): Promise<{ refs: RecommendationRef[] } | null> {
+): Promise<{ refs: RecommendationRef[]; fresh: boolean } | null> {
     const result = await query<CacheRow>(
-        `SELECT id, recommendations, generated_at
+        `SELECT id, recommendations, generated_at, generated_at > NOW() - INTERVAL '12 hours' AS fresh
      FROM recommendation_cache
      WHERE user_id = $1
        AND media_type_filter = $2
-       AND generated_at > NOW() - INTERVAL '12 hours'
      ORDER BY id DESC LIMIT 1`,
         [userId, mediaType],
     );
     if (result.rows.length === 0) return null;
     const row = result.rows[0];
-    return { refs: row.recommendations };
+    return { refs: row.recommendations, fresh: row.fresh };
 }
 
 export async function setCache(refs: RecommendationRef[], userId: number, mediaType: MediaType): Promise<void> {
@@ -78,13 +88,6 @@ export async function setCache(refs: RecommendationRef[], userId: number, mediaT
     await query(
         `INSERT INTO recommendation_cache (user_id, recommendations, generated_at, media_type_filter) VALUES ($1, $2, NOW(), $3)`,
         [userId, JSON.stringify(refs), mediaType],
-    );
-}
-
-export async function invalidateCacheForMediaType(userId: number, mediaType: MediaType): Promise<void> {
-    await query(
-        `DELETE FROM recommendation_cache WHERE user_id = $1 AND media_type_filter = $2`,
-        [userId, mediaType],
     );
 }
 

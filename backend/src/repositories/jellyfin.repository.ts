@@ -54,6 +54,25 @@ export async function reloadCache(): Promise<void> {
     titleYearSet = newTitleYears;
 }
 
+export async function getLibraryTitles(
+    mediaType: MediaType,
+    limit: number,
+): Promise<{ title: string; year: string | null }[]> {
+    const result = await query<{ title: string; year: string | null }>(
+        `SELECT title, year
+     FROM (
+       SELECT DISTINCT ON (COALESCE(tmdb_id::text, jellyfin_id)) title, year, date_created
+       FROM jellyfin_library
+       WHERE media_type = $1
+       ORDER BY COALESCE(tmdb_id::text, jellyfin_id), date_created DESC NULLS LAST
+     ) deduped
+     ORDER BY date_created DESC NULLS LAST
+     LIMIT $2`,
+        [mediaType, limit],
+    );
+    return result.rows;
+}
+
 export async function replaceLibrary(items: JellyfinItem[]): Promise<void> {
     await query('DELETE FROM jellyfin_library');
 
