@@ -8,7 +8,7 @@
       autocomplete="off"
     />
     <mat-icon matPrefix>search</mat-icon>
-    @if (searchQuery) {
+    @if (searchQuery()) {
       <button mat-icon-button matSuffix type="button" (click)="clearAndSearch()" aria-label="Clear">
         <mat-icon>close</mat-icon>
       </button>

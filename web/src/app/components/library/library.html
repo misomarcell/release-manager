@@ -2,6 +2,8 @@
     <app-filter-search
         placeholder="Search library..."
         [filters]="libraryFilters"
+        [query]="q()"
+        [values]="searchFilterValues()"
         (searchSubmit)="onSearch($event)"
     />
 
@@ -25,14 +27,14 @@
 
     @if (!loading() && items().length > 0) {
         <div class="results-header">
-            @if (activeSearch()) {
+            @if (q()) {
                 <span class="results-label">
-                    Results for: <i>"{{ activeSearch() }}"</i>
+                    Results for: <i>"{{ q() }}"</i>
                 </span>
             }
             <span class="results-count">
                 {{ total() }} items
-                @if (!activeSearch()) {
+                @if (!q()) {
                     @if (remainingSpace(); as freeSpace) {
                         · {{ freeSpace.amount | number: '1.2-2' }} {{ freeSpace.unit }} remaining
                     }
@@ -52,7 +54,7 @@
         <mat-paginator
             [length]="total()"
             [pageSize]="pageSize"
-            [pageIndex]="currentPage() - 1"
+            [pageIndex]="page() - 1"
             [hidePageSize]="true"
             (page)="onPage($event)"
             showFirstLastButtons
@@ -60,9 +62,9 @@
         />
     } @else if (!loading() && !error()) {
         <p class="empty">
-            @if (activeSearch()) {
-                No results for "{{ activeSearch() }}".
-            } @else if (mediaTypeFilter() !== 'all') {
+            @if (q()) {
+                No results for "{{ q() }}".
+            } @else if (type() !== 'all') {
                 No {{ mediaTypeLabel() }} found in your Jellyfin library.
             } @else {
                 Your Jellyfin library is empty or not yet synced.

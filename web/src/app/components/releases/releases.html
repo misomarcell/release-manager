@@ -2,6 +2,8 @@
     <app-filter-search
         placeholder="Search movies, TV shows..."
         [filters]="releaseFilters"
+        [query]="q()"
+        [values]="searchFilterValues()"
         (searchSubmit)="onSearch($event)"
     />
 
@@ -28,7 +30,7 @@
             @for (movie of groupedMovies(); track movie.key; let i = $index) {
                 <app-release-card
                     [movie]="movie"
-                    [searchQuery]="activeSearch()"
+                    [searchQuery]="q()"
                     (searchTitle)="onSearchByTitle($event)"
                 />
             }
@@ -37,7 +39,7 @@
         <mat-paginator
             [length]="totalResults()"
             [pageSize]="pageSize"
-            [pageIndex]="currentPage() - 1"
+            [pageIndex]="page() - 1"
             [hidePageSize]="true"
             (page)="onPage($event)"
             showFirstLastButtons

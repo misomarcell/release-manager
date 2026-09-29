@@ -1,4 +1,4 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
@@ -48,10 +48,12 @@ export interface FilterSearchSubmit {
 export class FilterSearchComponent {
     placeholder = input('Search...');
     filters = input<SearchFilterDefinition[]>([]);
+    query = input('');
+    values = input<SearchFilterValues>({});
     searchSubmit = output<FilterSearchSubmit>();
 
-    protected searchQuery = '';
-    private selectedFilters = signal<SearchFilterValues>({});
+    protected searchQuery = linkedSignal(() => this.query());
+    private selectedFilters = linkedSignal(() => this.values());
 
     protected filterValues = computed(() => ({
         ...this.defaultFilterValues(),
@@ -62,13 +64,8 @@ export class FilterSearchComponent {
         this.filters().filter((filter) => this.isFilterActive(filter)).length,
     );
 
-    setState(query: string, filters: SearchFilterValues = {}): void {
-        this.searchQuery = query;
-        this.selectedFilters.set({ ...this.defaultFilterValues(), ...filters });
-    }
-
     setQuery(query: string): void {
-        this.searchQuery = query;
+        this.searchQuery.set(query);
         this.emitSearch();
     }
 
@@ -77,7 +74,7 @@ export class FilterSearchComponent {
     }
 
     protected clearAndSearch(): void {
-        this.searchQuery = '';
+        this.searchQuery.set('');
         this.emitSearch();
     }
 
@@ -102,7 +99,7 @@ export class FilterSearchComponent {
 
     private emitSearch(): void {
         this.searchSubmit.emit({
-            query: this.searchQuery,
+            query: this.searchQuery(),
             filters: this.filterValues(),
         });
     }

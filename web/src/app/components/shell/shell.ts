@@ -44,10 +44,10 @@ export class ShellComponent implements OnInit, OnDestroy {
     protected isDesktop = signal(false);
     protected mobileOpen = signal(false);
     private bpSub!: Subscription;
-    private previousUrl = '';
+    private previousPath = '';
 
     ngOnInit(): void {
-        this.previousUrl = this.router.url;
+        this.previousPath = urlPath(this.router.url);
         this.bpSub = this.breakpointObserver.observe(DESKTOP_BREAKPOINT).subscribe((state) => {
             this.isDesktop.set(state.matches);
             if (state.matches) {
@@ -57,10 +57,11 @@ export class ShellComponent implements OnInit, OnDestroy {
         this.setTitleFromRoute();
         this.bpSub.add(
             this.router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)).subscribe((e) => {
-                if (e.urlAfterRedirects !== this.previousUrl) {
+                const path = urlPath(e.urlAfterRedirects);
+                if (path !== this.previousPath) {
                     this.setTitleFromRoute();
                 }
-                this.previousUrl = e.urlAfterRedirects;
+                this.previousPath = path;
             }),
         );
     }
@@ -85,4 +86,8 @@ export class ShellComponent implements OnInit, OnDestroy {
         await this.auth.logout();
         this.router.navigate(['/login']);
     }
+}
+
+function urlPath(url: string): string {
+    return url.split(/[?#]/)[0];
 }

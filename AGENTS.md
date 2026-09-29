@@ -20,6 +20,7 @@
 - Character coding should be UTF-8 in all files, supporting Hungarian characters.
 - No need for explicit readonly keyword in Angular components, leave private fields as simply private.
 - Always separate Angular component files into `.ts`, `.html`, and `.scss` — never use inline templates or styles.
+- List pages (Releases, Library) keep search, filters and `page` in URL query params: read them as inputs via `withComponentInputBinding()` and change them with `router.navigate` so the browser back button steps through pages and filters.
 
 ## Shared Models
 
