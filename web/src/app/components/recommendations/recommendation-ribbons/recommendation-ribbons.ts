@@ -34,10 +34,6 @@ export class RecommendationRibbonsComponent {
 
     protected skeletonItems = [0, 1, 2, 3, 4];
 
-    protected trackByTmdb(_: number, rec: Recommendation): string {
-        return `${rec.mediaType}:${rec.tmdbId}`;
-    }
-
     protected openDetail(rec: Recommendation): void {
         const ref = this.dialog.open(RecommendationDetailDialogComponent, {
             data: { rec },

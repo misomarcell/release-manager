@@ -17,7 +17,7 @@
         </div>
     } @else if (movies().length > 0) {
         <div class="ribbon">
-            @for (rec of movies(); track trackByTmdb($index, rec)) {
+            @for (rec of movies(); track rec.mediaType + ':' + rec.tmdbId) {
                 <div class="rec-card">
                     <div class="poster-wrap" (click)="openDetail(rec)">
                         @if (rec.poster) {
@@ -78,7 +78,7 @@
         </div>
     } @else if (tvShows().length > 0) {
         <div class="ribbon">
-            @for (rec of tvShows(); track trackByTmdb($index, rec)) {
+            @for (rec of tvShows(); track rec.mediaType + ':' + rec.tmdbId) {
                 <div class="rec-card">
                     <div class="poster-wrap" (click)="openDetail(rec)">
                         @if (rec.poster) {

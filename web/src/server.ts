@@ -10,6 +10,15 @@ import { join } from 'node:path';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 const backendUrl = process.env['BACKEND_URL'] || 'http://localhost:3000';
+// Hop-by-hop headers plus the ones fetch() invalidates by decoding and buffering the body.
+const SKIPPED_RESPONSE_HEADERS = new Set([
+    'connection',
+    'keep-alive',
+    'transfer-encoding',
+    'content-encoding',
+    'content-length',
+    'set-cookie',
+]);
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
@@ -36,7 +45,7 @@ app.use('/api', express.raw({ type: '*/*' }), async (req, res) => {
         res.status(upstream.status);
 
         for (const [key, value] of upstream.headers.entries()) {
-            if (key === 'set-cookie') continue;
+            if (SKIPPED_RESPONSE_HEADERS.has(key)) continue;
             res.setHeader(key, value);
         }
         const setCookies = upstream.headers.getSetCookie();

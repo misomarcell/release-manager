@@ -13,7 +13,7 @@ export class SearchService {
     category: NcoreCategoryKey = 'movies',
     search = '',
     page = 1,
-    perPage = 1000,
+    perPage = 100,
     uhd = false,
   ): Promise<NcoreSearchResponse> {
     let params = new HttpParams()
