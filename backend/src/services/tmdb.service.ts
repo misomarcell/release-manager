@@ -5,6 +5,7 @@ import type { MovieMetadata, MetadataLookup, MediaType } from 'shared/tmdb.model
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w342';
+const REQUEST_TIMEOUT_MS = 10_000;
 
 interface FindResult {
     id: number;
@@ -190,6 +191,7 @@ class TmdbService {
                     Authorization: `Bearer ${config.tmdb.accessToken}`,
                     Accept: 'application/json',
                 },
+                signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
             });
             if (!res.ok) return null;
             return asRecord(await res.json());

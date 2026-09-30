@@ -120,6 +120,7 @@ backend/src/
 | `OPENAI_API_KEY`       | OpenAI API key for AI-powered recommendations (optional)               |
 | `JELLYFIN_URL`         | Jellyfin server URL (e.g. `http://jellyfin:8096`)                      |
 | `JELLYFIN_API_KEY`     | Jellyfin admin API key                                                 |
+| `JELLYFIN_USER_ID`     | Jellyfin user ID to scope library sync to (optional)                   |
 | `JELLYFIN_CRON`        | Cron schedule for library sync (default: `0 6 * * *` — daily at 6 AM)  |
 
 ## Validation Rules

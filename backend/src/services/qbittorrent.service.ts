@@ -6,6 +6,7 @@ import { logSync } from '../repositories/sync.repository.js';
 import type { DownloadCategory } from 'shared/constants';
 
 const TORRENT_HASH_PATTERN = /^[a-f0-9]{40}$/i;
+const REQUEST_TIMEOUT_MS = 30_000;
 
 interface QbittorrentServerState {
     connectionStatus: string;
@@ -21,6 +22,7 @@ interface QbittorrentRawTorrent {
 
 class QbittorrentService {
     private sessionCookie = '';
+    private pendingLogin: Promise<void> | null = null;
 
     async addTorrent(torrentData: ArrayBuffer, savePath: string, category: DownloadCategory): Promise<void> {
         const formData = new FormData();
@@ -149,7 +151,14 @@ class QbittorrentService {
         };
     }
 
-    private async login(): Promise<void> {
+    private login(): Promise<void> {
+        this.pendingLogin ??= this.doLogin().finally(() => {
+            this.pendingLogin = null;
+        });
+        return this.pendingLogin;
+    }
+
+    private async doLogin(): Promise<void> {
         const { username, password } = config.qbittorrent;
         const url = this.getBaseUrl();
 
@@ -159,6 +168,7 @@ class QbittorrentService {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({ username, password }),
+            signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         });
 
         const responseText = await response.text();
@@ -180,18 +190,17 @@ class QbittorrentService {
     private async qbtFetch(path: string, init: RequestInit): Promise<Response> {
         const url = this.getBaseUrl();
 
-        let response = await fetch(`${url}${path}`, {
-            ...init,
-            headers: this.getHeaders(init.headers),
-        });
-
-        if (response.status === 403) {
-            this.sessionCookie = '';
-            await this.login();
-            response = await fetch(`${url}${path}`, {
+        const send = () =>
+            fetch(`${url}${path}`, {
                 ...init,
                 headers: this.getHeaders(init.headers),
+                signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
             });
+
+        let response = await send();
+        if (response.status === 403) {
+            await this.login();
+            response = await send();
         }
 
         return response;
