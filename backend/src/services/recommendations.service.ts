@@ -2,26 +2,30 @@ import { getAiRecommendations, isOpenAiAvailable } from './openai.service.js';
 import type { AiSuggestion } from './openai.service.js';
 import { getMetadata } from './metadata.service.js';
 import { tmdbService } from './tmdb.service.js';
-import { getFeedbackForMediaType, getFreshCache, setCache } from '../repositories/recommendations.repository.js';
+import { getCache, getFeedbackForMediaType, setCache } from '../repositories/recommendations.repository.js';
+import { getLibraryTitles } from '../repositories/jellyfin.repository.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import type { Recommendation, RecommendationRef, RecommendationsResponse } from 'shared/recommendations.models';
 import type { MediaType } from 'shared/tmdb.models';
 import type { FeedbackRow } from '../repositories/recommendations.repository.js';
 
 const PERSONALIZED_RECOMMEND_COUNT = 10;
-const FEEDBACK_SAMPLE_SIZE = 100;
+const AI_SUGGESTION_BUFFER = 5;
+const MAX_RATED_TITLES = 1000;
+const MAX_OWNED_TITLES = 2000;
 const MIN_AI_SUGGESTIONS = 3;
 
 class RecommendationsService {
     async getPersonalizedRecommendations(
         userId: number,
         mediaType: MediaType,
+        forceRefresh = false,
     ): Promise<RecommendationsResponse> {
         const feedback = await getFeedbackForMediaType(userId, mediaType);
         const canRefresh = feedback.length > 0;
 
-        const cached = await getFreshCache(userId, mediaType);
-        if (cached) {
+        const cached = await getCache(userId, mediaType);
+        if (cached?.fresh && !forceRefresh) {
             return { recommendations: await this.enrichRecommendations(cached.refs), canRefresh };
         }
 
@@ -30,43 +34,62 @@ class RecommendationsService {
             return { recommendations: await this.enrichRecommendations(refs), canRefresh: false };
         }
 
-        const refs = await this.getPersonalizedRefs(mediaType, feedback);
-        return this.buildAndCacheResponse(refs, userId, mediaType);
+        const recommendations = await this.getAiPersonalized(userId, mediaType, feedback, cached?.refs ?? []);
+        if (recommendations.length < MIN_AI_SUGGESTIONS) {
+            const refs = await this.getTopRatedRefs(mediaType);
+            await setCache(refs, userId, mediaType);
+            return { recommendations: await this.enrichRecommendations(refs), canRefresh };
+        }
+
+        await setCache(recommendations.map(this.toRef), userId, mediaType);
+        return { recommendations, canRefresh };
     }
 
-    async getTrendingRecommendations(
-        mediaType: MediaType,
-    ): Promise<RecommendationsResponse> {
+    async getTrendingRecommendations(mediaType: MediaType): Promise<RecommendationsResponse> {
         const refs = await this.getTrendingRefs(mediaType);
         return { recommendations: await this.enrichRecommendations(refs), canRefresh: false };
     }
 
-    private buildFeedbackContext(feedback: FeedbackRow[]): string {
-        const liked = feedback.filter((f) => f.feedback === 'like');
-        const disliked = feedback.filter((f) => f.feedback === 'dislike');
+    private async getAiPersonalized(
+        userId: number,
+        mediaType: MediaType,
+        feedback: FeedbackRow[],
+        previousRefs: RecommendationRef[],
+    ): Promise<Recommendation[]> {
+        const suggestions = await getAiRecommendations({
+            userId,
+            mediaType,
+            count: PERSONALIZED_RECOMMEND_COUNT + AI_SUGGESTION_BUFFER,
+            rated: feedback.slice(-MAX_RATED_TITLES),
+            owned: await getLibraryTitles(mediaType, MAX_OWNED_TITLES),
+            previouslySuggested: previousRefs,
+        });
 
-        const parts: string[] = [];
-        if (liked.length > 0) parts.push(`Liked: ${liked.map((f) => f.title).join('; ')}`);
-        if (disliked.length > 0) parts.push(`Disliked: ${disliked.map((f) => f.title).join('; ')}`);
+        const enriched = await this.enrichRecommendations(this.toSuggestionRefs(suggestions, mediaType));
+        const ratedIds = new Set(feedback.map((row) => row.tmdbId));
+        const seenIds = new Set<number>();
 
-        return parts.join('\n\n');
+        return enriched
+            .filter((rec) => {
+                if (ratedIds.has(rec.tmdbId) || rec.inJellyfinLibrary || seenIds.has(rec.tmdbId)) return false;
+                seenIds.add(rec.tmdbId);
+                return true;
+            })
+            .slice(0, PERSONALIZED_RECOMMEND_COUNT);
     }
 
-    private toRecommendationRefs(suggestions: AiSuggestion[], mediaType: MediaType): RecommendationRef[] {
+    private toSuggestionRefs(suggestions: AiSuggestion[], mediaType: MediaType): RecommendationRef[] {
         return suggestions.map((s) => ({ title: s.title, year: s.year, mediaType, reason: s.reason }));
     }
 
-    private sampleFeedback(feedback: FeedbackRow[]): FeedbackRow[] {
-        const shuffled = [...feedback];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        return shuffled.slice(0, FEEDBACK_SAMPLE_SIZE);
-    }
-
-    private getRatedTitles(feedback: FeedbackRow[]): string[] {
-        return [...new Set(feedback.map((row) => row.title))];
+    private toRef(rec: Recommendation): RecommendationRef {
+        return {
+            tmdbId: rec.tmdbId,
+            mediaType: rec.mediaType,
+            title: rec.title,
+            year: rec.year,
+            ...(rec.reason ? { reason: rec.reason } : {}),
+        };
     }
 
     private async getTopRatedRefs(mediaType: MediaType): Promise<RecommendationRef[]> {
@@ -75,30 +98,6 @@ class RecommendationsService {
 
     private async getTrendingRefs(mediaType: MediaType): Promise<RecommendationRef[]> {
         return tmdbService.fetchTrending(mediaType);
-    }
-
-    private async getPersonalizedRefs(mediaType: MediaType, feedback: FeedbackRow[]): Promise<RecommendationRef[]> {
-        if (feedback.length === 0) return this.getTopRatedRefs(mediaType);
-
-        const suggestions = await getAiRecommendations(
-            this.buildFeedbackContext(this.sampleFeedback(feedback)),
-            this.getRatedTitles(feedback),
-            PERSONALIZED_RECOMMEND_COUNT,
-            mediaType,
-        );
-
-        return suggestions.length >= MIN_AI_SUGGESTIONS
-            ? this.toRecommendationRefs(suggestions, mediaType)
-            : this.getTopRatedRefs(mediaType);
-    }
-
-    private async buildAndCacheResponse(
-        refs: RecommendationRef[],
-        userId: number,
-        mediaType: MediaType,
-    ): Promise<RecommendationsResponse> {
-        await setCache(refs, userId, mediaType);
-        return { recommendations: await this.enrichRecommendations(refs), canRefresh: true };
     }
 
     private async enrichRecommendations(refs: RecommendationRef[]): Promise<Recommendation[]> {
