@@ -15,6 +15,6 @@ export class SeasonSummaryComponent {
     protected episodeCount = computed(() => this.seasons().reduce((sum, s) => sum + s.episodeCount, 0));
 
     protected seasonLabel(season: SeasonInfo): string {
-        return season.seasonNumber === 0 ? 'Specials' : `S${String(season.seasonNumber).padStart(2, '0')}`;
+        return season.seasonNumber === 0 ? 'Specials' : `Season ${season.seasonNumber}`;
     }
 }

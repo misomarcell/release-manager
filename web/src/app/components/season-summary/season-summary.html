@@ -8,11 +8,11 @@
         {{ episodeCount() === 1 ? 'episode' : 'episodes' }}
     </span>
 </div>
-<div class="seasons">
-    @for (season of seasons(); track season.seasonNumber) {
-        <span class="season" [title]="season.episodeCount + ' episodes'">
-            <span class="season-label">{{ seasonLabel(season) }}</span>
-            <span class="episode-count">{{ season.episodeCount }} ep</span>
+@for (season of seasons(); track season.seasonNumber) {
+    <div class="season-row">
+        <span>{{ seasonLabel(season) }}</span>
+        <span class="episode-count">
+            {{ season.episodeCount }} {{ season.episodeCount === 1 ? 'episode' : 'episodes' }}
         </span>
-    }
-</div>
+    </div>
+}

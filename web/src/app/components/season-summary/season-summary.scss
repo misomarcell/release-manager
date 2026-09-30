@@ -1,6 +1,6 @@
 :host {
     display: block;
-    padding: 0 0.75rem 0.75rem;
+    padding: 0 0.75rem 0.5rem;
     border-radius: 8px;
     background: var(--mat-sys-surface-variant);
 }
@@ -30,31 +30,16 @@
     }
 }
 
-.seasons {
+.season-row {
     display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-}
-
-.season {
-    display: inline-flex;
-    align-items: center;
-    border-radius: 4px;
-    overflow: hidden;
-    font-size: 0.72rem;
-    line-height: 1.7;
-    background: rgba(16, 185, 129, 0.12);
-
-    .season-label {
-        padding: 1px 6px;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        background: rgba(16, 185, 129, 0.2);
-        color: #34d399;
-    }
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.35rem 0;
+    font-size: 0.78rem;
+    color: var(--mat-sys-on-surface-variant);
+    border-top: 1px solid color-mix(in srgb, var(--mat-sys-outline-variant) 60%, transparent);
 
     .episode-count {
-        padding: 1px 6px;
-        color: var(--mat-sys-on-surface-variant);
+        opacity: 0.75;
     }
 }
