@@ -5,7 +5,11 @@ import {
   generateAuthenticationOptions,
   verifyAuthenticationResponse,
 } from '@simplewebauthn/server';
-import type { RegistrationResponseJSON, AuthenticationResponseJSON } from '@simplewebauthn/server';
+import type {
+  RegistrationResponseJSON,
+  AuthenticationResponseJSON,
+  AuthenticatorTransportFuture,
+} from '@simplewebauthn/server';
 import { config } from '../config.js';
 import {
   findUserByUsername,
@@ -17,7 +21,7 @@ import {
   saveChallenge,
   consumeChallenge,
   createSession,
-  getSession,
+  getValidSessionUser,
   deleteSession,
   findUserById,
   updateLastLogin,
@@ -57,7 +61,7 @@ export async function finishRegistration(username: string, response: Registratio
 
   const verification = await verifyRegistrationResponse({
     response,
-    expectedChallenge: async (challenge) => consumeChallenge(challenge, username),
+    expectedChallenge: (challenge) => consumeChallenge(challenge, username),
     expectedOrigin: config.rp.origin,
     expectedRPID: config.rp.id,
     requireUserVerification: false,
@@ -104,9 +108,7 @@ export async function finishAuthentication(
 
   const verification = await verifyAuthenticationResponse({
     response,
-    expectedChallenge: async (challenge) => {
-      return await consumeChallenge(challenge);
-    },
+    expectedChallenge: (challenge) => consumeChallenge(challenge),
     expectedOrigin: config.rp.origin,
     expectedRPID: config.rp.id,
     requireUserVerification: false,
@@ -114,7 +116,7 @@ export async function finishAuthentication(
       id: cred.id,
       publicKey: new Uint8Array(cred.public_key),
       counter: cred.counter,
-      transports: cred.transports as AuthenticatorTransport[],
+      transports: cred.transports as AuthenticatorTransportFuture[],
     },
   });
 
@@ -131,11 +133,8 @@ export async function finishAuthentication(
 }
 
 export async function validateSession(token: string) {
-  const session = await getSession(token);
-  if (!session) return null;
-
-  const user = await findUserById(session.user_id);
-  if (!user || !user.valid) return null;
+  const user = await getValidSessionUser(token);
+  if (!user) return null;
 
   return { userId: user.id, username: user.username, admin: user.admin };
 }
@@ -143,12 +142,3 @@ export async function validateSession(token: string) {
 export async function logout(token: string) {
   await deleteSession(token);
 }
-
-type AuthenticatorTransport =
-  | 'ble'
-  | 'cable'
-  | 'hybrid'
-  | 'internal'
-  | 'nfc'
-  | 'smart-card'
-  | 'usb';

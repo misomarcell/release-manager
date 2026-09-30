@@ -45,9 +45,7 @@ class RecommendationsService {
         return { recommendations, canRefresh };
     }
 
-    async getTrendingRecommendations(
-        mediaType: MediaType,
-    ): Promise<RecommendationsResponse> {
+    async getTrendingRecommendations(mediaType: MediaType): Promise<RecommendationsResponse> {
         const refs = await this.getTrendingRefs(mediaType);
         return { recommendations: await this.enrichRecommendations(refs), canRefresh: false };
     }

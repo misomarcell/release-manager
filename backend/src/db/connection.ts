@@ -22,6 +22,10 @@ export async function withTransaction<T>(fn: (client: pg.PoolClient) => Promise<
     }
 }
 
+export async function closeDatabase(): Promise<void> {
+    await pool.end();
+}
+
 export async function initDatabase(): Promise<void> {
     await pool.query(`
     CREATE TABLE IF NOT EXISTS users (

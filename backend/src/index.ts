@@ -1,9 +1,10 @@
 import { config } from './config.js';
 import express from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import cron from 'node-cron';
-import { initDatabase } from './db/connection.js';
+import { closeDatabase, initDatabase } from './db/connection.js';
 import { logger } from './utils/logger.js';
 import { reloadCache } from './repositories/jellyfin.repository.js';
 import { needsSyncOnStartup } from './repositories/sync.repository.js';
@@ -43,6 +44,26 @@ app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok' });
 });
 
+app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
+    if (res.headersSent) {
+        next(err);
+        return;
+    }
+
+    const status = (err as { status?: unknown }).status;
+    if (typeof status === 'number' && status >= 400 && status < 500) {
+        res.status(status).json({ error: err instanceof Error ? err.message : 'Bad request' });
+        return;
+    }
+
+    logger.error('Unhandled request error', {
+        method: req.method,
+        path: req.path,
+        error: err instanceof Error ? err.message : String(err),
+    });
+    res.status(500).json({ error: 'Internal server error' });
+});
+
 interface ScheduledSync {
     service: SyncService;
     label: string;
@@ -71,9 +92,22 @@ async function start() {
         sync: () => qbittorrentService.syncTorrents(),
     });
 
-    app.listen(config.port, () => {
+    const server = app.listen(config.port, () => {
         logger.info(`Backend started`, { port: config.port });
     });
+
+    const shutdown = (signal: string) => {
+        console.log(`Received ${signal}, shutting down`);
+        cron.getTasks().forEach((task) => void task.stop());
+        server.close(() => {
+            closeDatabase()
+                .catch((err: unknown) => console.error('Failed to close database pool:', err))
+                .finally(() => process.exit(0));
+        });
+        setTimeout(() => process.exit(1), 10_000).unref();
+    };
+    process.once('SIGTERM', () => shutdown('SIGTERM'));
+    process.once('SIGINT', () => shutdown('SIGINT'));
 }
 
 function scheduleSync({ service, label, enabled, cronSchedule, sync }: ScheduledSync): void {

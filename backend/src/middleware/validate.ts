@@ -29,18 +29,12 @@ function sendValidationError(res: Response, error: z.ZodError): void {
 //   const body = parseBody(MySchema, req.body, res);
 //   if (!body) return;   // 400 already sent, body is fully typed
 
-type ParseResult<T> = T | null;
-
 /**
- * Validates the request body against `schema`.
+ * Validates `input` (request body, query or params) against `schema`.
  * Returns typed data on success; sends 400 and returns `null` on failure.
  */
-export function parseBody<T>(
-    schema: { safeParse(v: unknown): { success: true; data: T } | { success: false; error: z.ZodError } },
-    body: unknown,
-    res: Response,
-): ParseResult<T> {
-    const result = schema.safeParse(body);
+function parseRequest<T>(schema: z.ZodType<T>, input: unknown, res: Response): T | null {
+    const result = schema.safeParse(input);
     if (!result.success) {
         sendValidationError(res, result.error);
         return null;
@@ -48,36 +42,6 @@ export function parseBody<T>(
     return result.data;
 }
 
-/**
- * Validates query parameters against `schema`.
- * Returns typed data on success; sends 400 and returns `null` on failure.
- */
-export function parseQuery<T>(
-    schema: { safeParse(v: unknown): { success: true; data: T } | { success: false; error: z.ZodError } },
-    query: unknown,
-    res: Response,
-): ParseResult<T> {
-    const result = schema.safeParse(query);
-    if (!result.success) {
-        sendValidationError(res, result.error);
-        return null;
-    }
-    return result.data;
-}
-
-/**
- * Validates route parameters against `schema`.
- * Returns typed data on success; sends 400 and returns `null` on failure.
- */
-export function parseParams<T>(
-    schema: { safeParse(v: unknown): { success: true; data: T } | { success: false; error: z.ZodError } },
-    params: unknown,
-    res: Response,
-): ParseResult<T> {
-    const result = schema.safeParse(params);
-    if (!result.success) {
-        sendValidationError(res, result.error);
-        return null;
-    }
-    return result.data;
-}
+export const parseBody = parseRequest;
+export const parseQuery = parseRequest;
+export const parseParams = parseRequest;

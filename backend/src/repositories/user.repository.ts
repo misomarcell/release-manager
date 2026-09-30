@@ -113,11 +113,12 @@ export async function createSession(token: string, userId: number, expiresAt: Da
   ]);
 }
 
-export async function getSession(
-  token: string,
-): Promise<{ user_id: number; expires_at: Date } | null> {
-  const result = await query<{ user_id: number; expires_at: Date }>(
-    'SELECT user_id, expires_at FROM sessions WHERE token = $1 AND expires_at > NOW()',
+export async function getValidSessionUser(token: string): Promise<UserRow | null> {
+  const result = await query<UserRow>(
+    `SELECT u.id, u.username, u.valid, u.admin
+     FROM sessions s
+     JOIN users u ON u.id = s.user_id
+     WHERE s.token = $1 AND s.expires_at > NOW() AND u.valid`,
     [token],
   );
   return result.rows[0] ?? null;
