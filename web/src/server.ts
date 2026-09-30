@@ -10,7 +10,6 @@ import { join } from 'node:path';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 const backendUrl = process.env['BACKEND_URL'] || 'http://localhost:3000';
-// Hop-by-hop headers plus the ones fetch() invalidates by decoding and buffering the body.
 const SKIPPED_RESPONSE_HEADERS = new Set([
     'connection',
     'keep-alive',
