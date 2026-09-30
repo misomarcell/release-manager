@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -9,7 +10,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
-import { filter, Subscription } from 'rxjs';
+import { filter } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { VersionService } from '../../services/version.service';
 import { TitleService } from '../../services/title.service';
@@ -34,40 +35,42 @@ const DESKTOP_BREAKPOINT = '(min-width: 960px)';
     templateUrl: './shell.html',
     styleUrl: './shell.scss',
 })
-export class ShellComponent implements OnInit, OnDestroy {
+export class ShellComponent implements OnInit {
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
     private breakpointObserver = inject(BreakpointObserver);
+    private destroyRef = inject(DestroyRef);
     protected auth = inject(AuthService);
     protected version = inject(VersionService);
     protected pageTitle = inject(TitleService);
     protected isDesktop = signal(false);
     protected mobileOpen = signal(false);
-    private bpSub!: Subscription;
     private previousPath = '';
 
     ngOnInit(): void {
         this.previousPath = urlPath(this.router.url);
-        this.bpSub = this.breakpointObserver.observe(DESKTOP_BREAKPOINT).subscribe((state) => {
-            this.isDesktop.set(state.matches);
-            if (state.matches) {
-                this.mobileOpen.set(false);
-            }
-        });
+        this.breakpointObserver
+            .observe(DESKTOP_BREAKPOINT)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((state) => {
+                this.isDesktop.set(state.matches);
+                if (state.matches) {
+                    this.mobileOpen.set(false);
+                }
+            });
         this.setTitleFromRoute();
-        this.bpSub.add(
-            this.router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)).subscribe((e) => {
+        this.router.events
+            .pipe(
+                filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((e) => {
                 const path = urlPath(e.urlAfterRedirects);
                 if (path !== this.previousPath) {
                     this.setTitleFromRoute();
                 }
                 this.previousPath = path;
-            }),
-        );
-    }
-
-    ngOnDestroy(): void {
-        this.bpSub.unsubscribe();
+            });
     }
 
     private setTitleFromRoute(): void {
@@ -84,7 +87,7 @@ export class ShellComponent implements OnInit, OnDestroy {
 
     protected async logout(): Promise<void> {
         await this.auth.logout();
-        this.router.navigate(['/login']);
+        void this.router.navigate(['/login']);
     }
 }
 

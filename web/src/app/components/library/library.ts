@@ -8,6 +8,7 @@ import { LibraryService } from '../../services/library.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import type { MediaType } from '@rm/shared/tmdb.models';
 import { parsePage, parseQuery } from '../../utils/query-params';
+import { extractHttpError } from '../../utils/http-error';
 
 const PAGE_SIZE = 30;
 const GIBIBYTE = 1_073_741_824;
@@ -68,8 +69,7 @@ export class LibraryComponent {
     protected loading = this.library.isLoading;
     protected error = computed(() => {
         const error = this.library.error();
-        if (!error) return null;
-        return error instanceof Error ? error.message : 'Failed to load library';
+        return error ? extractHttpError(error, 'Failed to load library') : null;
     });
     protected items = computed(() => (this.library.hasValue() ? this.library.value().items : []));
     protected total = computed(() => (this.library.hasValue() ? this.library.value().total : 0));

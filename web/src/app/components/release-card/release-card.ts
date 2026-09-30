@@ -13,6 +13,7 @@ import { NfoDialogComponent } from '../nfo-dialog/nfo-dialog';
 import { DownloadDialogComponent } from '../download-dialog/download-dialog';
 import { MediaDetailsComponent } from '../media-details/media-details';
 import type { DownloadDialogData } from '../download-dialog/download-dialog';
+import { extractHttpError } from '../../utils/http-error';
 import type { GroupedMovie } from '../releases/releases';
 import type { NcoreResult } from '@rm/shared/ncore.models';
 import type { MovieDetailMetadata } from '@rm/shared/tmdb.models';
@@ -100,7 +101,13 @@ export class ReleaseCardComponent {
     }
 
     protected async showNfo(torrentId: string): Promise<void> {
-        const html = await this.search.fetchNfo(torrentId);
+        let html: string;
+        try {
+            html = await this.search.fetchNfo(torrentId);
+        } catch (e: unknown) {
+            this.snackBar.open(extractHttpError(e, 'Failed to load NFO'), 'OK', { duration: 5000 });
+            return;
+        }
         this.dialog.open(NfoDialogComponent, {
             data: { html },
             width: '90vw',
