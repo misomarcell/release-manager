@@ -1,4 +1,4 @@
-import { query } from '../db/connection.js';
+import { query, withTransaction } from '../db/connection.js';
 import type { LibraryItem, MediaInfo } from 'shared/jellyfin.models';
 import type { MediaType } from 'shared/tmdb.models';
 
@@ -74,46 +74,39 @@ export async function getLibraryTitles(
 }
 
 export async function replaceLibrary(items: JellyfinItem[]): Promise<void> {
-    await query('DELETE FROM jellyfin_library');
+    await withTransaction(async (client) => {
+        await client.query('DELETE FROM jellyfin_library');
+        if (items.length === 0) return;
 
-    if (items.length === 0) return;
-
-    const values: unknown[] = [];
-    const placeholders: string[] = [];
-
-    items.forEach((item, i) => {
-        const base = i * 9;
-        placeholders.push(
-            `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9})`,
-        );
-        values.push(
-            item.jellyfinId,
-            item.tmdbId ?? null,
-            item.mediaType ?? null,
-            item.title,
-            item.year ?? null,
-            item.dateCreated ?? null,
-            item.mediaInfo ? JSON.stringify(item.mediaInfo) : null,
-            item.sizeBytes ?? null,
-            item.path ?? null,
+        await client.query(
+            `INSERT INTO jellyfin_library (jellyfin_id, tmdb_id, media_type, title, year, date_created, media_info, size_bytes, path)
+       SELECT * FROM unnest(
+         $1::text[], $2::int[], $3::text[], $4::text[], $5::text[],
+         $6::timestamptz[], $7::jsonb[], $8::bigint[], $9::text[]
+       )
+       ON CONFLICT (jellyfin_id) DO UPDATE
+         SET tmdb_id = EXCLUDED.tmdb_id,
+             media_type = EXCLUDED.media_type,
+             title = EXCLUDED.title,
+             year = EXCLUDED.year,
+             date_created = EXCLUDED.date_created,
+             media_info = EXCLUDED.media_info,
+             size_bytes = EXCLUDED.size_bytes,
+             path = EXCLUDED.path,
+             synced_at = NOW()`,
+            [
+                items.map((item) => item.jellyfinId),
+                items.map((item) => item.tmdbId ?? null),
+                items.map((item) => item.mediaType ?? null),
+                items.map((item) => item.title),
+                items.map((item) => item.year ?? null),
+                items.map((item) => item.dateCreated ?? null),
+                items.map((item) => (item.mediaInfo ? JSON.stringify(item.mediaInfo) : null)),
+                items.map((item) => item.sizeBytes ?? null),
+                items.map((item) => item.path ?? null),
+            ],
         );
     });
-
-    await query(
-        `INSERT INTO jellyfin_library (jellyfin_id, tmdb_id, media_type, title, year, date_created, media_info, size_bytes, path)
-     VALUES ${placeholders.join(', ')}
-     ON CONFLICT (jellyfin_id) DO UPDATE
-       SET tmdb_id = EXCLUDED.tmdb_id,
-           media_type = EXCLUDED.media_type,
-           title = EXCLUDED.title,
-           year = EXCLUDED.year,
-           date_created = EXCLUDED.date_created,
-           media_info = EXCLUDED.media_info,
-           size_bytes = EXCLUDED.size_bytes,
-           path = EXCLUDED.path,
-           synced_at = NOW()`,
-        values,
-    );
 }
 
 export async function getLibraryPage(
