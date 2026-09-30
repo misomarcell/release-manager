@@ -16,6 +16,11 @@ export interface MediaInfo {
     streams: MediaStream[];
 }
 
+export interface SeasonInfo {
+    seasonNumber: number;
+    episodeCount: number;
+}
+
 export interface LibraryItem {
     jellyfinId: string;
     tmdbId: number | null;
@@ -29,6 +34,7 @@ export interface LibraryItem {
     mediaInfo: MediaInfo | null;
     sizeBytes: number | null;
     path: string | null;
+    seasons: SeasonInfo[] | null;
     torrentHash?: string;
 }
 

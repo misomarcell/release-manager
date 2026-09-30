@@ -1,5 +1,5 @@
 import { query, withTransaction } from '../db/connection.js';
-import type { LibraryItem, MediaInfo } from 'shared/jellyfin.models';
+import type { LibraryItem, MediaInfo, SeasonInfo } from 'shared/jellyfin.models';
 import type { MediaType } from 'shared/tmdb.models';
 
 export interface LibraryPage {
@@ -17,6 +17,38 @@ export interface JellyfinItem {
     mediaInfo: MediaInfo | null;
     sizeBytes: number | null;
     path: string | null;
+    seasons: SeasonInfo[] | null;
+}
+
+interface LibraryRow {
+    jellyfin_id: string;
+    tmdb_id: number | null;
+    media_type: string | null;
+    title: string;
+    year: string | null;
+    synced_at: string;
+    media_info: MediaInfo | null;
+    size_bytes: number | null;
+    path: string | null;
+    seasons: SeasonInfo[] | null;
+}
+
+function toLibraryItem(row: LibraryRow): LibraryItem {
+    return {
+        jellyfinId: row.jellyfin_id,
+        tmdbId: row.tmdb_id,
+        mediaType: (row.media_type as MediaType) ?? null,
+        title: row.title,
+        year: row.year,
+        syncedAt: row.synced_at,
+        poster: null,
+        genre: null,
+        rating: null,
+        mediaInfo: row.media_info ?? null,
+        sizeBytes: row.size_bytes ?? null,
+        path: row.path ?? null,
+        seasons: row.seasons ?? null,
+    };
 }
 
 // In-memory lookup sets — populated on startup and after each sync
@@ -79,10 +111,10 @@ export async function replaceLibrary(items: JellyfinItem[]): Promise<void> {
         if (items.length === 0) return;
 
         await client.query(
-            `INSERT INTO jellyfin_library (jellyfin_id, tmdb_id, media_type, title, year, date_created, media_info, size_bytes, path)
+            `INSERT INTO jellyfin_library (jellyfin_id, tmdb_id, media_type, title, year, date_created, media_info, size_bytes, path, seasons)
        SELECT * FROM unnest(
          $1::text[], $2::int[], $3::text[], $4::text[], $5::text[],
-         $6::timestamptz[], $7::jsonb[], $8::bigint[], $9::text[]
+         $6::timestamptz[], $7::jsonb[], $8::bigint[], $9::text[], $10::jsonb[]
        )
        ON CONFLICT (jellyfin_id) DO UPDATE
          SET tmdb_id = EXCLUDED.tmdb_id,
@@ -93,6 +125,7 @@ export async function replaceLibrary(items: JellyfinItem[]): Promise<void> {
              media_info = EXCLUDED.media_info,
              size_bytes = EXCLUDED.size_bytes,
              path = EXCLUDED.path,
+             seasons = EXCLUDED.seasons,
              synced_at = NOW()`,
             [
                 items.map((item) => item.jellyfinId),
@@ -104,6 +137,7 @@ export async function replaceLibrary(items: JellyfinItem[]): Promise<void> {
                 items.map((item) => (item.mediaInfo ? JSON.stringify(item.mediaInfo) : null)),
                 items.map((item) => item.sizeBytes ?? null),
                 items.map((item) => item.path ?? null),
+                items.map((item) => (item.seasons ? JSON.stringify(item.seasons) : null)),
             ],
         );
     });
@@ -138,21 +172,11 @@ export async function getLibraryPage(
     const offsetParam = filters.length + 2;
 
     const [dataResult, countResult] = await Promise.all([
-        query<{
-            jellyfin_id: string;
-            tmdb_id: number | null;
-            media_type: string | null;
-            title: string;
-            year: string | null;
-            synced_at: string;
-            media_info: MediaInfo | null;
-            size_bytes: number | null;
-            path: string | null;
-        }>(
-            `SELECT jellyfin_id, tmdb_id, media_type, title, year, synced_at, media_info, size_bytes, path
+        query<LibraryRow>(
+            `SELECT jellyfin_id, tmdb_id, media_type, title, year, synced_at, media_info, size_bytes, path, seasons
        FROM (
          SELECT DISTINCT ON (COALESCE(tmdb_id::text, jellyfin_id))
-           jellyfin_id, tmdb_id, media_type, title, year, synced_at, date_created, media_info, size_bytes, path
+           jellyfin_id, tmdb_id, media_type, title, year, synced_at, date_created, media_info, size_bytes, path, seasons
          FROM jellyfin_library
          ${whereSql}
          ORDER BY COALESCE(tmdb_id::text, jellyfin_id), title ASC
@@ -172,37 +196,12 @@ export async function getLibraryPage(
         ),
     ]);
 
-    const items: LibraryItem[] = dataResult.rows.map((row) => ({
-        jellyfinId: row.jellyfin_id,
-        tmdbId: row.tmdb_id,
-        mediaType: (row.media_type as MediaType) ?? null,
-        title: row.title,
-        year: row.year,
-        syncedAt: row.synced_at,
-        poster: null,
-        genre: null,
-        rating: null,
-        mediaInfo: row.media_info ?? null,
-        sizeBytes: row.size_bytes ?? null,
-        path: row.path ?? null,
-    }));
-
-    return { items, total: parseInt(countResult.rows[0].count, 10) };
+    return { items: dataResult.rows.map(toLibraryItem), total: parseInt(countResult.rows[0].count, 10) };
 }
 
 export async function getLibraryItem(jellyfinId: string): Promise<LibraryItem | null> {
-    const result = await query<{
-        jellyfin_id: string;
-        tmdb_id: number | null;
-        media_type: string | null;
-        title: string;
-        year: string | null;
-        synced_at: string;
-        media_info: MediaInfo | null;
-        size_bytes: number | null;
-        path: string | null;
-    }>(
-        `SELECT jellyfin_id, tmdb_id, media_type, title, year, synced_at, media_info, size_bytes, path
+    const result = await query<LibraryRow>(
+        `SELECT jellyfin_id, tmdb_id, media_type, title, year, synced_at, media_info, size_bytes, path, seasons
      FROM jellyfin_library
      WHERE jellyfin_id = $1
      LIMIT 1`,
@@ -210,22 +209,7 @@ export async function getLibraryItem(jellyfinId: string): Promise<LibraryItem | 
     );
 
     const row = result.rows[0];
-    if (!row) return null;
-
-    return {
-        jellyfinId: row.jellyfin_id,
-        tmdbId: row.tmdb_id,
-        mediaType: (row.media_type as MediaType) ?? null,
-        title: row.title,
-        year: row.year,
-        syncedAt: row.synced_at,
-        poster: null,
-        genre: null,
-        rating: null,
-        mediaInfo: row.media_info ?? null,
-        sizeBytes: row.size_bytes ?? null,
-        path: row.path ?? null,
-    };
+    return row ? toLibraryItem(row) : null;
 }
 
 export async function deleteLibraryItem(jellyfinId: string): Promise<boolean> {

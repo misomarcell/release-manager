@@ -145,6 +145,8 @@ export async function initDatabase(): Promise<void> {
       synced_at    TIMESTAMPTZ DEFAULT NOW()
     );
 
+    ALTER TABLE jellyfin_library ADD COLUMN IF NOT EXISTS seasons JSONB;
+
     CREATE TABLE IF NOT EXISTS sync_log (
       id            SERIAL PRIMARY KEY,
       service       VARCHAR(32) NOT NULL,

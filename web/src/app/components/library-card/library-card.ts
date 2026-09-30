@@ -12,6 +12,7 @@ import { AdminService } from '../../services/admin.service';
 import { AuthService } from '../../services/auth.service';
 import { MediaDetailsComponent } from '../media-details/media-details';
 import { MediaStreamsComponent } from '../media-streams/media-streams';
+import { SeasonSummaryComponent } from '../season-summary/season-summary';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { computeMediaBadges, type Badge } from '../../utils/media-badges';
 import { extractHttpError } from '../../utils/http-error';
@@ -20,7 +21,14 @@ import type { MovieDetailMetadata } from '@rm/shared/tmdb.models';
 
 @Component({
     selector: 'app-library-card',
-    imports: [MatExpansionModule, MatIconModule, MatDividerModule, MediaDetailsComponent, MediaStreamsComponent],
+    imports: [
+        MatExpansionModule,
+        MatIconModule,
+        MatDividerModule,
+        MediaDetailsComponent,
+        MediaStreamsComponent,
+        SeasonSummaryComponent,
+    ],
     templateUrl: './library-card.html',
     styleUrl: './library-card.scss',
 })

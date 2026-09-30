@@ -1,0 +1,45 @@
+:host {
+    display: block;
+    padding: 0 0.75rem 0.5rem;
+    border-radius: 8px;
+    background: var(--mat-sys-surface-variant);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-height: 44px;
+    font-size: 0.82rem;
+
+    .title {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+
+        mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+        }
+    }
+
+    .totals {
+        color: var(--mat-sys-on-surface-variant);
+    }
+}
+
+.season-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.35rem 0;
+    font-size: 0.78rem;
+    color: var(--mat-sys-on-surface-variant);
+    border-top: 1px solid color-mix(in srgb, var(--mat-sys-outline-variant) 60%, transparent);
+
+    .episode-count {
+        opacity: 0.75;
+    }
+}

@@ -1,7 +1,7 @@
 import { config } from '../config.js';
 import { logger } from '../utils/logger.js';
 import type { MediaType } from 'shared/tmdb.models';
-import type { MediaInfo, MediaStream } from 'shared/jellyfin.models';
+import type { MediaInfo, MediaStream, SeasonInfo } from 'shared/jellyfin.models';
 import { replaceLibrary, reloadCache, type JellyfinItem } from '../repositories/jellyfin.repository.js';
 import { logSync } from '../repositories/sync.repository.js';
 
@@ -40,6 +40,11 @@ interface JellyfinRawItem {
     Path?: string;
 }
 
+interface JellyfinRawEpisode {
+    SeriesId?: string;
+    ParentIndexNumber?: number;
+}
+
 interface JellyfinConnectionConfig {
     url: string;
     apiKey: string;
@@ -73,8 +78,9 @@ class JellyfinService {
             )) as { Items?: JellyfinRawItem[] };
 
             const rawItems: JellyfinRawItem[] = Array.isArray(data.Items) ? data.Items : [];
+            const seasonsBySeries = await this.fetchSeasonsBySeries(userId);
             const items = rawItems
-                .map((raw) => this.toJellyfinItem(raw))
+                .map((raw) => this.toJellyfinItem(raw, seasonsBySeries))
                 .filter((item): item is JellyfinItem => item !== null);
 
             await replaceLibrary(items);
@@ -92,7 +98,41 @@ class JellyfinService {
         }
     }
 
-    private toJellyfinItem(raw: JellyfinRawItem): JellyfinItem | null {
+    private async fetchSeasonsBySeries(userId: string): Promise<Map<string, SeasonInfo[]>> {
+        const data = (await this.jellyfinGet(
+            '/Items',
+            {
+                Recursive: 'true',
+                IncludeItemTypes: 'Episode',
+                IsMissing: 'false',
+                EnableImages: 'false',
+                EnableUserData: 'false',
+                ...(userId ? { userId } : {}),
+            },
+            SYNC_TIMEOUT_MS,
+        )) as { Items?: JellyfinRawEpisode[] };
+
+        const counts = new Map<string, Map<number, number>>();
+        for (const episode of data.Items ?? []) {
+            if (!episode.SeriesId || episode.ParentIndexNumber == null) continue;
+            const seasons = counts.get(episode.SeriesId) ?? new Map<number, number>();
+            seasons.set(episode.ParentIndexNumber, (seasons.get(episode.ParentIndexNumber) ?? 0) + 1);
+            counts.set(episode.SeriesId, seasons);
+        }
+
+        const result = new Map<string, SeasonInfo[]>();
+        for (const [seriesId, seasons] of counts) {
+            result.set(
+                seriesId,
+                [...seasons]
+                    .map(([seasonNumber, episodeCount]) => ({ seasonNumber, episodeCount }))
+                    .sort((a, b) => a.seasonNumber - b.seasonNumber),
+            );
+        }
+        return result;
+    }
+
+    private toJellyfinItem(raw: JellyfinRawItem, seasonsBySeries: Map<string, SeasonInfo[]>): JellyfinItem | null {
         const mediaType = this.mapMediaType(raw.Type);
         if (!mediaType || !raw.Name) return null;
 
@@ -113,6 +153,7 @@ class JellyfinService {
             mediaInfo,
             sizeBytes,
             path: raw.Path ?? null,
+            seasons: mediaType === 'tv' ? (seasonsBySeries.get(raw.Id) ?? null) : null,
         };
     }
 
