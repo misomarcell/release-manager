@@ -20,8 +20,8 @@
             <span>Is It Woke?</span>
         </a>
     }
-    @if (jellyfinUrl()) {
-        <a mat-menu-item [href]="jellyfinUrl()!" target="_blank" rel="noopener">
+    @if (jellyfinUrl(); as url) {
+        <a mat-menu-item [href]="url" target="_blank" rel="noopener">
             <mat-icon>play_circle</mat-icon>
             <span>Open in Jellyfin</span>
         </a>
