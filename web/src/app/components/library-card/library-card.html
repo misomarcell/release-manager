@@ -24,9 +24,6 @@
                         · {{ i.genre }}
                     }
                 </span>
-                @if (i.seasons?.length) {
-                    <app-season-summary [seasons]="i.seasons!" />
-                }
                 @if (badges().length) {
                     <div class="media-badges">
                         @for (badge of badges(); track badge.label) {
@@ -53,6 +50,10 @@
             [deleteActionDisabled]="deleting()"
             (deleteAction)="deleteItem()"
         />
+
+        @if (i.seasons?.length) {
+            <app-season-summary [seasons]="i.seasons!" />
+        }
 
         @if (i.mediaInfo?.streams?.length) {
             <app-media-streams [fileInfo]="{ sizeBytes: i.sizeBytes, path: i.path }" [streams]="i.mediaInfo!.streams" />

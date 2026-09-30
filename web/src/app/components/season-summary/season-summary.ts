@@ -1,8 +1,10 @@
 import { Component, computed, input } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 import type { SeasonInfo } from '@rm/shared/jellyfin.models';
 
 @Component({
     selector: 'app-season-summary',
+    imports: [MatIconModule],
     templateUrl: './season-summary.html',
     styleUrl: './season-summary.scss',
 })

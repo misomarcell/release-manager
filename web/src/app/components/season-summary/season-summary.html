@@ -1,7 +1,13 @@
-<span class="totals">
-    {{ seasonCount() }} {{ seasonCount() === 1 ? 'season' : 'seasons' }} · {{ episodeCount() }}
-    {{ episodeCount() === 1 ? 'episode' : 'episodes' }}
-</span>
+<div class="header">
+    <span class="title">
+        <mat-icon>video_library</mat-icon>
+        Seasons
+    </span>
+    <span class="totals">
+        {{ seasonCount() }} {{ seasonCount() === 1 ? 'season' : 'seasons' }} · {{ episodeCount() }}
+        {{ episodeCount() === 1 ? 'episode' : 'episodes' }}
+    </span>
+</div>
 <div class="seasons">
     @for (season of seasons(); track season.seasonNumber) {
         <span class="season" [title]="season.episodeCount + ' episodes'">
