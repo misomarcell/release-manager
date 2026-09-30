@@ -24,6 +24,9 @@
                         · {{ i.genre }}
                     }
                 </span>
+                @if (i.seasons?.length) {
+                    <app-season-summary [seasons]="i.seasons!" />
+                }
                 @if (badges().length) {
                     <div class="media-badges">
                         @for (badge of badges(); track badge.label) {

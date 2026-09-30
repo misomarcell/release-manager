@@ -31,6 +31,7 @@
 - `shared/src/user.models.ts` — User types: `UserInfo`.
 - `shared/src/recommendations.models.ts` — Recommendation types: `Recommendation`, `FeedbackValue`, `RecommendationFeedbackRequest`.
 - `shared/src/constants.ts` — Shared constants: `TMDB_GENRE_MAP`, `DOWNLOAD_CATEGORIES`, `DownloadCategory`.
+- `shared/src/jellyfin.models.ts` — Jellyfin library types: `MediaStream`, `MediaInfo`, `SeasonInfo`, `LibraryItem` (includes per-season episode counts for TV), `LibraryResponse`.
 - `shared/src/log.models.ts` — Logging types: `LogLevel`, `LogEntry`, `LogsResponse`.
 - Both frontend and backend import from `shared` — never duplicate these types.
 
@@ -56,7 +57,7 @@ backend/src/
     ncore.service.ts    # nCore API: search, NFO, torrent file download
     tmdb.service.ts     # TMDB API + PostgreSQL caching; enriches all results with inJellyfinLibrary
     qbittorrent.service.ts # qBittorrent Web API integration
-    jellyfin.service.ts # Jellyfin API: library sync + connection test
+    jellyfin.service.ts # Jellyfin API: library sync (incl. per-season episode counts) + connection test
     recommendations.service.ts # AI personalized recs (filtered by TMDB id) + TMDB top-rated/trending
     openai.service.ts   # OpenAI Responses API client (gpt-6-luna, structured output)
     recommendation-prompt.ts # Builds instructions + compact taste profile input
