@@ -23,6 +23,9 @@
                 }
             </div>
 
+            @if (hasMedia()) {
+                <app-watchlist-button [tmdbId]="tmdbId()!" [mediaType]="mediaType()!" [title]="title()" />
+            }
             @if (hasMenuActions()) {
                 <app-media-actions-menu
                     [title]="title()"
@@ -41,7 +44,7 @@
         <p class="plot">{{ detail()!.plot }}</p>
     }
 
-    @if (displayFeedbackBtns()) {
+    @if (hasMedia()) {
         <app-feedback-buttons [tmdbId]="tmdbId()!" [mediaType]="mediaType()!" />
     }
 }

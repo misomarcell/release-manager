@@ -43,4 +43,7 @@ export const config = {
         userId: process.env['JELLYFIN_USER_ID']?.trim() || '',
         cronSchedule: process.env['JELLYFIN_CRON']?.trim() || '0 6 * * *',
     },
+    watchlist: {
+        cronSchedule: process.env['WATCHLIST_CRON']?.trim() || '0 * * * *',
+    },
 };

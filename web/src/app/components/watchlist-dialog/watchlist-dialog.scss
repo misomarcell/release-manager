@@ -1,0 +1,43 @@
+.media-title {
+    font-weight: 500;
+    color: var(--mat-sys-on-surface);
+    margin: 0 0 0.5rem;
+}
+
+.description {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--mat-sys-on-surface-variant);
+    margin: 0 0 1rem;
+}
+
+.keywords-field {
+    width: 100%;
+    margin-top: 0.25rem;
+}
+
+.suggestions-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--mat-sys-on-surface-variant);
+    margin: 1rem 0 0.25rem;
+}
+
+mat-progress-bar {
+    margin-top: 1rem;
+}
+
+.error {
+    color: var(--mat-sys-error);
+    font-size: 0.85rem;
+    margin: 0.5rem 0 0;
+}
+
+.remove-btn {
+    color: var(--mat-sys-error);
+}
+
+.spacer {
+    flex: 1;
+}

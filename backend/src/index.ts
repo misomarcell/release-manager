@@ -10,6 +10,7 @@ import { reloadCache } from './repositories/jellyfin.repository.js';
 import { needsSyncOnStartup } from './repositories/sync.repository.js';
 import { jellyfinService } from './services/jellyfin.service.js';
 import { qbittorrentService } from './services/qbittorrent.service.js';
+import { watchlistService } from './services/watchlist.service.js';
 import authRoutes from './routes/auth.routes.js';
 import searchRoutes from './routes/search.routes.js';
 import userRoutes from './routes/user.routes.js';
@@ -17,6 +18,7 @@ import adminRoutes from './routes/admin.routes.js';
 import versionRoutes from './routes/version.routes.js';
 import recommendationsRoutes from './routes/recommendations.routes.js';
 import libraryRoutes from './routes/library.routes.js';
+import watchlistRoutes from './routes/watchlist.routes.js';
 import type { SyncService } from 'shared/sync.models';
 
 const app = express();
@@ -39,6 +41,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/version', versionRoutes);
 app.use('/api/recommendations', recommendationsRoutes);
 app.use('/api/library', libraryRoutes);
+app.use('/api/watchlist', watchlistRoutes);
 
 app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok' });
@@ -91,6 +94,7 @@ async function start() {
         cronSchedule: config.qbittorrent.cronSchedule,
         sync: () => qbittorrentService.syncTorrents(),
     });
+    scheduleWatchlistCheck();
 
     const server = app.listen(config.port, () => {
         logger.info(`Backend started`, { port: config.port });
@@ -142,6 +146,22 @@ function scheduleSync({ service, label, enabled, cronSchedule, sync }: Scheduled
         );
     });
     logger.info(`${label} sync scheduled`, { schedule: cronSchedule });
+}
+
+function scheduleWatchlistCheck(): void {
+    if (!config.ncore.username || !config.ncore.cookiePass) {
+        logger.info('nCore not configured - watchlist check disabled');
+        return;
+    }
+
+    cron.schedule(config.watchlist.cronSchedule, () => {
+        watchlistService.checkAll().catch((err: unknown) =>
+            logger.error('Watchlist scheduled check failed', {
+                error: err instanceof Error ? err.message : String(err),
+            }),
+        );
+    });
+    logger.info('Watchlist check scheduled', { schedule: config.watchlist.cronSchedule });
 }
 
 start().catch((err) => {

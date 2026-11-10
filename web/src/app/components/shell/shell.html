@@ -1,7 +1,13 @@
 <mat-toolbar class="toolbar">
     @if (!isDesktop()) {
         <button mat-icon-button (click)="toggleSidenav()" aria-label="Open menu">
-            <mat-icon>menu</mat-icon>
+            <mat-icon
+                aria-hidden="false"
+                [matBadge]="watchlist.unreadCount()"
+                [matBadgeHidden]="watchlist.unreadCount() === 0"
+            >
+                menu
+            </mat-icon>
         </button>
     }
     <span class="toolbar-title">{{ pageTitle.title() }}</span>
@@ -28,6 +34,17 @@
                 <a mat-list-item routerLink="/library" routerLinkActive="active-link" (click)="closeSidenav()">
                     <mat-icon matListItemIcon>video_library</mat-icon>
                     <span matListItemTitle>Library</span>
+                </a>
+                <a mat-list-item routerLink="/watchlist" routerLinkActive="active-link" (click)="closeSidenav()">
+                    <mat-icon
+                        matListItemIcon
+                        aria-hidden="false"
+                        [matBadge]="watchlist.unreadCount()"
+                        [matBadgeHidden]="watchlist.unreadCount() === 0"
+                    >
+                        bookmarks
+                    </mat-icon>
+                    <span matListItemTitle>Watchlist</span>
                 </a>
                 <a mat-list-item routerLink="/recommendations" routerLinkActive="active-link" (click)="closeSidenav()">
                     <mat-icon matListItemIcon>explore</mat-icon>

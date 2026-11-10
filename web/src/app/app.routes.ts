@@ -28,6 +28,11 @@ export const routes: Routes = [
                 loadComponent: () => import('./components/library/library').then((m) => m.LibraryComponent),
             },
             {
+                path: 'watchlist',
+                data: { title: 'Watchlist' },
+                loadComponent: () => import('./components/watchlist/watchlist').then((m) => m.WatchlistComponent),
+            },
+            {
                 path: 'recommendations',
                 data: { title: 'Recommendations' },
                 loadComponent: () =>

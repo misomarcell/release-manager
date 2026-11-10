@@ -1,0 +1,102 @@
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    @media (min-width: 960px) {
+        max-width: 1000px;
+        padding: 1.5rem 2rem;
+    }
+
+    .error {
+        color: var(--mat-sys-error);
+    }
+
+    .results-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+
+        .results-count {
+            font-size: 0.875rem;
+            color: var(--mat-sys-on-surface-variant);
+            white-space: nowrap;
+        }
+    }
+
+    .results {
+        display: flex !important;
+        flex-direction: column;
+    }
+
+    .empty {
+        text-align: center;
+        color: var(--mat-sys-on-surface-variant);
+        margin-top: 2rem;
+    }
+}
+
+.release-skeletons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.skeleton-card-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    background: var(--mat-sys-surface-container);
+    border-radius: 12px;
+
+    @media (min-width: 960px) {
+        gap: 1.25rem;
+        padding: 0.75rem;
+    }
+}
+
+.skel-poster {
+    width: 56px;
+    height: 84px;
+    flex-shrink: 0;
+    border-radius: 6px;
+
+    @media (min-width: 960px) {
+        width: 90px;
+        height: 135px;
+    }
+}
+
+.skel-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skel-title {
+    height: 18px;
+    width: 55%;
+    border-radius: 4px;
+}
+
+.skel-meta {
+    height: 13px;
+    width: 35%;
+    border-radius: 4px;
+}
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
