@@ -44,6 +44,6 @@ export const config = {
         cronSchedule: process.env['JELLYFIN_CRON']?.trim() || '0 6 * * *',
     },
     watchlist: {
-        cronSchedule: process.env['WATCHLIST_CRON']?.trim() || '0 * * * *',
+        cronSchedule: process.env['WATCHLIST_CRON']?.trim() || '0 9 * * *',
     },
 };

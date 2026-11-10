@@ -136,7 +136,7 @@ backend/src/
 | `JELLYFIN_API_KEY`     | Jellyfin admin API key                                                 |
 | `JELLYFIN_USER_ID`     | Jellyfin user ID to scope library sync to (optional)                   |
 | `JELLYFIN_CRON`        | Cron schedule for library sync (default: `0 6 * * *` — daily at 6 AM)  |
-| `WATCHLIST_CRON`       | Cron schedule for the watchlist release check (default: `0 * * * *`)   |
+| `WATCHLIST_CRON`       | Cron schedule for watchlist check (default: `0 9 * * *` — daily at 9 AM) |
 
 ## Validation Rules
 

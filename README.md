@@ -90,7 +90,7 @@ To connect to the database, register a new server in pgAdmin:
 | `RP_ORIGIN`         | WebAuthn origin URL          | `http://localhost:4000`                         |
 | `QBITTORRENT_CRON`  | qBittorrent torrent sync cron schedule | `0 6 * * *`                            |
 | `JELLYFIN_CRON`     | Jellyfin library sync cron schedule | `0 6 * * *`                                |
-| `WATCHLIST_CRON`    | Watchlist release check cron schedule | `0 * * * *`                              |
+| `WATCHLIST_CRON`    | Watchlist release check cron schedule | `0 9 * * *`                              |
 
 ## Authentication
 
