@@ -1,10 +1,6 @@
 <h2 mat-dialog-title>{{ data.item ? 'Edit watchlist item' : 'Add to watchlist' }}</h2>
 <mat-dialog-content>
     <p class="media-title">{{ data.title }}</p>
-    <p class="description">
-        You get notified when a new release shows up on nCore for this title. Add keywords to be notified only about
-        releases whose name contains at least one of them.
-    </p>
 
     <mat-form-field appearance="outline" subscriptSizing="dynamic" class="keywords-field">
         <mat-label>Release filter keywords</mat-label>
