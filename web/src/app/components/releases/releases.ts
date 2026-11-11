@@ -101,8 +101,7 @@ export class ReleasesComponent {
 
     private searchResource = resource({
         params: () => ({ query: this.q(), category: this.category(), uhd: this.uhd(), page: this.page() }),
-        loader: ({ params }) =>
-            this.search.search({ ...params, perPage: PAGE_SIZE, uhd: !params.query && params.uhd }),
+        loader: ({ params }) => this.search.search({ ...params, perPage: PAGE_SIZE, uhd: !params.query && params.uhd }),
     });
 
     protected loading = this.searchResource.isLoading;
