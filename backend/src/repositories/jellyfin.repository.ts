@@ -28,7 +28,7 @@ interface LibraryRow {
     year: string | null;
     synced_at: string;
     media_info: MediaInfo | null;
-    size_bytes: number | null;
+    size_bytes: string | number | null;
     path: string | null;
     seasons: SeasonInfo[] | null;
 }
@@ -45,7 +45,7 @@ function toLibraryItem(row: LibraryRow): LibraryItem {
         genre: null,
         rating: null,
         mediaInfo: row.media_info ?? null,
-        sizeBytes: row.size_bytes ?? null,
+        sizeBytes: row.size_bytes === null ? null : Number(row.size_bytes),
         path: row.path ?? null,
         seasons: row.seasons ?? null,
     };
