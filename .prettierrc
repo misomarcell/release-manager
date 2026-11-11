@@ -1,11 +1,25 @@
 {
   "printWidth": 120,
+  "tabWidth": 4,
   "singleQuote": true,
+  "endOfLine": "lf",
   "overrides": [
     {
       "files": "*.html",
       "options": {
         "parser": "angular"
+      }
+    },
+    {
+      "files": ["*.json", "*.jsonc", "*.webmanifest", "*.yml", "*.yaml", "*.md", ".prettierrc"],
+      "options": {
+        "tabWidth": 2
+      }
+    },
+    {
+      "files": "*.md",
+      "options": {
+        "singleQuote": false
       }
     }
   ]

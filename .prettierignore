@@ -1,0 +1,7 @@
+dist/
+node_modules/
+.angular/
+.agents/
+.impeccable/
+pnpm-lock.yaml
+skills-lock.json

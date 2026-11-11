@@ -11,7 +11,9 @@
     "build": "pnpm --filter shared build && pnpm --filter backend build && pnpm --filter web build",
     "lint": "pnpm -r lint",
     "knip": "pnpm -r knip",
-    "validate": "pnpm lint && pnpm build && pnpm knip",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "validate": "pnpm format:check && pnpm lint && pnpm build && pnpm knip",
     "lint:staged": "lint-staged",
     "prepare": "husky"
   },
@@ -21,10 +23,12 @@
     "husky": "^9.1.7",
     "knip": "^5.88.1",
     "lint-staged": "^16.4.0",
+    "prettier": "^3.9.10",
     "typescript": "~6.0.3",
     "typescript-eslint": "8.66.0"
   },
   "lint-staged": {
-    "*.{ts,html}": "eslint"
+    "*.{ts,html}": "eslint",
+    "*": "prettier --write --ignore-unknown"
   }
 }

@@ -130,54 +130,62 @@ backend/src/
 
 ## Environment Variables
 
-| Variable               | Description                                                            |
-| ---------------------- | ---------------------------------------------------------------------- |
-| `DATABASE_URL`         | PostgreSQL connection string                                           |
-| `PORT`                 | Backend listen port (default: `3000`)                                  |
-| `NCORE_BASE_URL`       | nCore base URL (default: `https://ncore.pro`)                          |
-| `NCORE_USERNAME`       | nCore account username                                                 |
-| `NCORE_COOKIE_PASS`    | nCore cookie passkey                                                   |
-| `TMDB_ACCESS_TOKEN`    | TMDB API read access token                                             |
-| `GITHUB_REPO`          | GitHub repo for version check (default: `misomarcell/release-manager`) |
-| `GITHUB_TOKEN`         | GitHub personal access token                                           |
-| `RP_ID`                | WebAuthn relying party ID (default: `localhost`)                       |
-| `RP_ORIGIN`            | Comma-separated allowed origins for WebAuthn                           |
-| `QBITTORRENT_URL`      | qBittorrent Web UI URL (e.g. `http://qbittorrent:8080`)                |
-| `QBITTORRENT_USERNAME` | qBittorrent username (default: `admin`)                                |
-| `QBITTORRENT_PASSWORD` | qBittorrent password                                                   |
-| `QBITTORRENT_CRON`     | Cron schedule for torrent sync (default: `0 6 * * *` — daily at 6 AM)  |
-| `DOWNLOAD_PATH_MOVIES` | Save path for movies (default: `/media/Movies`)                        |
-| `DOWNLOAD_PATH_TV`     | Save path for TV shows (default: `/media/TV_Shows`)                    |
-| `OPENAI_API_KEY`       | OpenAI API key for AI-powered recommendations (optional)               |
-| `JELLYFIN_URL`         | Jellyfin server URL (e.g. `http://jellyfin:8096`)                      |
-| `JELLYFIN_API_KEY`     | Jellyfin admin API key                                                 |
-| `JELLYFIN_USER_ID`     | Jellyfin user ID to scope library sync to (optional)                   |
-| `JELLYFIN_CRON`        | Cron schedule for library sync (default: `0 6 * * *` — daily at 6 AM)  |
+| Variable               | Description                                                              |
+| ---------------------- | ------------------------------------------------------------------------ |
+| `DATABASE_URL`         | PostgreSQL connection string                                             |
+| `PORT`                 | Backend listen port (default: `3000`)                                    |
+| `NCORE_BASE_URL`       | nCore base URL (default: `https://ncore.pro`)                            |
+| `NCORE_USERNAME`       | nCore account username                                                   |
+| `NCORE_COOKIE_PASS`    | nCore cookie passkey                                                     |
+| `TMDB_ACCESS_TOKEN`    | TMDB API read access token                                               |
+| `GITHUB_REPO`          | GitHub repo for version check (default: `misomarcell/release-manager`)   |
+| `GITHUB_TOKEN`         | GitHub personal access token                                             |
+| `RP_ID`                | WebAuthn relying party ID (default: `localhost`)                         |
+| `RP_ORIGIN`            | Comma-separated allowed origins for WebAuthn                             |
+| `QBITTORRENT_URL`      | qBittorrent Web UI URL (e.g. `http://qbittorrent:8080`)                  |
+| `QBITTORRENT_USERNAME` | qBittorrent username (default: `admin`)                                  |
+| `QBITTORRENT_PASSWORD` | qBittorrent password                                                     |
+| `QBITTORRENT_CRON`     | Cron schedule for torrent sync (default: `0 6 * * *` — daily at 6 AM)    |
+| `DOWNLOAD_PATH_MOVIES` | Save path for movies (default: `/media/Movies`)                          |
+| `DOWNLOAD_PATH_TV`     | Save path for TV shows (default: `/media/TV_Shows`)                      |
+| `OPENAI_API_KEY`       | OpenAI API key for AI-powered recommendations (optional)                 |
+| `JELLYFIN_URL`         | Jellyfin server URL (e.g. `http://jellyfin:8096`)                        |
+| `JELLYFIN_API_KEY`     | Jellyfin admin API key                                                   |
+| `JELLYFIN_USER_ID`     | Jellyfin user ID to scope library sync to (optional)                     |
+| `JELLYFIN_CRON`        | Cron schedule for library sync (default: `0 6 * * *` — daily at 6 AM)    |
 | `WATCHLIST_CRON`       | Cron schedule for watchlist check (default: `0 9 * * *` — daily at 9 AM) |
 
 ## Validation Rules
 
 - Mandatory local quality gates after code changes:
-  1. `pnpm lint`
-  2. `pnpm build`
-  3. `pnpm knip`
+  1. `pnpm format:check`
+  2. `pnpm lint`
+  3. `pnpm build`
+  4. `pnpm knip`
 - `pnpm validate` runs all checks and should pass before pushing.
 - Always run `pnpm validate` at the end of every task to catch errors early.
+
+## Formatting
+
+- Prettier is the only formatter; its version is pinned in the root `package.json` and configured in `.prettierrc` (120 columns, single quotes, 4 spaces, 2 spaces for JSON/YAML/Markdown, LF line endings). `.prettierignore` lists what it skips.
+- Run `pnpm format` after editing files so the working tree matches what the editor's format-on-save produces. `pnpm format:check` is part of `pnpm validate`.
+- ESLint carries no formatting rules, so `eslint --fix` and Prettier never disagree. Keep it that way: do not add stylistic ESLint rules that overlap with Prettier.
+- `.gitattributes` keeps every text file on LF.
 
 ## Maintainability Lint Rules
 
 `eslint.config.js` enforces these as errors for all TypeScript in `web`, `backend` and `shared`:
 
-| Rule                     | Limit                                             |
-| ------------------------ | ------------------------------------------------- |
-| `complexity`             | 10 per function (`??`, `\|\|`, `&&`, `?.` count)   |
-| `max-lines-per-function` | 50 (blank lines and comments excluded)            |
-| `max-params`             | 4                                                 |
-| `max-depth`              | 3                                                 |
-| `max-nested-callbacks`   | 3                                                 |
-| `max-lines`              | 300 per file (blank lines and comments excluded)  |
-| `no-nested-ternary`      | —                                                 |
-| `no-else-return`         | —                                                 |
+| Rule                     | Limit                                            |
+| ------------------------ | ------------------------------------------------ |
+| `complexity`             | 10 per function (`??`, `\|\|`, `&&`, `?.` count) |
+| `max-lines-per-function` | 50 (blank lines and comments excluded)           |
+| `max-params`             | 4                                                |
+| `max-depth`              | 3                                                |
+| `max-nested-callbacks`   | 3                                                |
+| `max-lines`              | 300 per file (blank lines and comments excluded) |
+| `no-nested-ternary`      | —                                                |
+| `no-else-return`         | —                                                |
 
 Angular templates: `@angular-eslint/template/cyclomatic-complexity` 12 (counted over the whole template) and `@angular-eslint/template/conditional-complexity` 5 (per expression).
 
@@ -189,7 +197,7 @@ Angular templates: `@angular-eslint/template/cyclomatic-complexity` 12 (counted 
 ## Pre-commit Hook
 
 - Husky + lint-staged is configured for pre-commit checks.
-- On commit, staged `*.ts` and `*.html` files run through `eslint --max-warnings=0`.
+- On commit, staged `*.ts` and `*.html` files run through `eslint --max-warnings=0`, then every staged file Prettier understands is formatted with `prettier --write`.
 
 ## Maintenance
 
