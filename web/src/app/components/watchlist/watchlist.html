@@ -1,40 +1,126 @@
-<main class="container">
+@let current = selected();
+<app-list-detail [openKey]="current ? '' + current.id : null">
+    <app-page-title title="Watchlist">
+        <a matButton="tonal" routerLink="/discover" [queryParams]="{ focus: 'search' }">
+            <mat-icon>add</mat-icon>
+            Add title
+        </a>
+    </app-page-title>
+
     @if (!watchlist.loaded()) {
-        <div class="release-skeletons">
-            @for (i of skeletonItems; track i) {
-                <div class="skeleton-card-row">
-                    <div class="skeleton skel-poster"></div>
-                    <div class="skel-text">
-                        <div class="skeleton skel-title"></div>
-                        <div class="skeleton skel-meta"></div>
-                    </div>
-                </div>
-            }
-        </div>
+        <app-row-skeletons [count]="3" />
     } @else if (items().length > 0) {
-        <div class="results-header">
-            <span class="results-count">
-                {{ items().length }} {{ items().length === 1 ? 'title' : 'titles' }}
+        <div class="list-head">
+            <div>
+                <b>{{ items().length }} {{ items().length === 1 ? 'title' : 'titles' }}</b>
                 @if (watchlist.unreadCount(); as count) {
-                    · {{ count }} new {{ count === 1 ? 'release' : 'releases' }}
+                    <span> · {{ count }} new {{ count === 1 ? 'release' : 'releases' }}</span>
                 }
-            </span>
-            <button mat-button [disabled]="checking()" (click)="checkNow()">
+            </div>
+            <button matButton="tonal" class="small" [disabled]="checking()" (click)="checkNow()">
                 <mat-icon [class.spinning]="checking()">refresh</mat-icon>
                 Check now
             </button>
         </div>
-        <mat-accordion class="results">
+        <div class="seg-list">
             @for (item of items(); track item.id) {
-                <app-watchlist-card [item]="item" />
+                @let newCount = item.newReleases.length;
+                <app-title-row
+                    [key]="'' + item.id"
+                    [title]="item.title"
+                    [poster]="item.poster"
+                    [mediaType]="item.mediaType"
+                    [year]="item.year"
+                    [info]="item.mediaType === 'tv' ? 'TV Show' : 'Movie'"
+                    [selected]="item === current"
+                    [replaceUrl]="!!open()"
+                >
+                    <mat-icon class="filter-icon" aria-label="Release filter">filter_alt</mat-icon>
+                    <span class="keywords">{{ item.keywords.length ? item.keywords.join(', ') : 'All releases' }}</span>
+                    @if (newCount > 0) {
+                        <span side class="state new">{{ newCount }} new</span>
+                    } @else {
+                        <small side>{{ item.releaseCount }} known</small>
+                    }
+                </app-title-row>
             }
-        </mat-accordion>
+        </div>
     } @else if (watchlist.error()) {
-        <p class="error">Failed to load your watchlist.</p>
+        <p class="message error" role="alert">Failed to load your watchlist.</p>
     } @else {
-        <p class="empty">
-            Your watchlist is empty. Use the bookmark button on a release or a recommendation to get notified about new
+        <p class="message">
+            Your watchlist is empty. Follow a title from its page, or add one with the button above, to hear about new
             releases.
         </p>
     }
-</main>
+
+    @if (current) {
+        <app-title-detail
+            detail
+            backLabel="Watchlist"
+            [title]="current.title"
+            [tmdbId]="current.tmdbId"
+            [mediaType]="current.mediaType"
+            [poster]="current.poster"
+            [year]="current.year"
+            [imdbId]="current.imdbId"
+            [trackers]="trackerStatus()"
+        >
+            <ng-container primary>
+                @if (current.newReleases.length > 0) {
+                    <button mat-flat-button [disabled]="busy()" (click)="markRead(current)">
+                        <mat-icon>done_all</mat-icon>
+                        Mark as read
+                    </button>
+                }
+                <button matButton="tonal" (click)="editFilter(current)">
+                    <mat-icon>tune</mat-icon>
+                    Edit filter
+                </button>
+            </ng-container>
+
+            <div class="columns">
+                <section>
+                    <div class="section-head">
+                        <h3>New releases</h3>
+                        <span>matching your filter</span>
+                    </div>
+                    @if (current.newReleases.length > 0) {
+                        <div class="seg-list">
+                            @for (release of current.newReleases; track release.torrentId) {
+                                <div class="tile release">
+                                    <a class="mono" [href]="release.detailsUrl" target="_blank" rel="noopener">
+                                        {{ release.releaseName }}
+                                    </a>
+                                    <p class="hint num">
+                                        {{ formatBytes(release.size) }} · Found {{ release.foundAt | date: dateFormat }}
+                                    </p>
+                                </div>
+                            }
+                        </div>
+                    } @else {
+                        <p class="hint">No new releases since you last looked.</p>
+                    }
+                </section>
+                <section>
+                    <div class="section-head">
+                        <h3>Release filter</h3>
+                        @if (current.keywords.length) {
+                            <span>any keyword matches</span>
+                        }
+                    </div>
+                    @if (current.keywords.length) {
+                        <div class="chips">
+                            @for (keyword of current.keywords; track keyword) {
+                                <span class="chip">{{ keyword }}</span>
+                            }
+                        </div>
+                        <p class="hint">A new release only counts when its name contains at least one of these.</p>
+                    } @else {
+                        <p class="hint">No filter. Every new release counts.</p>
+                    }
+                </section>
+            </div>
+        </app-title-detail>
+    }
+</app-list-detail>

@@ -10,10 +10,10 @@ import { firstValueFrom } from 'rxjs';
 import { AdminService, type SyncStatus } from '../../services/admin.service';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { extractHttpError } from '../../utils/http-error';
-
+import { PageTitleComponent } from '../page-title/page-title';
 @Component({
     selector: 'app-admin',
-    imports: [DatePipe, MatButtonModule, MatIconModule, MatCardModule],
+    imports: [PageTitleComponent, DatePipe, MatButtonModule, MatIconModule, MatCardModule],
     templateUrl: './admin.html',
     styleUrl: './admin.scss',
 })

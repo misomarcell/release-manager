@@ -1,17 +1,26 @@
-import { Component, inject, computed, viewChild, input, effect, resource } from '@angular/core';
+import { Component, computed, inject, input, resource, viewChild } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatAccordion } from '@angular/material/expansion';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { ReleaseCardComponent } from '../release-card/release-card';
 import { FilterSearchComponent, FilterSearchSubmit, SearchFilterDefinition } from '../filter-search/filter-search';
+import { ListDetailComponent } from '../list-detail/list-detail';
+import { ReleaseListComponent } from '../release-list/release-list';
+import { RowSkeletonsComponent } from '../row-skeletons/row-skeletons';
+import { TitleDetailComponent, type StatusCell } from '../title-detail/title-detail';
+import { TitleRowComponent } from '../title-row/title-row';
 import { SearchService } from '../../services/search.service';
-import { TitleService } from '../../services/title.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import type { NcoreCategoryKey, NcoreResult } from '@rm/shared/ncore.models';
+import { WatchlistService } from '../../services/watchlist.service';
+import { injectIsDesktop } from '../../utils/breakpoint';
 import { extractHttpError } from '../../utils/http-error';
 import { parsePage, parseQuery } from '../../utils/query-params';
+import { releaseResolutions } from '../../utils/release-view';
+import { cleanSearchTerm } from '../../utils/search-term';
+import { TRACKERS, type TrackerId } from '@rm/shared/tracker.models';
+import type { NcoreCategoryKey, NcoreResult } from '@rm/shared/ncore.models';
 
+const PAGE_SIZE = 100;
 const VALID_CATEGORIES: NcoreCategoryKey[] = ['all', 'movies', 'tv'];
 const RELEASE_SEARCH_FILTERS: SearchFilterDefinition[] = [
     {
@@ -34,23 +43,30 @@ const RELEASE_SEARCH_FILTERS: SearchFilterDefinition[] = [
     },
 ];
 
-export interface GroupedMovie {
+interface TitleGroup {
     key: string;
+    title: string;
     metadata: NcoreResult['metadata'];
-    metadata_lookup: NcoreResult['metadata_lookup'];
-    imdb_id: string;
+    imdbId: string;
     releases: NcoreResult[];
+    resolutions: string[];
+    topSeeders: number;
 }
 
 @Component({
     selector: 'app-releases',
     imports: [
+        RouterLink,
         MatButtonModule,
         MatIconModule,
-        MatAccordion,
+        MatMenuModule,
         MatPaginatorModule,
-        ReleaseCardComponent,
         FilterSearchComponent,
+        ListDetailComponent,
+        ReleaseListComponent,
+        RowSkeletonsComponent,
+        TitleDetailComponent,
+        TitleRowComponent,
     ],
     templateUrl: './releases.html',
     styleUrl: './releases.scss',
@@ -59,23 +75,29 @@ export class ReleasesComponent {
     private search = inject(SearchService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
-    private releaseSearch = viewChild(FilterSearchComponent);
-    private titleService = inject(TitleService);
+    private isDesktop = injectIsDesktop();
+    private layout = viewChild.required(ListDetailComponent);
+    protected watchlist = inject(WatchlistService);
 
     q = input('', { transform: parseQuery });
     category = input<NcoreCategoryKey, unknown>('all', { transform: parseCategory });
     uhd = input(false, { transform: (value: string | undefined) => value === 'true' });
+    tracker = input<TrackerId | null, unknown>(null, { transform: parseTracker });
     page = input(1, { transform: parsePage });
+    open = input('', { transform: parseQuery });
 
     protected releaseFilters = RELEASE_SEARCH_FILTERS;
+    protected trackers = TRACKERS;
+    protected pageSize = PAGE_SIZE;
     protected searchFilterValues = computed(() => ({ category: this.category(), uhdOnly: this.uhd() }));
-    protected readonly skeletonItems = [0, 1, 2, 3, 4, 5];
-    protected readonly pageSize = 100;
+    protected trackerLabel = computed(
+        () => TRACKERS.find((tracker) => tracker.id === this.tracker())?.name ?? 'All trackers',
+    );
 
     private searchResource = resource({
         params: () => ({ query: this.q(), category: this.category(), uhd: this.uhd(), page: this.page() }),
         loader: ({ params }) =>
-            this.search.search(params.category, params.query, params.page, this.pageSize, !params.query && params.uhd),
+            this.search.search(params.category, params.query, params.page, PAGE_SIZE, !params.query && params.uhd),
     });
 
     protected loading = this.searchResource.isLoading;
@@ -83,75 +105,102 @@ export class ReleasesComponent {
         const error = this.searchResource.error();
         return error ? extractHttpError(error, 'Search failed') : null;
     });
-    private results = computed(() => (this.searchResource.hasValue() ? this.searchResource.value().results : []));
     protected totalResults = computed(() =>
         this.searchResource.hasValue() ? this.searchResource.value().totalResults : 0,
     );
+    protected pageCount = computed(() => Math.max(1, Math.ceil(this.totalResults() / PAGE_SIZE)));
 
-    private pageTitle = computed(() => {
+    protected heading = computed(() => {
         const query = this.q();
-        if (query) return `Results for: ${query}`;
+        if (query) return `Results for “${query}”`;
         const category = this.category();
-        return category === 'movies' ? 'Top Movies' : category === 'tv' ? 'Top TV Shows' : 'Top Releases';
+        return category === 'movies' ? 'Top movies' : category === 'tv' ? 'Top TV shows' : 'Top releases';
     });
 
-    protected groupedMovies = computed(() => {
-        const results = this.results();
-        const groups = new Map<string, GroupedMovie>();
-        for (const r of results) {
-            const key = r.imdb_id || `${r.metadata_lookup.title}::${r.metadata_lookup.year}`;
-            const existing = groups.get(key);
-            if (existing) {
-                existing.releases.push(r);
-                if (!existing.metadata && r.metadata) {
-                    existing.metadata = r.metadata;
-                }
-            } else {
-                groups.set(key, {
-                    key,
-                    metadata: r.metadata,
-                    metadata_lookup: r.metadata_lookup,
-                    imdb_id: r.imdb_id,
-                    releases: [r],
-                });
-            }
+    protected groups = computed(() => {
+        const tracker = this.tracker();
+        const results = this.searchResource.hasValue() ? this.searchResource.value().results : [];
+        const byKey = new Map<string, NcoreResult[]>();
+        for (const result of results) {
+            if (tracker && result.tracker !== tracker) continue;
+            const key = result.imdb_id || `${result.metadata_lookup.title}::${result.metadata_lookup.year}`;
+            byKey.set(key, [...(byKey.get(key) ?? []), result]);
         }
-        return [...groups.values()];
+        return [...byKey].map(([key, releases]): TitleGroup => {
+            const metadata = releases.find((release) => release.metadata)?.metadata ?? null;
+            return {
+                key,
+                title: metadata?.title || releases[0].metadata_lookup.title,
+                metadata,
+                imdbId: releases[0].imdb_id,
+                releases,
+                resolutions: releaseResolutions(releases),
+                topSeeders: Math.max(...releases.map((release) => release.seeders)),
+            };
+        });
     });
 
-    constructor() {
-        effect(() => this.titleService.setTitle(this.pageTitle()));
+    protected selected = computed(() => {
+        const groups = this.groups();
+        return groups.find((group) => group.key === this.open()) ?? (this.isDesktop() ? groups[0] : undefined);
+    });
+
+    protected trackerStatus = computed<StatusCell | null>(() => {
+        const group = this.selected();
+        if (!group) return null;
+        const count = group.releases.length;
+        const trackerCount = new Set(group.releases.map((release) => release.tracker)).size;
+        return {
+            value: `${count} ${count === 1 ? 'release' : 'releases'}`,
+            detail: [`on ${trackerCount} ${trackerCount === 1 ? 'tracker' : 'trackers'}`, group.resolutions.join(', ')]
+                .filter(Boolean)
+                .join(' · '),
+        };
+    });
+
+    protected libraryStatus = computed<StatusCell | null>(() => {
+        const metadata = this.selected()?.metadata;
+        if (!metadata) return { value: 'Unknown title', detail: 'No metadata found for this release' };
+        return metadata.inJellyfinLibrary ? { value: 'In library', tone: 'yes' } : { value: 'Not in the library' };
+    });
+
+    protected titleQuery = computed(() => {
+        const group = this.selected();
+        const query = group ? cleanSearchTerm(group.title) : '';
+        return query && query.toLocaleLowerCase() !== cleanSearchTerm(this.q()).toLocaleLowerCase() ? query : null;
+    });
+
+    protected isFollowing(group: TitleGroup): boolean {
+        return !!group.metadata && !!this.watchlist.find(group.metadata.tmdbId, group.metadata.mediaType);
     }
 
     protected onSearch(params: FilterSearchSubmit): void {
-        const query = params.query.trim();
         const category = parseCategory(params.filters['category']);
         void this.router.navigate([], {
             relativeTo: this.route,
             queryParams: {
-                q: query || null,
+                q: params.query.trim() || null,
                 category: category !== 'all' ? category : null,
                 uhd: params.filters['uhdOnly'] === true ? 'true' : null,
+                tracker: this.tracker(),
             },
         });
     }
 
-    protected onSearchByTitle(title: string): void {
-        this.releaseSearch()?.setQuery(title);
-    }
-
     protected onPage(event: PageEvent): void {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        this.layout().scrollListToTop();
         void this.router.navigate([], {
             relativeTo: this.route,
-            queryParams: { page: event.pageIndex > 0 ? event.pageIndex + 1 : null },
+            queryParams: { page: event.pageIndex > 0 ? event.pageIndex + 1 : null, open: null },
             queryParamsHandling: 'merge',
         });
     }
 }
 
 function parseCategory(value: unknown): NcoreCategoryKey {
-    return typeof value === 'string' && (VALID_CATEGORIES as string[]).includes(value)
-        ? (value as NcoreCategoryKey)
-        : 'all';
+    return VALID_CATEGORIES.find((category) => category === value) ?? 'all';
+}
+
+function parseTracker(value: unknown): TrackerId | null {
+    return TRACKERS.find((tracker) => tracker.id === value)?.id ?? null;
 }

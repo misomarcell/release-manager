@@ -9,12 +9,13 @@ import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../services/admin.service';
 import { extractHttpError } from '../../utils/http-error';
 import type { LogEntry, LogLevel } from '@rm/shared/log.models';
+import { PageTitleComponent } from '../page-title/page-title';
 
 const PAGE_SIZE = 100;
-
 @Component({
     selector: 'app-logs',
     imports: [
+        PageTitleComponent,
         DatePipe,
         JsonPipe,
         FormsModule,

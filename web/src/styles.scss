@@ -1,60 +1,512 @@
+@use 'sass:string';
 @use '@angular/material' as mat;
 
+$font: string.unquote("'Google Sans Flex', system-ui, sans-serif");
+
 html {
-  height: 100%;
-  @include mat.dialog-overrides(
-    (
-      container-shape: 12px,
-    )
-  );
-  @include mat.theme(
-    (
-      color: (
-        primary: mat.$azure-palette,
-        tertiary: mat.$blue-palette,
-      ),
-      typography: Roboto,
-      density: 0,
-    )
-  );
+    color-scheme: light dark;
+    height: 100%;
+    -webkit-text-size-adjust: 100%;
+    --rm-mono: 'Google Sans Code', ui-monospace, monospace;
+    --rm-positive: light-dark(#1c6c35, #8bd89a);
+    --rm-bar: light-dark(#e4ebe8, #161d1c);
+    --rm-ease: cubic-bezier(0.2, 0, 0, 1);
+
+    @include mat.theme(
+        (
+            color: (
+                primary: mat.$cyan-palette,
+                tertiary: mat.$yellow-palette,
+            ),
+            typography: (
+                plain-family: $font,
+                brand-family: $font,
+                bold-weight: 650,
+                medium-weight: 550,
+                regular-weight: 400,
+            ),
+            density: 0,
+        )
+    );
+    @include mat.theme-overrides(
+        (
+            background: light-dark(#edf3f0, #0e1514),
+            surface: light-dark(#edf3f0, #0e1514),
+            surface-container-lowest: light-dark(#ffffff, #0a100f),
+            surface-container-low: light-dark(#f7fbf9, #141b1a),
+            surface-container: light-dark(#ffffff, #1a2120),
+            surface-container-high: light-dark(#f3f8f6, #242b2a),
+            surface-container-highest: light-dark(#e4ebe8, #2f3635),
+            surface-variant: light-dark(#dbe5e1, #3a4442),
+            on-surface: light-dark(#161d1c, #dde4e2),
+            on-surface-variant: light-dark(#414b49, #b4bfbc),
+            outline: light-dark(#6f7977, #889391),
+            outline-variant: light-dark(#c3cdca, #3a4442),
+            primary: light-dark(#006a60, #82d5c8),
+            on-primary: light-dark(#ffffff, #003731),
+            primary-container: light-dark(#a4f4e7, #00504a),
+            on-primary-container: light-dark(#00201c, #a4f4e7),
+            secondary-container: light-dark(#cfe9e2, #30514b),
+            on-secondary-container: light-dark(#06201c, #d2ede6),
+            tertiary: light-dark(#755800, #f2c04e),
+            on-tertiary: light-dark(#ffffff, #402d00),
+            tertiary-container: light-dark(#ffe0a0, #574000),
+            on-tertiary-container: light-dark(#251a00, #ffe0a0),
+            error: light-dark(#ba1a1a, #ffb4ab),
+            error-container: light-dark(#ffdad6, #93000a),
+            on-error-container: light-dark(#410002, #ffdad6),
+        )
+    );
+    @include mat.dialog-overrides(
+        (
+            container-shape: 28px,
+            container-color: var(--mat-sys-surface-container-low),
+        )
+    );
+    @include mat.menu-overrides(
+        (
+            container-shape: 16px,
+        )
+    );
+    @include mat.form-field-overrides(
+        (
+            outlined-container-shape: 12px,
+        )
+    );
+    @include mat.paginator-overrides(
+        (
+            container-background-color: transparent,
+        )
+    );
 }
 
 body {
-  color-scheme: dark;
-  background-color: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
-  font: var(--mat-sys-body-medium);
-  margin: 0;
-  height: 100%;
+    margin: 0;
+    height: 100%;
+    background: var(--mat-sys-surface);
+    color: var(--mat-sys-on-surface);
+    font: 400 14px/20px $font;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.poster-overlay .mat-mdc-dialog-container .mat-mdc-dialog-surface {
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
-  overflow: visible;
+h1,
+h2,
+h3 {
+    margin: 0;
+    text-wrap: balance;
+}
+
+p {
+    margin: 0;
+    text-wrap: pretty;
+}
+
+::selection {
+    background: var(--mat-sys-primary);
+    color: var(--mat-sys-on-primary);
+}
+
+:where(a, button, input, [tabindex]):focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+}
+
+mat-icon.filled {
+    font-variation-settings: 'FILL' 1;
+}
+
+.mono {
+    font-family: var(--rm-mono);
+    font-size: 12.5px;
+    line-height: 18px;
+    overflow-wrap: anywhere;
+}
+
+.num {
+    font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 960px) {
+    .phone-only {
+        display: none !important;
+    }
+}
+
+@media (max-width: 959.98px) {
+    .desktop-only {
+        display: none !important;
+    }
+}
+
+// Custom controls share one feedback language: hover tints, press shrinks, focus outlines.
+.pressable {
+    cursor: pointer;
+    user-select: none;
+    touch-action: manipulation;
+    transition:
+        scale 120ms ease-out,
+        background-color 120ms ease-out;
+
+    @media (hover: hover) {
+        &:hover {
+            background-image: linear-gradient(
+                color-mix(in srgb, currentColor 8%, transparent),
+                color-mix(in srgb, currentColor 8%, transparent)
+            );
+        }
+    }
+
+    &:active {
+        scale: 0.97;
+    }
+}
+
+// Segmented group: 2px seams, small inner corners, large outer corners.
+.seg-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    > * {
+        border-radius: 6px;
+    }
+
+    > :first-child {
+        border-start-start-radius: 20px;
+        border-start-end-radius: 20px;
+    }
+
+    > :last-child {
+        border-end-start-radius: 20px;
+        border-end-end-radius: 20px;
+    }
+}
+
+.tile {
+    background: var(--mat-sys-surface-container);
+    border-radius: 6px;
+    min-width: 0;
+}
+
+.kv {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 0 12px;
+    padding: 10px 14px;
+    font-size: 13.5px;
+
+    > :first-child {
+        color: var(--mat-sys-on-surface-variant);
+        font-size: 13px;
+    }
+}
+
+.tag {
+    flex: none;
+    height: 20px;
+    padding: 0 8px;
+    border-radius: 6px;
+    background: var(--mat-sys-surface-container-high);
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 11.5px;
+    line-height: 20px;
+    font-weight: 500;
+    white-space: nowrap;
+
+    &.res {
+        background: var(--mat-sys-secondary-container);
+        color: var(--mat-sys-on-secondary-container);
+    }
+
+    &.hdr {
+        background: var(--mat-sys-tertiary-container);
+        color: var(--mat-sys-on-tertiary-container);
+    }
+}
+
+.state {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+    padding: 0 8px 0 6px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+
+    mat-icon {
+        font-size: 15px;
+        width: 15px;
+        height: 15px;
+    }
+
+    &.own {
+        background: var(--mat-sys-primary-container);
+        color: var(--mat-sys-on-primary-container);
+    }
+
+    &.following {
+        box-shadow: inset 0 0 0 1px var(--mat-sys-outline-variant);
+        color: var(--mat-sys-on-surface-variant);
+    }
+
+    &.new {
+        padding: 0 8px;
+        background: var(--mat-sys-tertiary);
+        color: var(--mat-sys-on-tertiary);
+    }
+}
+
+.chips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.chip {
+    position: relative;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 8px;
+    background: none;
+    color: var(--mat-sys-on-surface-variant);
+    font: 450 13px/1 $font;
+    white-space: nowrap;
+
+    // Keeps the 32px look while giving touch a 44px target.
+    &::after {
+        content: '';
+        position: absolute;
+        inset: -6px 0;
+    }
+
+    mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+    }
+
+    &.on {
+        padding-inline-start: 8px;
+        border-color: transparent;
+        background-color: var(--mat-sys-secondary-container);
+        color: var(--mat-sys-on-secondary-container);
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        pointer-events: none;
+    }
+}
+
+.list-head,
+.section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+
+    span {
+        font-size: 12.5px;
+        color: var(--mat-sys-on-surface-variant);
+    }
+}
+
+.list-head {
+    padding: 2px 6px 0;
+
+    b {
+        font-size: 13px;
+        font-weight: 600;
+    }
+}
+
+.section-head h3 {
+    font-size: 16px;
+    font-weight: 650;
+}
+
+.seed,
+.leech {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+
+    mat-icon {
+        font-size: 16px;
+        width: 14px;
+        height: 16px;
+    }
+}
+
+.seed {
+    color: var(--rm-positive);
+    font-weight: 600;
+}
+
+.leech {
+    color: var(--mat-sys-error);
+    font-weight: 500;
+}
+
+.fl {
+    padding: 0 6px;
+    border-radius: 5px;
+    box-shadow: inset 0 0 0 1px currentColor;
+    color: var(--rm-positive);
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 600;
+}
+
+.message {
+    padding: 32px 16px;
+    text-align: center;
+    color: var(--mat-sys-on-surface-variant);
+
+    &.error {
+        color: var(--mat-sys-error);
+    }
+}
+
+.hint {
+    font-size: 12.5px;
+    color: var(--mat-sys-on-surface-variant);
+}
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        rotate: 360deg;
+    }
 }
 
 @keyframes shimmer {
-  0% {
-    transform: translateX(-150%);
-  }
-  100% {
-    transform: translateX(150%);
-  }
+    from {
+        translate: -150%;
+    }
+    to {
+        translate: 150%;
+    }
 }
 
 .skeleton {
-  position: relative;
-  overflow: hidden;
-  background-color: var(--mat-sys-surface-variant);
-  border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    background-color: var(--mat-sys-surface-container-high);
+    border-radius: 6px;
 
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent 0%, var(--mat-sys-surface-container-highest) 50%, transparent 100%);
-    animation: shimmer 1.5s linear infinite;
-  }
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, var(--mat-sys-surface-container-highest), transparent);
+        animation: shimmer 1.5s linear infinite;
+    }
+}
+
+.poster-overlay .mat-mdc-dialog-container .mat-mdc-dialog-surface {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    overflow: visible;
+}
+
+// Sheets: a centred dialog on wide screens, a bottom sheet in thumb reach on phones.
+.sheet .mat-mdc-dialog-surface {
+    box-shadow: none;
+}
+
+@media (max-width: 599.98px) {
+    .cdk-global-overlay-wrapper:has(.sheet) {
+        align-items: flex-end !important;
+    }
+
+    .sheet {
+        width: 100vw !important;
+        max-height: 92dvh;
+
+        .mat-mdc-dialog-surface {
+            border-radius: 28px 28px 0 0;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            position: relative;
+            transform: none !important;
+
+            &::before {
+                content: '';
+                position: absolute;
+                top: 8px;
+                left: calc(50% - 18px);
+                width: 36px;
+                height: 4px;
+                border-radius: 2px;
+                background: var(--mat-sys-outline);
+            }
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            animation: sheet-in 300ms var(--rm-ease) both;
+        }
+    }
+}
+
+@keyframes sheet-in {
+    from {
+        translate: 0 100%;
+    }
+}
+
+// Route changes: a short cross-fade, and a title page that slides over the list on phones.
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 160ms;
+}
+
+@media (max-width: 959.98px) {
+    ::view-transition-new(detail):only-child {
+        animation: detail-in 280ms var(--rm-ease) both;
+    }
+
+    ::view-transition-old(detail):only-child {
+        animation: detail-out 200ms ease-in both;
+    }
+}
+
+@keyframes detail-in {
+    from {
+        translate: 100% 0;
+    }
+}
+
+@keyframes detail-out {
+    to {
+        translate: 100% 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation: none !important;
+    }
+
+    .pressable,
+    .skeleton::after,
+    .spinning {
+        transition: none;
+        animation: none;
+    }
 }

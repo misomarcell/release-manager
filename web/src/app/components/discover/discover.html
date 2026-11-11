@@ -1,0 +1,129 @@
+@let current = selected();
+<app-list-detail [openKey]="selectedKey()" [wide]="!q()">
+    <app-filter-search
+        class="search"
+        placeholder="Search all titles…"
+        [filters]="q() ? typeFilters : []"
+        [query]="q()"
+        [values]="filterValues()"
+        [focusOnInit]="focus() === 'search'"
+        (searchSubmit)="onSearch($event)"
+    />
+
+    @if (q()) {
+        @if (searching()) {
+            <app-row-skeletons [count]="5" />
+        } @else if (searchError(); as err) {
+            <p class="message error" role="alert">{{ err }}</p>
+        } @else if (results().length > 0) {
+            <div class="list-head">
+                <b>{{ results().length }} {{ results().length === 1 ? 'title' : 'titles' }}</b>
+                <span>all titles · from TMDB</span>
+            </div>
+            <div class="seg-list">
+                @for (title of results(); track titleKey(title)) {
+                    @let following = isFollowing(title);
+                    <app-title-row
+                        [key]="titleKey(title)"
+                        [title]="title.title"
+                        [poster]="title.poster"
+                        [mediaType]="title.mediaType"
+                        [year]="title.year"
+                        [rating]="title.rating"
+                        [info]="title.mediaType === 'tv' ? 'TV Show' : 'Movie'"
+                        [selected]="title === current"
+                        [replaceUrl]="!!open()"
+                    >
+                        @if (title.inJellyfinLibrary) {
+                            <span class="state own">
+                                <mat-icon class="filled" aria-hidden="true">check_circle</mat-icon>
+                                In library
+                            </span>
+                        }
+                        @if (following) {
+                            <span class="state following">
+                                <mat-icon class="filled" aria-hidden="true">bookmark</mat-icon>
+                                Following
+                            </span>
+                        }
+                        <button
+                            side
+                            mat-icon-button
+                            type="button"
+                            class="follow"
+                            [class.on]="following"
+                            [attr.aria-label]="following ? 'Edit watchlist item' : 'Follow'"
+                            (click)="follow(title)"
+                        >
+                            <mat-icon [class.filled]="following">
+                                {{ following ? 'bookmark_added' : 'bookmark_add' }}
+                            </mat-icon>
+                        </button>
+                    </app-title-row>
+                }
+            </div>
+        } @else {
+            <p class="message">No titles found for “{{ q() }}”.</p>
+        }
+    } @else {
+        <nav class="tabs" aria-label="Recommendation view">
+            @for (option of tabs; track option.id) {
+                <a
+                    class="pressable"
+                    [class.on]="tab() === option.id"
+                    [attr.aria-current]="tab() === option.id ? 'page' : null"
+                    [routerLink]="[]"
+                    [queryParams]="{ tab: option.id === 'trending' ? null : option.id }"
+                >
+                    <mat-icon [class.filled]="tab() === option.id" aria-hidden="true">{{ option.icon }}</mat-icon>
+                    {{ option.label }}
+                </a>
+            }
+        </nav>
+        <app-ribbon
+            heading="Movies"
+            icon="movie"
+            [items]="movies.items()"
+            [loading]="movies.loading()"
+            [canRefresh]="tab() === 'personalized' && movies.canRefresh()"
+            [selectedKey]="selectedKey()"
+            (refresh)="movies.refresh()"
+        />
+        <app-ribbon
+            heading="TV Shows"
+            icon="tv"
+            [items]="tvShows.items()"
+            [loading]="tvShows.loading()"
+            [canRefresh]="tab() === 'personalized' && tvShows.canRefresh()"
+            [selectedKey]="selectedKey()"
+            (refresh)="tvShows.refresh()"
+        />
+    }
+
+    @if (current) {
+        <app-title-detail
+            detail
+            backLabel="Discover"
+            [title]="current.title"
+            [tmdbId]="current.tmdbId"
+            [mediaType]="current.mediaType"
+            [poster]="current.poster"
+            [year]="current.year"
+            [rating]="current.rating"
+            [genre]="current.genre"
+            [library]="libraryStatus()"
+            [hideTrackers]="true"
+        >
+            <a primary mat-flat-button routerLink="/releases" [queryParams]="releasesQuery()">
+                <mat-icon>search</mat-icon>
+                Search releases
+            </a>
+            @if (reason(); as text) {
+                <div class="why">
+                    <mat-icon class="filled" aria-hidden="true">auto_awesome</mat-icon>
+                    <p><b>Why this pick</b><br />{{ text }}</p>
+                </div>
+            }
+        </app-title-detail>
+    }
+</app-list-detail>

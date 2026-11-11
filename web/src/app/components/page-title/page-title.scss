@@ -1,0 +1,15 @@
+:host {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 56px;
+    padding: 0 6px;
+}
+
+h1 {
+    flex: 1;
+    font-size: 26px;
+    line-height: 32px;
+    font-weight: 650;
+}

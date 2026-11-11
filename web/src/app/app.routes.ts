@@ -19,61 +19,43 @@ export const routes: Routes = [
             },
             {
                 path: 'releases',
-                data: { title: 'Top Releases' },
+                title: 'Releases',
                 loadComponent: () => import('./components/releases/releases').then((m) => m.ReleasesComponent),
             },
             {
                 path: 'library',
-                data: { title: 'My Library' },
+                title: 'Library',
                 loadComponent: () => import('./components/library/library').then((m) => m.LibraryComponent),
             },
             {
                 path: 'watchlist',
-                data: { title: 'Watchlist' },
+                title: 'Watchlist',
                 loadComponent: () => import('./components/watchlist/watchlist').then((m) => m.WatchlistComponent),
             },
             {
+                path: 'discover',
+                title: 'Discover',
+                loadComponent: () => import('./components/discover/discover').then((m) => m.DiscoverComponent),
+            },
+            {
                 path: 'recommendations',
-                data: { title: 'Recommendations' },
-                loadComponent: () =>
-                    import('./components/recommendations/recommendations').then((m) => m.RecommendationsComponent),
-                children: [
-                    {
-                        path: '',
-                        redirectTo: 'trending',
-                        pathMatch: 'full',
-                    },
-                    {
-                        path: 'trending',
-                        loadComponent: () =>
-                            import('./components/recommendations/trending-recommendations/trending-recommendations').then(
-                                (m) => m.TrendingRecommendationsComponent,
-                            ),
-                    },
-                    {
-                        path: 'personalized',
-                        loadComponent: () =>
-                            import('./components/recommendations/personalized-recommendations/personalized-recommendations').then(
-                                (m) => m.PersonalizedRecommendationsComponent,
-                            ),
-                    },
-                ],
+                redirectTo: 'discover',
             },
             {
                 path: 'users',
-                data: { title: 'Manage Users' },
+                title: 'Manage Users',
                 loadComponent: () => import('./components/users/users').then((m) => m.UsersComponent),
                 canActivate: [adminGuard],
             },
             {
                 path: 'admin',
-                data: { title: 'Administration' },
+                title: 'Administration',
                 loadComponent: () => import('./components/admin/admin').then((m) => m.AdminComponent),
                 canActivate: [adminGuard],
             },
             {
                 path: 'logs',
-                data: { title: 'Logs' },
+                title: 'Logs',
                 loadComponent: () => import('./components/logs/logs').then((m) => m.LogsComponent),
                 canActivate: [adminGuard],
             },

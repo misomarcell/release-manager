@@ -1,6 +1,7 @@
-<main class="container">
+@let current = selected();
+<app-list-detail [openKey]="current?.item?.jellyfinId ?? null">
     <app-filter-search
-        placeholder="Search library..."
+        placeholder="Search library…"
         [filters]="libraryFilters"
         [query]="q()"
         [values]="searchFilterValues()"
@@ -8,67 +9,89 @@
     />
 
     @if (loading()) {
-        <div class="release-skeletons">
-            @for (i of skeletonItems; track i) {
-                <div class="skeleton-card-row">
-                    <div class="skeleton skel-poster"></div>
-                    <div class="skel-text">
-                        <div class="skeleton skel-title"></div>
-                        <div class="skeleton skel-meta"></div>
-                    </div>
-                </div>
-            }
-        </div>
-    }
-
-    @if (error(); as err) {
-        <p class="error">{{ err }}</p>
-    }
-
-    @if (!loading() && items().length > 0) {
-        <div class="results-header">
-            @if (q()) {
-                <span class="results-label">
-                    Results for: <i>"{{ q() }}"</i>
-                </span>
-            }
-            <span class="results-count">
-                {{ total() }} items
-                @if (!q()) {
-                    @if (remainingSpace(); as freeSpace) {
-                        · {{ freeSpace.amount | number: '1.2-2' }} {{ freeSpace.unit }} remaining
-                    }
+        <app-row-skeletons [count]="5" />
+    } @else if (error(); as err) {
+        <p class="message error" role="alert">{{ err }}</p>
+    } @else if (rows().length > 0) {
+        <div class="list-head">
+            <b>
+                @if (q()) {
+                    Results for “{{ q() }}” ·
                 }
-            </span>
-        </div>
-        <mat-accordion class="results">
-            @for (item of items(); track item.jellyfinId) {
-                <app-library-card
-                    [item]="item"
-                    [jellyfinBaseUrl]="jellyfinBaseUrl()"
-                    (deleted)="onItemDeleted($event)"
-                />
+                {{ total() }} {{ total() === 1 ? 'item' : 'items' }}
+            </b>
+            @if (remainingSpace(); as space) {
+                <span class="num">{{ space }} remaining</span>
             }
-        </mat-accordion>
-
+        </div>
+        <div class="seg-list">
+            @for (row of rows(); track row.item.jellyfinId) {
+                <app-title-row
+                    [key]="row.item.jellyfinId"
+                    [title]="row.item.title"
+                    [poster]="row.item.poster"
+                    [mediaType]="row.item.mediaType"
+                    [year]="row.item.year"
+                    [rating]="row.item.rating"
+                    [info]="row.info"
+                    [selected]="row === current"
+                    [replaceUrl]="!!open()"
+                >
+                    @for (tag of row.tags; track tag.label) {
+                        <span class="tag" [class]="tag.kind">{{ tag.label }}</span>
+                    }
+                    @if (row.size) {
+                        <b side>{{ row.size }}</b>
+                    }
+                </app-title-row>
+            }
+        </div>
         <mat-paginator
             [length]="total()"
             [pageSize]="pageSize"
             [pageIndex]="page() - 1"
             [hidePageSize]="true"
             (page)="onPage($event)"
-            showFirstLastButtons
             aria-label="Page selector"
         />
-    } @else if (!loading() && !error()) {
-        <p class="empty">
-            @if (q()) {
-                No results for "{{ q() }}".
-            } @else if (type() !== 'all') {
-                No {{ mediaTypeLabel() }} found in your Jellyfin library.
-            } @else {
-                Your Jellyfin library is empty or not yet synced.
-            }
-        </p>
+    } @else {
+        <p class="message">{{ emptyMessage() }}</p>
     }
-</main>
+
+    @if (current) {
+        <app-title-detail
+            detail
+            backLabel="Library"
+            [title]="current.item.title"
+            [tmdbId]="current.item.tmdbId"
+            [mediaType]="current.item.mediaType"
+            [poster]="current.item.poster"
+            [year]="current.item.year"
+            [rating]="current.item.rating"
+            [genre]="current.item.genre"
+            [library]="libraryStatus()"
+            [canDelete]="canDelete()"
+            [deleting]="deleting()"
+            (deleteAction)="deleteItem(current.item)"
+        >
+            @if (jellyfinUrl(); as url) {
+                <a primary mat-flat-button [href]="url" target="_blank" rel="noopener">
+                    <mat-icon class="filled">play_circle</mat-icon>
+                    Open in Jellyfin
+                </a>
+            }
+            <div class="columns">
+                @if (current.item.seasons?.length) {
+                    <app-season-summary [seasons]="current.item.seasons!" />
+                }
+                @if (current.item.mediaInfo?.streams?.length) {
+                    <app-media-streams
+                        [streams]="current.item.mediaInfo!.streams"
+                        [sizeBytes]="current.item.sizeBytes"
+                        [path]="current.item.path"
+                    />
+                }
+            </div>
+        </app-title-detail>
+    }
+</app-list-detail>

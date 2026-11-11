@@ -1,44 +1,66 @@
 <h2 mat-dialog-title>Send to qBittorrent</h2>
 <mat-dialog-content>
-  <p class="release-name">{{ data.release.release_name }}</p>
+    @let r = data.release;
+    <div class="tile release">
+        <div class="tags">
+            @for (tag of release.tags; track tag.label) {
+                <span class="tag" [class]="tag.kind">{{ tag.label }}</span>
+            }
+        </div>
+        <p class="mono">
+            @for (part of release.nameParts; track $index) {{{ part }}<wbr />}
+        </p>
+        <p class="stats num">
+            <span>{{ release.tracker }}</span>
+            <span>{{ formatBytes(r.size) }}</span>
+            <span class="seed"><mat-icon aria-label="Seeders">arrow_drop_up</mat-icon>{{ r.seeders }}</span>
+            <span class="leech"><mat-icon aria-label="Leechers">arrow_drop_down</mat-icon>{{ r.leechers }}</span>
+        </p>
+    </div>
 
-  <div class="info-block">
-    <span class="info-label">Type</span>
-    <span class="info-value">
-      @if (data.isTV && data.release.tvInfo) {
-        {{ formatTvLabel(data.release.tvInfo) }}
-      } @else {
-        Movie
-      }
-    </span>
-  </div>
+    <div class="tile kv type">
+        <span>Type</span>
+        <span>{{ data.isTV && r.tvInfo ? formatTvLabel(r.tvInfo) : 'Movie' }}</span>
+    </div>
 
-  <div class="info-block">
-    <span class="info-label">Category</span>
-    <mat-chip-listbox [value]="category()" (change)="category.set($event.value)">
-      @for (cat of categories; track cat) {
-        <mat-chip-option [value]="cat">{{ cat }}</mat-chip-option>
-      }
-    </mat-chip-listbox>
-  </div>
+    <div>
+        <p class="hint label">Category</p>
+        <div class="chips" role="group" aria-label="Category">
+            @for (cat of categories; track cat) {
+                <button
+                    class="chip pressable"
+                    type="button"
+                    [class.on]="category() === cat"
+                    [attr.aria-pressed]="category() === cat"
+                    (click)="category.set(cat)"
+                >
+                    @if (category() === cat) {
+                        <mat-icon aria-hidden="true">check</mat-icon>
+                    }
+                    {{ cat }}
+                </button>
+            }
+        </div>
+    </div>
 
-  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="path-field">
-    <mat-label>Save path</mat-label>
-    <input matInput [(ngModel)]="savePath" />
-    <mat-icon matPrefix>folder</mat-icon>
-  </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Save path</mat-label>
+        <input matInput class="save-path mono" [(ngModel)]="savePath" autocomplete="off" spellcheck="false" />
+        <mat-icon matPrefix>folder</mat-icon>
+        <mat-hint>Suggested from the title. Edit it if this should go somewhere else.</mat-hint>
+    </mat-form-field>
 
-  @if (sending()) {
-    <mat-progress-bar mode="indeterminate" />
-  }
-  @if (error(); as err) {
-    <p class="error">{{ err }}</p>
-  }
+    @if (sending()) {
+        <mat-progress-bar mode="indeterminate" />
+    }
+    @if (error(); as err) {
+        <p class="error" role="alert">{{ err }}</p>
+    }
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close [disabled]="sending()">Cancel</button>
-  <button mat-flat-button (click)="onDownload()" [disabled]="sending() || !savePath.trim()">
-    <mat-icon>download</mat-icon>
-    Download
-  </button>
+    <button mat-button mat-dialog-close [disabled]="sending()">Cancel</button>
+    <button mat-flat-button (click)="onDownload()" [disabled]="sending() || !savePath.trim()">
+        <mat-icon>download</mat-icon>
+        Download
+    </button>
 </mat-dialog-actions>

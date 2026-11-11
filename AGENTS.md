@@ -7,7 +7,7 @@
   - `backend/`: Express API server with PostgreSQL
   - `shared/`: shared TypeScript models used by both app and backend
 - Frontend serves Angular SSR and proxies `/api/*` requests to the backend.
-- Backend handles nCore search, TMDB enrichment, caching, Passkey authentication, qBittorrent integration, Jellyfin library sync, and the per-user release watchlist.
+- Backend handles nCore search, TMDB enrichment and title search, caching, Passkey authentication, qBittorrent integration, Jellyfin library sync, and the per-user release watchlist.
 - PostgreSQL stores metadata cache, user credentials, sessions, and watchlist items with their known releases.
 
 ## Workflow
@@ -20,13 +20,28 @@
 - Character coding should be UTF-8 in all files, supporting Hungarian characters.
 - No need for explicit readonly keyword in Angular components, leave private fields as simply private.
 - Always separate Angular component files into `.ts`, `.html`, and `.scss` — never use inline templates or styles.
-- List pages (Releases, Library) keep search, filters and `page` in URL query params: read them as inputs via `withComponentInputBinding()` and change them with `router.navigate` so the browser back button steps through pages and filters.
+- List pages (Releases, Library, Watchlist, Discover) keep search, filters, `page` and the opened title (`open`) in URL query params: read them as inputs via `withComponentInputBinding()` and change them with `router.navigate` / `routerLink` so the browser back button steps through pages, filters and the title page.
+- nCore is the only tracker today, but more are planned: UI copy says "trackers", and every release carries a `tracker` id (`shared/src/tracker.models.ts`).
+
+## Frontend Design System
+
+- `DESIGN.md` describes the visual system; `docs/redesign-brief.md` is the brief it was built from.
+- Theme lives in `web/src/styles.scss`: `mat.theme` plus `mat.theme-overrides` with `light-dark()` values, following the device colour scheme. Components use `--mat-sys-*` roles (plus `--rm-positive`, `--rm-bar`, `--rm-mono`) and never hard-coded hexes.
+- Fonts: Google Sans Flex (UI), Google Sans Code (`.mono`: release names, paths), Material Symbols Rounded (`mat-icon`, add `.filled` for the filled variant).
+- Shared global classes in `styles.scss`: `.seg-list` + `.tile` (segmented groups), `.kv`, `.tag` (`.res`, `.hdr`), `.state` (`.own`, `.following`, `.new`), `.chip` (`.on`), `.list-head`, `.section-head`, `.seed`, `.leech`, `.fl`, `.pressable`, `.skeleton`, `.message`, `.hint`, `.phone-only`, `.desktop-only`.
+- Shell (`components/shell`): bottom navigation on phones, navigation rail from 960px; admin pages and sign out are behind `app-account-menu`.
+- Every list page is `app-list-detail` (list column + title page; a full-screen layer on phones, a side pane on desktop) filled with `app-title-row` rows and one `app-title-detail`. Page-specific content is projected into the detail; the single filled button goes into its `[primary]` slot.
+- `app-filter-search` is the 56px search bar with visible filter chips; `app-page-title` is the title bar for pages without search.
+- Dialogs that act on a title (download, watchlist, NFO) open with `sheetConfig()` from `utils/sheet.ts`: a bottom sheet on phones, a centred dialog otherwise.
+- Route changes run through `withViewTransitions`; `utils/view-transitions.ts` skips the transition when only filters or the page change.
 
 ## Shared Models
 
 - `shared/src/` contains shared TypeScript models and constants used by both frontend and backend.
-- `shared/src/ncore.models.ts` — nCore-specific types: `NcoreCategoryKey`, `TvType`, `TvInfo`, `NcoreResult`, `NcoreSearchResponse`.
-- `shared/src/tmdb.models.ts` — TMDB metadata types: `MetadataLookup`, `MovieMetadata` (includes `inJellyfinLibrary`), `MovieDetailMetadata`.
+- `shared/src/ncore.models.ts` — nCore-specific types: `NcoreCategoryKey`, `TvType`, `TvInfo`, `NcoreResult` (includes `tracker`), `NcoreSearchResponse`.
+- `shared/src/tracker.models.ts` — `TRACKERS`, `TrackerId`, `trackerName()`.
+- `shared/src/release-tags.ts` — `parseReleaseTags()`: resolution, HDR, source and audio tags parsed from a release name.
+- `shared/src/tmdb.models.ts` — TMDB metadata types: `MetadataLookup`, `MovieMetadata` (includes `inJellyfinLibrary`), `TitleSummary`, `TitleSearchResponse`.
 - `shared/src/download.models.ts` — Download types: `DownloadRequest`, `DownloadResponse`.
 - `shared/src/user.models.ts` — User types: `UserInfo`.
 - `shared/src/recommendations.models.ts` — Recommendation types: `Recommendation`, `FeedbackValue`, `RecommendationFeedbackRequest`.
@@ -48,7 +63,7 @@ backend/src/
   middleware/auth.ts     # Session authentication middleware
   routes/
     auth.routes.ts      # Passkey registration/login endpoints
-    search.routes.ts    # nCore search + TMDB enrichment + download
+    search.routes.ts    # nCore search + TMDB enrichment, title metadata, TMDB title search, download
     version.routes.ts   # App version endpoint (latest GitHub commit)
     recommendations.routes.ts # AI-powered recommendations + feedback
     admin.routes.ts     # Admin actions incl. Jellyfin sync + qBittorrent test
@@ -95,11 +110,12 @@ backend/src/
 
 ## Watchlist
 
-- Any title with TMDB metadata can be added from the release card, library card or recommendation dialog (`app-watchlist-button` → `app-watchlist-dialog`); items are stored per user in `watchlist_items`.
+- Any title with TMDB metadata can be followed from its title page or from a Discover search row (`WatchlistSheetService` → `app-watchlist-dialog`); items are stored per user in `watchlist_items`.
+- Discover's "Search all titles" (`GET /api/search/titles`, TMDB) lets a title be followed before any release exists.
 - `watchlist_releases` keeps every known nCore torrent id per item. The first successful check is the baseline (all `seen`); later checks insert unknown torrent ids as unseen.
 - Releases are looked up through the nCore JSON search by IMDb id (`miben=imdb`, newest first), falling back to a title search filtered by parsed title/year when no IMDb id is known.
 - Optional per-item keywords (`mat-chip-grid` in the dialog): a new release only counts when its name contains at least one keyword (case-insensitive). Non-matching releases are stored as already seen.
-- The unseen count is shown as a `matBadge` on the Watchlist nav item, the mobile menu button and the watchlist card; "Mark as read" resets it for an item.
+- The unseen count is shown in amber on the Watchlist nav item, the watchlist row and the title page status; "Mark as read" resets it for an item.
 - Checks run on `WATCHLIST_CRON` and on demand via "Check now" (`POST /api/watchlist/check`).
 
 ## Docker

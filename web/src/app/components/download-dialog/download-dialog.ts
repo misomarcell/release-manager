@@ -6,15 +6,15 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatChipsModule } from '@angular/material/chips';
 import { SearchService } from '../../services/search.service';
 import { extractHttpError } from '../../utils/http-error';
+import { formatBytes } from '../../utils/format-bytes';
+import { describeRelease } from '../../utils/release-view';
 import { DOWNLOAD_CATEGORIES, type DownloadCategory } from '@rm/shared/constants';
 import type { NcoreResult, TvInfo } from '@rm/shared/ncore.models';
 
 export interface DownloadDialogData {
     release: NcoreResult;
-    title: string;
     isTV: boolean;
     suggestedPath: string;
     category: DownloadCategory;
@@ -30,7 +30,6 @@ export interface DownloadDialogData {
         MatInputModule,
         MatIconModule,
         MatProgressBarModule,
-        MatChipsModule,
     ],
     templateUrl: './download-dialog.html',
     styleUrl: './download-dialog.scss',
@@ -41,6 +40,8 @@ export class DownloadDialogComponent {
     protected data = inject(MAT_DIALOG_DATA) as DownloadDialogData;
 
     protected categories = DOWNLOAD_CATEGORIES;
+    protected release = describeRelease(this.data.release);
+    protected formatBytes = formatBytes;
     protected category = signal<DownloadCategory>(this.data.category);
     protected savePath = this.data.suggestedPath;
     protected sending = signal(false);

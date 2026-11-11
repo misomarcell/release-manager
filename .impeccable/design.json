@@ -1,48 +1,308 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-11T12:00:00.000Z",
+  "generatedAt": "2026-11-11T19:00:00.000Z",
   "title": "Design System: Release Manager",
   "extensions": {
     "colorMeta": {
-      "primary": { "role": "primary", "displayName": "Booth Light Azure", "canonical": "var(--mat-sys-primary)", "tonalRamp": ["#001b3f", "#002f65", "#00458f", "#005cbb", "#438fff", "#abc7ff", "#d7e3ff", "#ecf0ff"] },
-      "on-primary": { "role": "primary", "displayName": "On Azure", "canonical": "var(--mat-sys-on-primary)", "tonalRamp": ["#001b3f", "#002f65", "#00458f", "#005cbb", "#438fff", "#abc7ff", "#d7e3ff", "#ecf0ff"] },
-      "secondary-container": { "role": "secondary", "displayName": "Selected Slate", "canonical": "var(--mat-sys-secondary-container)", "tonalRamp": ["#131c2b", "#283041", "#3e4759", "#565e71", "#8891a5", "#bec6dc", "#dae2f9", "#ecf0ff"] },
-      "on-secondary-container": { "role": "secondary", "displayName": "On Selected Slate", "canonical": "var(--mat-sys-on-secondary-container)", "tonalRamp": ["#131c2b", "#283041", "#3e4759", "#565e71", "#8891a5", "#bec6dc", "#dae2f9", "#ecf0ff"] },
-      "tertiary": { "role": "tertiary", "displayName": "Shelf Periwinkle", "canonical": "var(--mat-sys-tertiary)", "tonalRamp": ["#00006e", "#0001ac", "#0000ef", "#343dff", "#7c84ff", "#bec2ff", "#e0e0ff", "#f1efff"] },
-      "surface": { "role": "neutral", "displayName": "Booth Black", "canonical": "var(--mat-sys-surface)", "tonalRamp": ["#0d0e11", "#121316", "#1f2022", "#343537", "#5e5e62", "#919094", "#c7c6ca", "#f2f0f4"] },
-      "surface-container-lowest": { "role": "neutral", "displayName": "Pit Black", "canonical": "var(--mat-sys-surface-container-lowest)", "tonalRamp": ["#0d0e11", "#121316", "#1f2022", "#343537", "#5e5e62", "#919094", "#c7c6ca", "#f2f0f4"] },
-      "surface-container": { "role": "neutral", "displayName": "Console Grey", "canonical": "var(--mat-sys-surface-container)", "tonalRamp": ["#0d0e11", "#121316", "#1f2022", "#343537", "#5e5e62", "#919094", "#c7c6ca", "#f2f0f4"] },
-      "surface-container-highest": { "role": "neutral", "displayName": "Shimmer Grey", "canonical": "var(--mat-sys-surface-container-highest)", "tonalRamp": ["#0d0e11", "#121316", "#1f2022", "#343537", "#5e5e62", "#919094", "#c7c6ca", "#f2f0f4"] },
-      "surface-variant": { "role": "neutral", "displayName": "Slate Fill", "canonical": "var(--mat-sys-surface-variant)", "tonalRamp": ["#181c22", "#2d3038", "#44474e", "#5b5e66", "#74777f", "#a9abb4", "#c4c6d0", "#eff0fa"] },
-      "outline-variant": { "role": "neutral", "displayName": "Hairline Slate", "canonical": "var(--mat-sys-outline-variant)", "tonalRamp": ["#181c22", "#2d3038", "#44474e", "#5b5e66", "#74777f", "#a9abb4", "#c4c6d0", "#eff0fa"] },
-      "on-surface": { "role": "neutral", "displayName": "Screen White", "canonical": "var(--mat-sys-on-surface)", "tonalRamp": ["#0d0e11", "#121316", "#1f2022", "#343537", "#5e5e62", "#919094", "#c7c6ca", "#e3e2e6"] },
-      "on-surface-variant": { "role": "neutral", "displayName": "Dim Grey", "canonical": "var(--mat-sys-on-surface-variant)", "tonalRamp": ["#181c22", "#2d3038", "#44474e", "#5b5e66", "#74777f", "#a9abb4", "#c4c6d0", "#eff0fa"] },
-      "error": { "role": "error", "displayName": "Soft Red", "canonical": "var(--mat-sys-error)", "tonalRamp": ["#410002", "#690005", "#93000a", "#ba1a1a", "#ff5449", "#ffb4ab", "#ffdad6", "#ffedea"] },
-      "on-error": { "role": "error", "displayName": "On Soft Red", "canonical": "var(--mat-sys-on-error)", "tonalRamp": ["#410002", "#690005", "#93000a", "#ba1a1a", "#ff5449", "#ffb4ab", "#ffdad6", "#ffedea"] },
-      "drift-positive": { "role": "drift", "displayName": "Seeder Green", "canonical": "#4caf50", "tonalRamp": ["#0c2a0e", "#1b5e20", "#2e7d32", "#388e3c", "#4caf50", "#81c784", "#c8e6c9", "#e8f5e9"] },
-      "drift-positive-deep": { "role": "drift", "displayName": "Like Green", "canonical": "#2e7d32", "tonalRamp": ["#0c2a0e", "#1b5e20", "#2e7d32", "#388e3c", "#4caf50", "#81c784", "#c8e6c9", "#e8f5e9"] },
-      "drift-badge-4k": { "role": "drift", "displayName": "4K Violet", "canonical": "#a78bfa", "tonalRamp": ["#2e1065", "#4c1d95", "#6d28d9", "#7c3aed", "#8b5cf6", "#a78bfa", "#ddd6fe", "#f5f3ff"] },
-      "drift-badge-dv": { "role": "drift", "displayName": "Dolby Vision Orange", "canonical": "#fb923c", "tonalRamp": ["#431407", "#7c2d12", "#c2410c", "#ea580c", "#f97316", "#fb923c", "#fed7aa", "#fff7ed"] },
-      "drift-badge-hdr": { "role": "drift", "displayName": "HDR Amber", "canonical": "#fbbf24", "tonalRamp": ["#451a03", "#78350f", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fde68a", "#fffbeb"] },
-      "drift-badge-codec": { "role": "drift", "displayName": "Codec Grey", "canonical": "#9ca3af", "tonalRamp": ["#111827", "#1f2937", "#374151", "#4b5563", "#6b7280", "#9ca3af", "#d1d5db", "#f3f4f6"] },
-      "drift-badge-audio": { "role": "drift", "displayName": "Audio Blue", "canonical": "#60a5fa", "tonalRamp": ["#172554", "#1e3a8a", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#bfdbfe", "#eff6ff"] }
+      "surface": {
+        "role": "neutral",
+        "displayName": "Ground",
+        "canonical": "var(--mat-sys-surface)",
+        "dark": "#0e1514",
+        "light": "#edf3f0",
+        "tonalRamp": [
+          "#0e1514",
+          "#edf3f0"
+        ]
+      },
+      "surface-container-low": {
+        "role": "neutral",
+        "displayName": "Pane",
+        "canonical": "var(--mat-sys-surface-container-low)",
+        "dark": "#141b1a",
+        "light": "#f7fbf9",
+        "tonalRamp": [
+          "#141b1a",
+          "#f7fbf9"
+        ]
+      },
+      "surface-container": {
+        "role": "neutral",
+        "displayName": "Tile",
+        "canonical": "var(--mat-sys-surface-container)",
+        "dark": "#1a2120",
+        "light": "#ffffff",
+        "tonalRamp": [
+          "#1a2120",
+          "#ffffff"
+        ]
+      },
+      "surface-container-high": {
+        "role": "neutral",
+        "displayName": "Tile High",
+        "canonical": "var(--mat-sys-surface-container-high)",
+        "dark": "#242b2a",
+        "light": "#f3f8f6",
+        "tonalRamp": [
+          "#242b2a",
+          "#f3f8f6"
+        ]
+      },
+      "on-surface": {
+        "role": "neutral",
+        "displayName": "On Surface",
+        "canonical": "var(--mat-sys-on-surface)",
+        "dark": "#dde4e2",
+        "light": "#161d1c",
+        "tonalRamp": [
+          "#dde4e2",
+          "#161d1c"
+        ]
+      },
+      "on-surface-variant": {
+        "role": "neutral",
+        "displayName": "On Surface Variant",
+        "canonical": "var(--mat-sys-on-surface-variant)",
+        "dark": "#b4bfbc",
+        "light": "#414b49",
+        "tonalRamp": [
+          "#b4bfbc",
+          "#414b49"
+        ]
+      },
+      "outline": {
+        "role": "neutral",
+        "displayName": "Outline",
+        "canonical": "var(--mat-sys-outline)",
+        "dark": "#889391",
+        "light": "#6f7977",
+        "tonalRamp": [
+          "#889391",
+          "#6f7977"
+        ]
+      },
+      "outline-variant": {
+        "role": "neutral",
+        "displayName": "Outline Variant",
+        "canonical": "var(--mat-sys-outline-variant)",
+        "dark": "#3a4442",
+        "light": "#c3cdca",
+        "tonalRamp": [
+          "#3a4442",
+          "#c3cdca"
+        ]
+      },
+      "primary": {
+        "role": "primary",
+        "displayName": "Teal",
+        "canonical": "var(--mat-sys-primary)",
+        "dark": "#82d5c8",
+        "light": "#006a60",
+        "tonalRamp": [
+          "#82d5c8",
+          "#006a60"
+        ]
+      },
+      "on-primary": {
+        "role": "primary",
+        "displayName": "On Teal",
+        "canonical": "var(--mat-sys-on-primary)",
+        "dark": "#003731",
+        "light": "#ffffff",
+        "tonalRamp": [
+          "#003731",
+          "#ffffff"
+        ]
+      },
+      "primary-container": {
+        "role": "primary",
+        "displayName": "Owned Teal",
+        "canonical": "var(--mat-sys-primary-container)",
+        "dark": "#00504a",
+        "light": "#a4f4e7",
+        "tonalRamp": [
+          "#00504a",
+          "#a4f4e7"
+        ]
+      },
+      "on-primary-container": {
+        "role": "primary",
+        "displayName": "On Owned Teal",
+        "canonical": "var(--mat-sys-on-primary-container)",
+        "dark": "#a4f4e7",
+        "light": "#00201c",
+        "tonalRamp": [
+          "#a4f4e7",
+          "#00201c"
+        ]
+      },
+      "secondary-container": {
+        "role": "secondary",
+        "displayName": "Selected Green",
+        "canonical": "var(--mat-sys-secondary-container)",
+        "dark": "#30514b",
+        "light": "#cfe9e2",
+        "tonalRamp": [
+          "#30514b",
+          "#cfe9e2"
+        ]
+      },
+      "on-secondary-container": {
+        "role": "secondary",
+        "displayName": "On Selected Green",
+        "canonical": "var(--mat-sys-on-secondary-container)",
+        "dark": "#d2ede6",
+        "light": "#06201c",
+        "tonalRamp": [
+          "#d2ede6",
+          "#06201c"
+        ]
+      },
+      "tertiary": {
+        "role": "tertiary",
+        "displayName": "New Amber",
+        "canonical": "var(--mat-sys-tertiary)",
+        "dark": "#f2c04e",
+        "light": "#755800",
+        "tonalRamp": [
+          "#f2c04e",
+          "#755800"
+        ]
+      },
+      "on-tertiary": {
+        "role": "tertiary",
+        "displayName": "On New Amber",
+        "canonical": "var(--mat-sys-on-tertiary)",
+        "dark": "#402d00",
+        "light": "#ffffff",
+        "tonalRamp": [
+          "#402d00",
+          "#ffffff"
+        ]
+      },
+      "tertiary-container": {
+        "role": "tertiary",
+        "displayName": "HDR Amber",
+        "canonical": "var(--mat-sys-tertiary-container)",
+        "dark": "#574000",
+        "light": "#ffe0a0",
+        "tonalRamp": [
+          "#574000",
+          "#ffe0a0"
+        ]
+      },
+      "on-tertiary-container": {
+        "role": "tertiary",
+        "displayName": "On HDR Amber",
+        "canonical": "var(--mat-sys-on-tertiary-container)",
+        "dark": "#ffe0a0",
+        "light": "#251a00",
+        "tonalRamp": [
+          "#ffe0a0",
+          "#251a00"
+        ]
+      },
+      "error": {
+        "role": "error",
+        "displayName": "Leecher Red",
+        "canonical": "var(--mat-sys-error)",
+        "dark": "#ffb4ab",
+        "light": "#ba1a1a",
+        "tonalRamp": [
+          "#ffb4ab",
+          "#ba1a1a"
+        ]
+      },
+      "positive": {
+        "role": "custom",
+        "displayName": "Seeder Green",
+        "canonical": "var(--rm-positive)",
+        "dark": "#8bd89a",
+        "light": "#1c6c35",
+        "tonalRamp": [
+          "#8bd89a",
+          "#1c6c35"
+        ]
+      },
+      "bar": {
+        "role": "neutral",
+        "displayName": "Bar",
+        "canonical": "var(--rm-bar)",
+        "dark": "#161d1c",
+        "light": "#e4ebe8",
+        "tonalRamp": [
+          "#161d1c",
+          "#e4ebe8"
+        ]
+      }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "The app name on the login screen. Nowhere else." },
-      "title": { "displayName": "Title", "purpose": "Toolbar page title, list titles, and row titles from 960px up." },
-      "body": { "displayName": "Body", "purpose": "Material body-medium, the default for everything." },
-      "meta": { "displayName": "Meta", "purpose": "Year, rating, genre, file size, counts, release names." },
-      "label": { "displayName": "Label", "purpose": "Uppercase section headings inside an opened row." },
-      "badge": { "displayName": "Badge", "purpose": "Uppercase media quality badges." },
-      "mono": { "displayName": "Mono", "purpose": "NFO text, log lines, the commit hash." }
+      "detail-title": {
+        "displayName": "Detail title",
+        "purpose": "The title on a title page. 30px, 23px on phones."
+      },
+      "page-title": {
+        "displayName": "Page title",
+        "purpose": "Pages without a search bar, such as Watchlist."
+      },
+      "row-title": {
+        "displayName": "Row title",
+        "purpose": "Title rows and section headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default text, plot."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Year, rating, genre, sizes, counts."
+      },
+      "tag": {
+        "displayName": "Tag",
+        "purpose": "Quality tags and state chips. Light, never uppercase."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Release names, file paths, NFO text."
+      }
     },
     "shadows": [],
     "motion": [
-      { "name": "state-fast", "value": "0.15s", "purpose": "Background, color and border-color transitions on hand-built controls (feedback bar, refresh tile)." },
-      { "name": "shimmer", "value": "shimmer 1.5s linear infinite", "purpose": "Skeleton sweep while a list or ribbon loads." }
+      {
+        "name": "press",
+        "value": "scale 120ms ease-out",
+        "purpose": "Press feedback on hand-built controls (.pressable)."
+      },
+      {
+        "name": "route-fade",
+        "value": "160ms",
+        "purpose": "Cross-fade between pages."
+      },
+      {
+        "name": "detail-slide",
+        "value": "280ms cubic-bezier(0.2, 0, 0, 1)",
+        "purpose": "Title page sliding over the list on phones."
+      },
+      {
+        "name": "sheet-in",
+        "value": "300ms cubic-bezier(0.2, 0, 0, 1)",
+        "purpose": "Bottom sheet entering on phones."
+      },
+      {
+        "name": "shimmer",
+        "value": "shimmer 1.5s linear infinite",
+        "purpose": "Skeleton sweep while content loads."
+      }
     ],
     "breakpoints": [
-      { "name": "desktop", "value": "960px" }
+      {
+        "name": "sheet",
+        "value": "600px"
+      },
+      {
+        "name": "desktop",
+        "value": "960px"
+      }
     ]
   },
   "components": [
@@ -50,91 +310,75 @@
       "name": "Filled Button",
       "kind": "button",
       "refersTo": "button-filled",
-      "description": "The one primary action on a screen, e.g. Sign in with Passkey.",
-      "html": "<button class=\"ds-btn-filled\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M17.81 4.47c-.08 0-.16-.02-.23-.06C15.66 3.42 14 3 12.01 3c-1.98 0-3.86.47-5.57 1.41-.24.13-.54.04-.68-.2-.13-.24-.04-.55.2-.68C7.82 2.52 9.86 2 12.01 2c2.13 0 3.99.47 6.03 1.52.25.13.34.43.21.67-.09.18-.26.28-.44.28zM3.5 9.72c-.1 0-.2-.03-.29-.09-.23-.16-.28-.47-.12-.7.99-1.4 2.25-2.5 3.75-3.27C9.98 4.04 14 4.03 17.15 5.65c1.5.77 2.76 1.86 3.75 3.25.16.22.11.54-.12.7-.23.16-.54.11-.7-.12-.9-1.26-2.04-2.25-3.39-2.94-2.87-1.47-6.54-1.47-9.4.01-1.36.7-2.5 1.7-3.4 2.96-.08.14-.23.21-.39.21zm6.25 12.07c-.13 0-.26-.05-.35-.15-.87-.87-1.34-1.43-2.01-2.64-.69-1.23-1.05-2.73-1.05-4.34 0-2.97 2.54-5.39 5.66-5.39s5.66 2.42 5.66 5.39c0 .28-.22.5-.5.5s-.5-.22-.5-.5c0-2.42-2.09-4.39-4.66-4.39s-4.66 1.97-4.66 4.39c0 1.44.32 2.77.93 3.85.64 1.15 1.08 1.64 1.85 2.42.19.2.19.51 0 .71-.11.1-.24.15-.37.15z\"/></svg>Sign in with Passkey</button>",
-      "css": ".ds-btn-filled { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: 48px; width: 100%; max-width: 360px; padding: 0 24px; border: none; border-radius: 9999px; background: var(--mat-sys-primary, #abc7ff); color: var(--mat-sys-on-primary, #002f65); font: 500 0.95rem Roboto, sans-serif; cursor: pointer; } .ds-btn-filled:hover { background: color-mix(in srgb, var(--mat-sys-primary, #abc7ff) 92%, var(--mat-sys-on-primary, #002f65)); } .ds-btn-filled:focus-visible { outline: 2px solid var(--mat-sys-on-surface, #e3e2e6); outline-offset: 2px; }"
-    },
-    {
-      "name": "Stroked Button",
-      "kind": "button",
-      "refersTo": "button-stroked",
-      "description": "Secondary labelled actions such as Register or Enable.",
-      "html": "<button class=\"ds-btn-stroked\">Register</button>",
-      "css": ".ds-btn-stroked { height: 40px; padding: 0 24px; border: 1px solid var(--mat-sys-outline-variant, #44474e); border-radius: 9999px; background: transparent; color: var(--mat-sys-primary, #abc7ff); font: 500 0.875rem Roboto, sans-serif; cursor: pointer; } .ds-btn-stroked:hover { background: color-mix(in srgb, var(--mat-sys-primary, #abc7ff) 8%, transparent); } .ds-btn-stroked:focus-visible { outline: 2px solid var(--mat-sys-primary, #abc7ff); outline-offset: 2px; }"
+      "description": "The one primary action on a title page, e.g. Open in Jellyfin.",
+      "html": "<button class=\"ds-btn-filled\">Open in Jellyfin</button>",
+      "css": ".ds-btn-filled { height: 40px; padding: 0 18px; border: 0; border-radius: 9999px; background: var(--mat-sys-primary, #82d5c8); color: var(--mat-sys-on-primary, #003731); font: 550 14px 'Google Sans Flex', system-ui, sans-serif; cursor: pointer; } .ds-btn-filled:active { scale: 0.97; } .ds-btn-filled:focus-visible { outline: 2px solid var(--mat-sys-primary, #82d5c8); outline-offset: 2px; }"
     },
     {
       "name": "Title Row",
-      "kind": "card",
+      "kind": "list-item",
       "refersTo": "title-row",
-      "description": "The collapsed expandable row used for releases, library items and watchlist items.",
-      "html": "<div class=\"ds-row\"><div class=\"ds-row-poster\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z\"/></svg></div><div class=\"ds-row-info\"><span class=\"ds-row-title\">A Title That Is Long Enough To Truncate</span><span class=\"ds-row-meta\">2026 · ⭐ 7.8 · Drama, Thriller</span><span class=\"ds-row-state\">In library</span></div></div>",
-      "css": ".ds-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; max-width: 420px; background: var(--mat-sys-surface-container, #1f2022); border-radius: 12px; font-family: Roboto, sans-serif; } .ds-row-poster { width: 56px; height: 84px; flex-shrink: 0; display: grid; place-items: center; border-radius: 6px; background: var(--mat-sys-surface-variant, #44474e); color: var(--mat-sys-on-surface-variant, #c4c6d0); } .ds-row-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .ds-row-title { font-size: 0.875rem; font-weight: 500; color: var(--mat-sys-on-surface, #e3e2e6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-row-meta { font-size: 0.8rem; color: var(--mat-sys-on-surface-variant, #c4c6d0); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-row-state { font-size: 0.8rem; color: var(--mat-sys-tertiary, #bec2ff); }"
+      "description": "The one list pattern: poster, title, meta, tags, trailing column.",
+      "html": "<div class=\"ds-row\"><div class=\"ds-row-poster\"></div><div class=\"ds-row-info\"><b>The Quiet Years</b><span>2026 · 7.8 · Drama, Thriller</span><span><i class=\"ds-tag ds-tag-res\">2160p</i> <i class=\"ds-tag ds-tag-res\">1080p</i></span></div><span class=\"ds-row-side\">1284</span></div>",
+      "css": ".ds-row { display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 8px; border-radius: 6px; background: var(--mat-sys-surface-container, #1a2120); color: var(--mat-sys-on-surface, #dde4e2); font: 400 13px/18px 'Google Sans Flex', system-ui, sans-serif; } .ds-row-poster { width: 56px; aspect-ratio: 2 / 3; border-radius: 10px; background: var(--mat-sys-surface-container-high, #242b2a); } .ds-row-info { flex: 1; display: flex; flex-direction: column; gap: 2px; } .ds-row-info b { font-size: 16px; line-height: 21px; font-weight: 600; } .ds-row-info span { color: var(--mat-sys-on-surface-variant, #b4bfbc); } .ds-row-side { color: var(--rm-positive, #8bd89a); font-weight: 600; } .ds-tag { display: inline-block; height: 20px; padding: 0 8px; border-radius: 6px; background: var(--mat-sys-surface-container-high, #242b2a); font: 500 11.5px/20px 'Google Sans Flex', system-ui, sans-serif; font-style: normal; } .ds-tag-res { background: var(--mat-sys-secondary-container, #30514b); color: var(--mat-sys-on-secondary-container, #d2ede6); }"
     },
     {
-      "name": "Poster Tile",
-      "kind": "card",
-      "refersTo": "poster-tile",
-      "description": "Vertical tile in a recommendation ribbon.",
-      "html": "<div class=\"ds-tile\"><div class=\"ds-tile-poster\"></div><div class=\"ds-tile-info\"><span class=\"ds-tile-title\">Recommended Title</span><span class=\"ds-tile-meta\">2025 · ⭐ 8.1</span></div></div>",
-      "css": ".ds-tile { width: 150px; display: flex; flex-direction: column; overflow: hidden; border-radius: 8px; background: var(--mat-sys-surface-container, #1f2022); font-family: Roboto, sans-serif; cursor: pointer; } .ds-tile-poster { width: 100%; aspect-ratio: 2 / 3; background: var(--mat-sys-surface-variant, #44474e); } .ds-tile-info { display: flex; flex-direction: column; gap: 3px; padding: 0.5rem 0.6rem 0.4rem; } .ds-tile-title { font-size: 0.9rem; font-weight: 500; line-height: 1.35; color: var(--mat-sys-on-surface, #e3e2e6); } .ds-tile-meta { font-size: 0.8rem; color: var(--mat-sys-on-surface-variant, #c4c6d0); } .ds-tile:focus-visible { outline: 2px solid var(--mat-sys-primary, #abc7ff); outline-offset: 2px; }"
-    },
-    {
-      "name": "Navigation Item",
-      "kind": "nav",
-      "refersTo": "nav-item",
-      "description": "Square 48px drawer item; the active one sits on Selected Slate.",
-      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-nav-item-active\" href=\"#\">Releases</a><a class=\"ds-nav-item\" href=\"#\">Library</a><a class=\"ds-nav-item\" href=\"#\">Watchlist</a></nav>",
-      "css": ".ds-nav { display: flex; flex-direction: column; gap: 8px; width: 256px; background: var(--mat-sys-surface, #121316); } .ds-nav-item { display: flex; align-items: center; height: 48px; padding: 0 16px; color: var(--mat-sys-on-surface, #e3e2e6); font: 400 0.875rem Roboto, sans-serif; text-decoration: none; } .ds-nav-item:hover { background: color-mix(in srgb, var(--mat-sys-on-surface, #e3e2e6) 8%, transparent); } .ds-nav-item:focus-visible { outline: 2px solid var(--mat-sys-primary, #abc7ff); outline-offset: -2px; } .ds-nav-item-active, .ds-nav-item-active:hover { background: var(--mat-sys-secondary-container, #3e4759); color: var(--mat-sys-on-secondary-container, #dae2f9); }"
-    },
-    {
-      "name": "Media Badge",
+      "name": "Filter Chip",
       "kind": "chip",
-      "refersTo": "media-badge",
-      "description": "Tiny uppercase quality tag on library rows. Hues are tolerated drift.",
-      "html": "<span class=\"ds-badges\"><span class=\"ds-badge ds-badge-4k\">4K</span><span class=\"ds-badge ds-badge-dv\">DV</span><span class=\"ds-badge ds-badge-hdr\">HDR</span><span class=\"ds-badge ds-badge-codec\">HEVC</span><span class=\"ds-badge ds-badge-audio\">Atmos</span></span>",
-      "css": ".ds-badges { display: inline-flex; flex-wrap: wrap; gap: 3px; } .ds-badge { display: inline-flex; align-items: center; padding: 1px 5px; border-radius: 3px; font: 700 0.6rem/1.6 Roboto, sans-serif; letter-spacing: 0.05em; text-transform: uppercase; } .ds-badge-4k { background: rgba(124, 58, 237, 0.18); color: #a78bfa; } .ds-badge-dv { background: rgba(249, 115, 22, 0.18); color: #fb923c; } .ds-badge-hdr { background: rgba(245, 158, 11, 0.18); color: #fbbf24; } .ds-badge-codec { background: rgba(107, 114, 128, 0.18); color: #9ca3af; } .ds-badge-audio { background: rgba(59, 130, 246, 0.18); color: #60a5fa; }"
-    },
-    {
-      "name": "Feedback Bar",
-      "kind": "custom",
-      "description": "Like and dislike halves in one rounded bar on recommendation tiles.",
-      "html": "<div class=\"ds-feedback\"><button class=\"ds-feedback-btn ds-feedback-like\" aria-label=\"Like\">👍</button><button class=\"ds-feedback-btn ds-feedback-dislike\" aria-label=\"Dislike\">👎</button></div>",
-      "css": ".ds-feedback { display: flex; width: 150px; border-radius: 8px; overflow: hidden; } .ds-feedback-btn { flex: 1; border: none; padding: 0.6rem; cursor: pointer; transition: background 0.15s, color 0.15s; } .ds-feedback-like { background: rgba(46, 125, 50, 0.08); color: #2e7d32; } .ds-feedback-like:hover { background: rgba(46, 125, 50, 0.18); } .ds-feedback-dislike { background: rgba(179, 38, 30, 0.08); color: var(--mat-sys-error, #ffb4ab); } .ds-feedback-dislike:hover { background: rgba(179, 38, 30, 0.18); } .ds-feedback-btn:focus-visible { outline: 2px solid var(--mat-sys-primary, #abc7ff); outline-offset: -2px; }"
+      "refersTo": "filter-chip",
+      "description": "Visible filters under the search bar; the selected one fills.",
+      "html": "<button class=\"ds-chip ds-chip-on\">All</button> <button class=\"ds-chip\">Movies</button>",
+      "css": ".ds-chip { height: 32px; padding: 0 12px; border: 1px solid var(--mat-sys-outline-variant, #3a4442); border-radius: 8px; background: none; color: var(--mat-sys-on-surface-variant, #b4bfbc); font: 450 13px 'Google Sans Flex', system-ui, sans-serif; cursor: pointer; } .ds-chip-on { border-color: transparent; background: var(--mat-sys-secondary-container, #30514b); color: var(--mat-sys-on-secondary-container, #d2ede6); }"
     }
   ],
   "narrative": {
-    "northStar": "The Projection Booth",
-    "overview": "The interface is a dark, quiet control room. The only saturated, bright things in it are the film posters; everything the app itself draws is near-black surface, soft grey text and one pale blue accent. Chrome never competes with artwork. A person opens it on a phone, scans a column of titles, opens one, acts, and leaves.\n\nIt is stock Angular Material 3, dark scheme, used as shipped. Controls are unfussy: no custom button shapes, no gradients, no decorative illustration, no brand flourish. The customization that exists is practical tightening for dense lists (compact expansion headers, square nav items, smaller meta text). The system is dark only; there is no light theme.",
+    "northStar": "One row, one title page, one status strip",
+    "overview": "Release Manager stays inside Material 3 but does not read as stock Angular Material. Neutrals are tinted green, the accent is teal, and surfaces are separated by tone instead of shadow. Every feature page is built from the same title row, the same title page and the same segmented group, in light and dark, following the device setting.",
     "keyCharacteristics": [
-      "Dark only, near-black surfaces separated by tone, not by shadow.",
-      "Posters carry all the color; the UI stays achromatic plus one pale blue.",
-      "A single column of expandable title rows is the main pattern on every list page.",
-      "Stock Material components, tightened for density, never restyled for personality.",
-      "Phone layout is the design; one breakpoint at 960px adds room, not new structure."
+      "Green-tinted neutrals with a teal primary; posters carry the saturated colour.",
+      "Segmented groups: 2px seams, 6px inner corners, 20px outer corners.",
+      "Bottom navigation on phones, a navigation rail from 960px.",
+      "A title opens as a full page on phones and a side pane on desktop.",
+      "Amber means new since you last looked, plus rating stars, and nothing else."
     ],
     "rules": [
-      { "name": "The Poster Rule", "body": "Posters are the only saturated imagery on a screen. The interface does not introduce color that competes with them.", "section": "colors" },
-      { "name": "The Theme Token Rule", "body": "New color comes from `--mat-sys-*`. A hard-coded hex needs a reason, and the existing hard-coded ones are drift, not precedent.", "section": "colors" },
-      { "name": "The Long String Rule", "body": "Release names are unbreakable scene strings. Inside an opened row they wrap with `word-break: break-all`; in a collapsed row a title truncates to one line with an ellipsis. Never let either cause horizontal scroll.", "section": "typography" },
-      { "name": "The Tone-Not-Shadow Rule", "body": "A surface is raised by moving one step up the surface-container scale, never by adding a shadow.", "section": "elevation" }
+      {
+        "name": "One job per colour",
+        "body": "Each colour role has one meaning. Amber is only for new releases and rating stars.",
+        "section": "colors"
+      },
+      {
+        "name": "Theme roles only",
+        "body": "Colour comes from --mat-sys-* and the --rm-* roles in styles.scss. No hexes in components.",
+        "section": "colors"
+      },
+      {
+        "name": "One filled button",
+        "body": "A title page has at most one filled button, and only for a real primary action.",
+        "section": "components"
+      },
+      {
+        "name": "Trackers, not nCore",
+        "body": "Copy says trackers and each release names its tracker. No release is ranked or called best.",
+        "section": "components"
+      },
+      {
+        "name": "Tone, not shadow",
+        "body": "Content surfaces are separated by tone. No shadows on content.",
+        "section": "elevation"
+      }
     ],
     "dos": [
-      "Do read color from `--mat-sys-*` custom properties so the theme stays the single source.",
-      "Do use Dim Grey (`on-surface-variant`) for anything secondary and keep Screen White for titles.",
-      "Do build list pages as one centered column of Title Rows (max 960px, 1000px from the breakpoint).",
-      "Do raise a surface by tone (Console Grey on Booth Black) and separate same-tone regions with a 1px Hairline Slate line.",
-      "Do keep Shelf Periwinkle for ownership and watch state, and Booth Light Azure for links and actions.",
-      "Do truncate collapsed titles to one line and let opened release names break anywhere.",
-      "Do match a skeleton's size and radius to the thing it stands in for.",
-      "Do author for the phone first and widen at 960px only."
+      "Build new lists from app-title-row inside .seg-list, and title content inside app-title-detail.",
+      "Say \"trackers\", and let each release name its tracker.",
+      "Show library and watchlist state on the title wherever it appears.",
+      "Keep long machine strings in mono and let them wrap."
     ],
     "donts": [
-      "Don't add shadows to cards, rows or tiles.",
-      "Don't restyle Material buttons, fields or chips for looks; override only for density or layout.",
-      "Don't add a light theme variant or assume one exists.",
-      "Don't introduce new hard-coded colors. The seeder green and the five badge tints are tolerated drift, not a palette to extend.",
-      "Don't add a second breakpoint or a multi-column grid of rows.",
-      "Don't let the interface draw saturated color next to posters."
+      "Don't add a colour that is not a theme role, or reuse amber for anything but new and rating stars.",
+      "Don't add a second filled button to a page.",
+      "Don't put shadows on content or expand rows in place.",
+      "Don't rank releases or call one best."
     ]
   }
 }

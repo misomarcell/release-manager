@@ -1,0 +1,50 @@
+<div class="columns head" aria-hidden="true">
+    <span>Release</span>
+    <span>Tracker</span>
+    <span class="end">Size</span>
+    <span class="end">Seed</span>
+    <span class="end">Leech</span>
+    <span></span>
+</div>
+<div class="seg-list" role="list">
+    @for (row of rows(); track row.release.torrent_id) {
+        @let r = row.release;
+        <div class="tile columns" role="listitem">
+            <div class="what">
+                @if (row.tags.length) {
+                    <div class="tags">
+                        @for (tag of row.tags; track tag.label) {
+                            <span class="tag" [class]="tag.kind">{{ tag.label }}</span>
+                        }
+                    </div>
+                }
+                <a class="mono" [href]="r.details_url" target="_blank" rel="noopener">
+                    @for (part of row.nameParts; track $index) {{{ part }}<wbr />}
+                </a>
+            </div>
+            <span class="tracker">
+                {{ row.tracker }}
+                @if (r.freeleech) {
+                    <span class="fl" title="Freeleech">FL</span>
+                }
+            </span>
+            <span class="size num end">{{ formatBytes(r.size) }}</span>
+            <span class="seed num end" title="Seeders">
+                <mat-icon aria-label="Seeders">arrow_drop_up</mat-icon>{{ r.seeders }}
+            </span>
+            <span class="leech num end" title="Leechers">
+                <mat-icon aria-label="Leechers">arrow_drop_down</mat-icon>{{ r.leechers }}
+            </span>
+            <span class="buttons">
+                <button mat-icon-button type="button" aria-label="Show NFO" (click)="showNfo(r.torrent_id)">
+                    <mat-icon>description</mat-icon>
+                </button>
+                @if (auth.admin()) {
+                    <button mat-icon-button class="tonal" type="button" aria-label="Send to qBittorrent" (click)="download(r)">
+                        <mat-icon>download</mat-icon>
+                    </button>
+                }
+            </span>
+        </div>
+    }
+</div>

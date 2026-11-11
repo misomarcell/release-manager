@@ -3,7 +3,7 @@ import { HttpParams } from '@angular/common/http';
 import { ApiService } from './api.service';
 import type { NcoreCategoryKey, NcoreSearchResponse } from '@rm/shared/ncore.models';
 import type { DownloadRequest, DownloadResponse } from '@rm/shared/download.models';
-import type { MovieDetailMetadata } from '@rm/shared/tmdb.models';
+import type { MediaType, MovieMetadata, TitleSearchResponse } from '@rm/shared/tmdb.models';
 
 @Injectable({ providedIn: 'root' })
 export class SearchService {
@@ -40,8 +40,16 @@ export class SearchService {
     return this.api.post<DownloadResponse>('/api/search/download', request);
   }
 
-  async fetchMovieDetail(tmdbId: number, mediaType: string): Promise<MovieDetailMetadata> {
+  async fetchMovieDetail(tmdbId: number, mediaType: MediaType): Promise<MovieMetadata> {
     const params = new HttpParams().set('type', mediaType);
-    return this.api.get<MovieDetailMetadata>(`/api/search/metadata/${tmdbId}`, params);
+    return this.api.get<MovieMetadata>(`/api/search/metadata/${tmdbId}`, params);
+  }
+
+  async searchTitles(query: string, mediaType: MediaType | null): Promise<TitleSearchResponse> {
+    let params = new HttpParams().set('q', query);
+    if (mediaType) {
+      params = params.set('type', mediaType);
+    }
+    return this.api.get<TitleSearchResponse>('/api/search/titles', params);
   }
 }

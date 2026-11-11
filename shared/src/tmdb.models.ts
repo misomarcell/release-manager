@@ -25,11 +25,17 @@ export interface MovieMetadata {
   inJellyfinLibrary?: boolean;
 }
 
-export interface MovieDetailMetadata {
-  plot: string;
-  runtime: string;
-  rated: string;
-  releaseDate: string;
-  trailerKey?: string;
-  imdbId?: string;
+export interface TitleSummary {
+  tmdbId: number;
+  mediaType: MediaType;
+  title: string;
+  year: string;
+  poster: string;
+  genre: string;
+  rating: string;
+  inJellyfinLibrary: boolean;
+}
+
+export interface TitleSearchResponse {
+  results: TitleSummary[];
 }

@@ -220,6 +220,7 @@ class NcoreService {
         const imdbId = asString(item['imdb_id']);
 
         return {
+            tracker: 'ncore',
             torrent_id: asString(item['torrent_id']),
             category: asString(item['category']),
             release_name: releaseName,

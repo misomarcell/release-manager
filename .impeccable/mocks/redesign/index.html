@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Release Manager redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@300..800&family=Google+Sans+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+.dark{
+  color-scheme:dark;
+  --bg:#0e1514;--tile:#1a2120;--tile-hi:#242b2a;--pane:#141b1a;--bar:#161d1c;--field:#242b2a;
+  --on:#dde4e2;--on-var:#b4bfbc;--outline:#889391;--outline-var:#3a4442;
+  --primary:#82d5c8;--on-primary:#003731;--primary-c:#00504a;--on-primary-c:#a4f4e7;
+  --sec-c:#30514b;--on-sec-c:#d2ede6;
+  --ter:#f2c04e;--on-ter:#402d00;--ter-c:#574000;--on-ter-c:#ffe0a0;
+  --err:#ffb4ab;--err-c:#93000a;--on-err-c:#ffdad6;
+  --pos:#8bd89a;--scrim:rgba(0,0,0,.6);--frame:#2a3230;--lift:0 18px 48px -18px rgba(0,0,0,.7);
+}
+.light{
+  color-scheme:light;
+  --bg:#edf3f0;--tile:#ffffff;--tile-hi:#f3f8f6;--pane:#f7fbf9;--bar:#e4ebe8;--field:#ffffff;
+  --on:#161d1c;--on-var:#414b49;--outline:#6f7977;--outline-var:#c3cdca;
+  --primary:#006a60;--on-primary:#ffffff;--primary-c:#a4f4e7;--on-primary-c:#00201c;
+  --sec-c:#cfe9e2;--on-sec-c:#06201c;
+  --ter:#755800;--on-ter:#ffffff;--ter-c:#ffe0a0;--on-ter-c:#251a00;
+  --err:#ba1a1a;--err-c:#ffdad6;--on-err-c:#410002;
+  --pos:#1c6c35;--scrim:rgba(10,20,18,.42);--frame:#c3cdca;--lift:0 18px 44px -20px rgba(20,40,36,.35);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--on);--ui:'Google Sans Flex',system-ui,sans-serif;--mono:'Google Sans Code',ui-monospace,monospace;font-family:var(--ui);font-size:14px;line-height:20px;font-optical-sizing:auto;transition:background .25s}
+::selection{background:var(--primary);color:var(--on-primary)}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit}
+.ms{font-family:'Material Symbols Rounded';font-weight:400;font-style:normal;font-size:20px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;direction:ltr;flex:none;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;-webkit-font-smoothing:antialiased}
+.ms.f{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+.ms.s{font-size:16px}.ms.l{font-size:24px}
+.mono{font-family:var(--mono)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- board ---------- */
+.board{max-width:1344px;margin:0 auto;padding:28px 24px 96px}
+.top{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:flex-end;justify-content:space-between;margin-bottom:8px}
+.top h1{font-size:34px;line-height:40px;font-weight:650;font-stretch:96%;letter-spacing:-.01em;text-wrap:balance}
+.top p{max-width:68ch;color:var(--on-var);font-size:15px;line-height:23px;margin-top:10px}
+.ctl{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.pk{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--on-var)}
+.pick{height:42px;border-radius:21px;border:1px solid var(--outline);background:var(--bg);color:var(--on);padding:0 14px;font:inherit;font-size:14px;font-weight:500;max-width:100%}
+.seg{display:inline-flex;border:1px solid var(--outline);border-radius:999px;overflow:hidden;flex:none}
+.seg button{background:none;border:0;height:40px;padding:0 18px 0 14px;display:flex;align-items:center;gap:6px;font-weight:500;font-size:14px;cursor:pointer;color:var(--on)}
+.seg button+button{border-left:1px solid var(--outline)}
+.seg button[aria-pressed=true]{background:var(--sec-c);color:var(--on-sec-c)}
+.sec{margin-top:64px}
+.sec>h2{font-size:24px;line-height:30px;font-weight:650;font-stretch:96%}
+.sec>p{color:var(--on-var);max-width:72ch;margin-top:6px;font-size:15px;line-height:23px}
+.stage{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start;margin-top:22px}
+.shot{flex:none;max-width:100%}
+.shot.wide{flex:1 1 100%;min-width:0}
+.cap{color:var(--on-var);font-size:13px;line-height:19px;margin-top:10px;max-width:390px}
+.shot.wide .cap{max-width:80ch}
+.cap b{color:var(--on);font-weight:600}
+.note{margin-top:18px;color:var(--on-var);font-size:13px}
+
+/* ---------- frames ---------- */
+.phone{width:390px;height:844px;border-radius:40px;background:var(--bg);box-shadow:0 0 0 1px var(--frame),0 0 0 9px var(--tile),0 0 0 10px var(--frame),var(--lift);overflow:hidden;position:relative;display:flex;flex-direction:column;margin:10px}
+.desk{width:1280px;height:840px;border-radius:18px;background:var(--bg);box-shadow:0 0 0 1px var(--frame),var(--lift);overflow:hidden;position:relative;display:flex}
+.scroll{flex:1;min-height:0;overflow:hidden;padding:8px 12px 0;display:flex;flex-direction:column;gap:12px}
+
+/* ---------- shell ---------- */
+.bnav{height:76px;flex:none;background:var(--bar);display:flex;padding:10px 6px 0}
+.bnav a,.rail a{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-var);font-size:12px;line-height:16px;font-weight:550;text-decoration:none}
+.pill{width:60px;height:32px;border-radius:16px;display:grid;place-items:center;position:relative}
+a.on{color:var(--on)}
+a.on .pill{background:var(--sec-c);color:var(--on-sec-c)}
+.dot{position:absolute;top:1px;left:34px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--ter);color:var(--on-ter);font-size:11px;line-height:18px;font-weight:700;text-align:center}
+.rail{width:88px;flex:none;background:var(--bar);display:flex;flex-direction:column;align-items:center;padding:22px 0 16px;gap:14px}
+.rail a{flex:none;width:100%}
+.rail .pill{width:56px;height:48px;border-radius:14px;background:var(--tile-hi)}
+.rail .dot{top:5px;left:32px}
+.rail .sp{flex:1}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--primary-c);color:var(--on-primary-c);display:grid;place-items:center;font-weight:650;font-size:14px;flex:none}
+.ibtn{width:40px;height:40px;border-radius:20px;display:grid;place-items:center;color:var(--on-var);flex:none}
+.ibtn.tonal{background:var(--sec-c);color:var(--on-sec-c)}
+.search{height:56px;border-radius:28px;background:var(--field);display:flex;align-items:center;gap:10px;padding:0 8px 0 16px;color:var(--on-var);font-size:15px;flex:none}
+.light .search{box-shadow:0 0 0 1px var(--outline-var)}
+.search span.q{flex:1}
+.chips{display:flex;gap:8px;flex:none;align-items:center}
+.chip{height:32px;border-radius:8px;border:1px solid var(--outline-var);padding:0 12px;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:450;color:var(--on-var);white-space:nowrap}
+.chip.on{background:var(--sec-c);color:var(--on-sec-c);border-color:transparent;padding-left:8px}
+.chips i{width:1px;height:20px;background:var(--outline-var)}
+.lhead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:2px 6px 0;flex:none}
+.lhead b{font-size:13px;font-weight:600}
+.lhead span{font-size:12.5px;color:var(--on-var)}
+.appbar{height:56px;margin-top:8px;display:flex;align-items:center;gap:4px;padding:0 6px;flex:none}
+.appbar h3{flex:1;font-size:18px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:6px}
+.ptitle{height:56px;flex:none;font-size:26px;line-height:32px;font-weight:650;font-stretch:96%;padding:0 6px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.scope{height:28px;padding:0 2px 0 12px;border-left:1px solid var(--outline-var);display:inline-flex;align-items:center;gap:1px;font-size:13px;color:var(--on-var);white-space:nowrap;flex:none}
+.search .q.val{color:var(--on)}
+
+/* ---------- title row: the one list pattern ---------- */
+.list{display:flex;flex-direction:column;gap:2px}
+.row{display:flex;gap:12px;align-items:center;background:var(--tile);border-radius:6px;padding:8px 12px 8px 8px;min-width:0}
+.list>:first-child{border-top-left-radius:20px;border-top-right-radius:20px}
+.list>:last-child{border-bottom-left-radius:20px;border-bottom-right-radius:20px}
+.row.sel{background:var(--sec-c);color:var(--on-sec-c);border-radius:20px}
+.row.sel .rm,.row.sel .side small{color:inherit;opacity:.82}
+.poster{width:56px;aspect-ratio:2/3;border-radius:10px;overflow:hidden;flex:none;background:var(--tile-hi)}
+.poster svg{display:block;width:100%;height:100%}
+.ri{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.rt{font-size:16px;line-height:21px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rm{font-size:13px;line-height:18px;color:var(--on-var);font-stretch:94%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px}
+.rm .ms{color:var(--ter);font-size:14px}
+.rs{display:flex;gap:4px;margin-top:4px;overflow:hidden;align-items:center}
+.side{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none;font-size:13px}
+.side small{font-size:12px;color:var(--on-var)}
+.seed{color:var(--pos);font-weight:600;display:inline-flex;align-items:center;gap:1px}
+.leech{color:var(--err);font-weight:500;display:inline-flex;align-items:center;gap:1px}
+.seed .ms,.leech .ms{font-size:15px}
+.seed,.leech{white-space:nowrap}
+.row.sel .seed{color:inherit}
+.tag{height:20px;border-radius:6px;padding:0 8px;background:var(--tile-hi);color:var(--on-var);font-size:11.5px;line-height:20px;font-weight:500;font-stretch:92%;white-space:nowrap;flex:none}
+.pane .tag,.sheet .tag{background:var(--bg)}
+.tag.res{background:var(--sec-c);color:var(--on-sec-c)}
+.tag.hdr{background:var(--ter-c);color:var(--on-ter-c)}
+.row.sel .tag{background:rgba(127,127,127,.22);color:inherit}
+.st{height:22px;border-radius:7px;padding:0 8px 0 6px;display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;white-space:nowrap;flex:none}
+.st .ms{font-size:15px}
+.st.own{background:var(--primary-c);color:var(--on-primary-c)}
+.st.fol{box-shadow:inset 0 0 0 1px var(--outline-var);color:var(--on-var)}
+.st.new{background:var(--ter);color:var(--on-ter);padding:0 8px}
+.pager{display:flex;align-items:center;justify-content:flex-end;gap:2px;color:var(--on-var);font-size:13px;flex:none;padding:0 2px}
+
+/* ---------- detail ---------- */
+.pane{flex:1;min-width:0;background:var(--pane);margin:12px 12px 12px 0;border-radius:28px;padding:26px 28px;display:flex;flex-direction:column;gap:18px;overflow:hidden}
+.col{width:432px;flex:none;display:flex;flex-direction:column;gap:12px;padding:12px 14px 0 16px;overflow:hidden}
+.hero{display:flex;gap:20px;min-width:0}
+.hero .poster{width:132px;border-radius:16px}
+.phone .hero .poster{width:104px;border-radius:14px}
+.hi{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.hi h3{font-size:30px;line-height:36px;font-weight:650;font-stretch:96%;letter-spacing:-.005em;text-wrap:balance}
+.phone .hi h3{font-size:23px;line-height:28px}
+.facts{color:var(--on-var);font-size:14px;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:center}
+.facts .ms{color:var(--ter);font-size:16px}
+.facts b{color:var(--on);font-weight:600}
+.facts i{width:3px;height:3px;border-radius:50%;background:var(--outline)}
+.plot{font-size:14.5px;line-height:22px;color:var(--on);max-width:70ch;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{height:40px;border-radius:20px;padding:0 18px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:550;font-size:14px;white-space:nowrap;flex:none}
+.btn.fill{background:var(--primary);color:var(--on-primary)}
+.btn.tonal{background:var(--sec-c);color:var(--on-sec-c)}
+.btn.line{box-shadow:inset 0 0 0 1px var(--outline);color:var(--primary)}
+.btn.text{color:var(--primary);padding:0 12px}
+.btn.danger{color:var(--err)}
+.btn.sm{height:34px;padding:0 14px;font-size:13px}
+/* status: where the title stands in each system */
+.join{display:flex;gap:2px;flex:none}
+.sys{flex:1;min-width:0;background:var(--tile);border-radius:6px;padding:14px 18px 15px;display:flex;flex-direction:column;gap:3px}
+.join>:first-child{border-radius:18px 6px 6px 18px}
+.join>:last-child{border-radius:6px 18px 18px 6px}
+.sys small{font-size:12.5px;line-height:18px;color:var(--on-var);display:flex;align-items:center;gap:7px;font-weight:500}
+.sys small .ms{font-size:18px}
+.sys .v{display:flex;flex-direction:column;gap:1px;min-width:0}
+.sys b{font-size:16px;line-height:22px;font-weight:650}
+.sys .d{font-size:13px;line-height:18px;color:var(--on-var)}
+.sys.yes b{color:var(--primary)}
+.sys.hot b{color:var(--ter)}
+.phone .join{flex-direction:column}
+.phone .sys{flex:none;flex-direction:row;align-items:center;gap:12px;padding:12px 16px}
+.phone .sys small{width:96px;flex:none;font-size:13px}
+.phone .sys .v{flex:1}
+.phone .sys b{font-size:14.5px;line-height:20px}
+.phone .join>:first-child{border-radius:18px 18px 6px 6px}
+.phone .join>:last-child{border-radius:6px 6px 18px 18px}
+/* action bar: every per-title action, same shape */
+.ab{display:flex;gap:2px;flex:none}
+.ab .a{flex:1;min-width:0;background:var(--tile);border-radius:6px;padding:11px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12.5px;line-height:16px;font-weight:500;color:var(--on)}
+.ab .a .ms{font-size:22px;color:var(--on-var)}
+.ab>:first-child{border-radius:18px 6px 6px 18px}
+.ab>:last-child{border-radius:6px 18px 18px 6px}
+.ab .a.on{background:var(--primary-c);color:var(--on-primary-c)}
+.ab .a.on .ms{color:inherit}
+.ab i{width:12px;flex:none}
+.ab .a:has(+i){border-top-right-radius:18px;border-bottom-right-radius:18px}
+.ab i+.a{border-top-left-radius:18px;border-bottom-left-radius:18px}
+.sh{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex:none}
+.sh h4{margin:0;font-size:16px;font-weight:650}
+.sh span{font-size:12.5px;color:var(--on-var)}
+/* release rows */
+.rel{display:grid;grid-template-columns:minmax(0,1fr) 84px 62px 70px 40px 84px;gap:0 12px;align-items:center;background:var(--tile);border-radius:6px;padding:10px 8px 10px 14px}
+.rel.h{background:none;padding:0 8px 2px 14px;font-size:12px;color:var(--on-var);font-weight:550}
+.rel .r{text-align:right}
+.rn{font-size:12.5px;line-height:18px;overflow-wrap:anywhere;color:var(--on);margin-top:5px}
+.rel .tg{display:flex;gap:4px;flex-wrap:wrap}
+.rel .ax{display:flex;justify-content:flex-end;gap:2px}
+.fl{color:var(--pos);font-weight:600;font-size:11px;line-height:16px;padding:0 6px;border-radius:5px;box-shadow:inset 0 0 0 1px currentColor;white-space:nowrap}
+.trk{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--on-var);white-space:nowrap}
+.prel{background:var(--tile);border-radius:6px;padding:11px 8px 8px 14px;display:flex;flex-direction:column;gap:2px}
+.prel .tg{display:flex;gap:4px;flex-wrap:wrap}
+.prel .ft{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--on-var);margin-top:2px}
+.prel .ft .g{flex:1}
+.kv{display:grid;grid-template-columns:96px minmax(0,1fr);gap:0 12px;background:var(--tile);border-radius:6px;padding:10px 14px;font-size:13.5px}
+.kv small{color:var(--on-var);font-size:13px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px;min-height:0}
+.stack{display:flex;flex-direction:column;gap:10px;min-width:0}
+.why{background:var(--ter-c);color:var(--on-ter-c);border-radius:18px;padding:14px 16px;display:flex;gap:12px;font-size:14px;line-height:21px}
+.status{font-size:13px;color:var(--on-var)}
+.kchips{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ---------- sheet ---------- */
+.scrim{position:absolute;inset:0;background:var(--scrim)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--pane);border-radius:28px 28px 0 0;padding:10px 20px 22px;display:flex;flex-direction:column;gap:14px}
+.sheet::before{content:'';width:36px;height:4px;border-radius:2px;background:var(--outline);align-self:center;margin-bottom:4px}
+.sheet h3{font-size:22px;line-height:28px;font-weight:650}
+.field{border-radius:12px;box-shadow:inset 0 0 0 1px var(--outline);padding:9px 14px 10px;display:flex;flex-direction:column;gap:2px;position:relative}
+.field.focus{box-shadow:inset 0 0 0 2px var(--primary)}
+.field label{font-size:12px;color:var(--on-var)}
+.field.focus label{color:var(--primary)}
+.field .v{display:flex;gap:8px;align-items:center;font-size:14px;min-height:28px;flex-wrap:wrap}
+.hint{font-size:12.5px;color:var(--on-var);margin-top:-8px;padding:0 4px}
+.sacts{display:flex;gap:8px;align-items:center;margin-top:4px}
+.sacts .g{flex:1}
+.caret{width:1.5px;height:18px;background:var(--primary)}
+
+/* ---------- discover ---------- */
+.tabs{display:flex;gap:4px;background:var(--tile);border-radius:22px;padding:4px;flex:none;align-self:flex-start}
+.tabs>span{height:36px;padding:0 16px;border-radius:18px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:500;font-size:13.5px;color:var(--on-var)}
+.phone .tabs{align-self:stretch}.phone .tabs>span{flex:1}
+.tabs .on{background:var(--sec-c);color:var(--on-sec-c)}
+.rib{display:flex;gap:12px;overflow:hidden;flex:none}
+.tile{width:128px;flex:none;display:flex;flex-direction:column;gap:6px}
+.phone .tile{width:148px}
+.tile .poster{width:100%;border-radius:16px;position:relative;overflow:visible}
+.tile .poster svg{border-radius:16px}
+.tile.sel .poster{box-shadow:0 0 0 3px var(--primary)}
+.tile b{font-size:14px;line-height:19px;font-weight:600;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.tile .rm{font-size:12.5px}
+.ownb{position:absolute;right:6px;top:6px;width:24px;height:24px;border-radius:12px;background:var(--primary-c);color:var(--on-primary-c);display:grid;place-items:center}
+.ownb .ms{font-size:16px}
+.more{width:128px;aspect-ratio:2/3;border-radius:16px;border:1.5px dashed var(--outline);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--on-var);font-size:13px;font-weight:550;text-align:center;padding:0 12px;flex:none}
+
+/* ---------- foundations ---------- */
+.found{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2px;margin-top:22px}
+.fcard{background:var(--tile);padding:20px;border-radius:6px;display:flex;flex-direction:column;gap:12px}
+.found>:first-child{border-radius:20px 6px 6px 20px}
+.found>:last-child{border-radius:6px 20px 20px 6px}
+.fcard h3{font-size:16px;font-weight:650}
+.sw{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.sw div{height:44px;border-radius:10px;box-shadow:inset 0 0 0 1px var(--outline-var)}
+.swl{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:11.5px;color:var(--on-var);margin-top:-6px}
+.fcard p{color:var(--on-var);font-size:13.5px;line-height:20px}
+.fcard li{color:var(--on-var);font-size:13.5px;line-height:20px;margin-bottom:6px}
+.fcard ul{margin:0;padding-left:18px}
+.fcard li b{color:var(--on);font-weight:600}
+@media (prefers-reduced-motion:reduce){body{transition:none}}
+</style>
+</head>
+<body class="dark">
+<div class="board">
+  <div class="top">
+    <div>
+      <h1>Release Manager, refreshed</h1>
+      <p>A proposal for the four feature pages on phone and desktop. It stays inside Material 3, replaces the stock azure-on-grey look with its own palette and type, and gives every page the same three building blocks: one title row, one detail view, one status strip. All titles, posters and release names shown here are invented placeholders.</p>
+    </div>
+    <div class="ctl">
+    <div class="seg" role="group" aria-label="Theme">
+      <button type="button" data-t="dark" aria-pressed="true"><span class="ms s">dark_mode</span>Dark</button>
+      <button type="button" data-t="light" aria-pressed="false"><span class="ms s">light_mode</span>Light</button>
+    </div></div>
+  </div>
+
+  <section class="sec"><h2>Releases</h2>
+    <p>Filters move out of the hidden menu into chips. A row answers three questions before it is opened: what is it, do I own it, and how good and how healthy are the releases. Opening a title is a page on the phone and a side pane on desktop, so the list never jumps.</p>
+    <div class="stage" id="s-rel"></div></section>
+
+  <section class="sec"><h2>Library</h2>
+    <p>The same row and the same detail view, now fed by Jellyfin. Quality tags use one neutral style with two emphases (resolution, HDR) in place of five unrelated hues.</p>
+    <div class="stage" id="s-lib"></div></section>
+
+  <section class="sec"><h2>Watchlist</h2>
+    <p>Amber means "new since you last looked" everywhere: the navigation badge, the row and the status strip. Nothing else in the interface uses it except rating stars.</p>
+    <div class="stage" id="s-wat"></div></section>
+
+  <section class="sec"><h2>Discover</h2>
+    <p>Recommendations under a shorter name that fits a bottom bar, and the home of the new all-titles search. Releases and Library keep their own scoped search; this one reaches every title through TMDB, which is what the watchlist needs.</p>
+    <div class="stage" id="s-dis"></div></section>
+
+  <section class="sec"><h2>Foundations</h2>
+    <p>What changes underneath. Swatches follow the theme switch at the top of the page.</p>
+    <div class="found">
+      <div class="fcard"><h3>Color</h3>
+        <div class="sw"><div style="background:var(--bg)"></div><div style="background:var(--tile)"></div><div style="background:var(--sec-c)"></div><div style="background:var(--primary)"></div></div>
+        <div class="swl"><span>Ground</span><span>Tile</span><span>Selected</span><span>Action</span></div>
+        <div class="sw"><div style="background:var(--primary-c)"></div><div style="background:var(--ter)"></div><div style="background:var(--pos)"></div><div style="background:var(--err)"></div></div>
+        <div class="swl"><span>Owned</span><span>New</span><span>Seeders</span><span>Error</span></div>
+        <p>Green-tinted neutrals and a teal primary replace azure on grey. Each color has one job, and all of them are theme roles, so the hard-coded hexes go away.</p></div>
+      <div class="fcard"><h3>Type</h3>
+        <div style="font-size:26px;line-height:32px;font-weight:650;font-stretch:96%">The Long Way Home</div>
+        <div class="rm" style="font-size:14px">2025 · Adventure, Family · 1h 52m</div>
+        <div class="mono" style="font-size:12.5px;line-height:18px;overflow-wrap:anywhere">The.Long.Way.Home.2025.1080p.WEB-DL.H264-DEMO</div>
+        <p>Google Sans Flex for all interface text. Google Sans Code only for release names and paths, where characters must not be confused.</p></div>
+      <div class="fcard"><h3>Shape</h3>
+        <div class="list"><div class="row" style="background:var(--tile-hi);height:30px"></div><div class="row" style="background:var(--tile-hi);height:30px"></div><div class="row sel" style="height:30px"></div><div class="row" style="background:var(--tile-hi);height:30px"></div></div>
+        <p>Lists are segmented groups: large outer corners, 2px seams, and the selected item rounds fully. The status strip, release lists and sheets all reuse it.</p></div>
+      <div class="fcard"><h3>What moves</h3>
+        <ul><li><b>Navigation</b> becomes a bottom bar on phones and a rail on desktop; the drawer goes away.</li><li><b>Admin pages</b> (users, administration, logs) and sign out move behind the account avatar.</li><li><b>Dialogs</b> for download and watchlist become bottom sheets on phones.</li></ul></div>
+    </div>
+  </section>
+  <p class="note">Open points are listed in the chat message that came with this file.</p>
+</div>
+
+<script>
+const ic=(n,c='')=>`<span class="ms ${c}" aria-hidden="true">${n}</span>`;
+const P=[
+ {t:'The Quiet Years',l:['THE QUIET','YEARS'],y:2026,r:'7.8',g:'Drama, Thriller',k:'Movie',bg:'#1d3557',fg:'#f1faee',ac:'#e63946',m:0},
+ {t:'Northern Line',l:['NORTHERN','LINE'],y:2026,r:'7.1',g:'Crime, Mystery',k:'Movie',bg:'#f4a261',fg:'#22223b',ac:'#22223b',m:1},
+ {t:'Glass City',l:['GLASS','CITY'],y:2025,r:'8.2',g:'Sci-Fi, Drama',k:'TV Show',bg:'#3a0ca3',fg:'#f8f9fa',ac:'#4cc9f0',m:2},
+ {t:'The Long Harvest',l:['THE LONG','HARVEST'],y:2026,r:'6.9',g:'Drama',k:'Movie',bg:'#606c38',fg:'#fefae0',ac:'#dda15e',m:3},
+ {t:'The Long Way Home',l:['THE LONG','WAY HOME'],y:2025,r:'7.4',g:'Adventure, Family',k:'Movie',bg:'#e9c46a',fg:'#264653',ac:'#e76f51',m:4},
+ {t:'Salt & Static',l:['SALT &','STATIC'],y:2026,r:'6.4',g:'Thriller',k:'Movie',bg:'#111111',fg:'#f5f5f5',ac:'#ffd60a',m:5},
+ {t:'Watchtower',l:['WATCH','TOWER'],y:2024,r:'8.0',g:'War, Drama',k:'TV Show',bg:'#8d0801',fg:'#f6f4e8',ac:'#f6aa1c',m:6},
+ {t:'Paper Moons',l:['PAPER','MOONS'],y:2026,r:'7.6',g:'Animation, Family',k:'Movie',bg:'#ffafcc',fg:'#3d1a5b',ac:'#ffffff',m:7},
+ {t:'Low Tide Club',l:['LOW TIDE','CLUB'],y:2025,r:'7.3',g:'Comedy',k:'TV Show',bg:'#00b4d8',fg:'#03045e',ac:'#ffe45e',m:1},
+ {t:'Firewall',l:['FIRE','WALL'],y:2026,r:'6.7',g:'Action',k:'Movie',bg:'#ff5400',fg:'#14110f',ac:'#14110f',m:3},
+ {t:'Long Shadows',l:['LONG','SHADOWS'],y:2022,r:'7.0',g:'Crime',k:'TV Show',bg:'#2b2d42',fg:'#edf2f4',ac:'#ef233c',m:4},
+ {t:'The Longest Winter',l:['THE LONGEST','WINTER'],y:2019,r:'6.8',g:'Drama',k:'Movie',bg:'#caf0f8',fg:'#03045e',ac:'#0077b6',m:7},
+ {t:'Longhand',l:['LONG','HAND'],y:2023,r:'6.1',g:'Comedy',k:'Movie',bg:'#283618',fg:'#fefae0',ac:'#bc6c25',m:5},
+];
+const motif=p=>[
+ `<circle cx="30" cy="34" r="17" fill="${p.ac}"/><rect y="50" width="60" height="40" fill="${p.bg}"/><path d="M0 50h60" stroke="${p.fg}" stroke-width=".8"/>`,
+ `<path d="M-10 62L70 14M-10 74L70 26M-10 86L70 38" stroke="${p.ac}" stroke-width="5"/>`,
+ `<g fill="${p.ac}"><rect x="8" y="12" width="9" height="46"/><rect x="20" y="24" width="9" height="34"/><rect x="32" y="6" width="9" height="52"/><rect x="44" y="30" width="9" height="28"/></g>`,
+ `<path d="M0 30q15-9 30 0t30 0v10q-15-9-30 0t-30 0zM0 46q15-9 30 0t30 0v10q-15-9-30 0t-30 0z" fill="${p.ac}"/>`,
+ `<path d="M30 10L52 56H8z" fill="${p.ac}"/><circle cx="44" cy="16" r="5" fill="${p.fg}"/>`,
+ `<g fill="${p.ac}">${[0,1,2,3,4].map(r=>[0,1,2,3].map(c=>`<circle cx="${12+c*12}" cy="${12+r*10}" r="${(r+c)%3?1.4:3}"/>`).join('')).join('')}</g>`,
+ `<path d="M20 60V26a10 10 0 0120 0v34z" fill="${p.ac}"/><rect x="27" y="34" width="6" height="10" fill="${p.bg}"/>`,
+ `<circle cx="24" cy="30" r="15" fill="${p.ac}"/><circle cx="31" cy="26" r="13" fill="${p.bg}"/><circle cx="44" cy="46" r="5" fill="${p.ac}"/>`,
+][p.m];
+const poster=i=>{const p=P[i];return `<div class="poster"><svg viewBox="0 0 60 90" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder poster for ${p.t}"><rect width="60" height="90" fill="${p.bg}"/>${motif(p)}<text x="6" y="74" fill="${p.fg}" font-size="6.6" font-weight="800" style="font-family:var(--ui);font-stretch:80%">${p.l[0]}</text><text x="6" y="82" fill="${p.fg}" font-size="6.6" font-weight="800" style="font-family:var(--ui);font-stretch:80%">${p.l[1]}</text></svg></div>`};
+const rn=n=>n.split('.').map(t=>`<span style="white-space:nowrap">${t}</span>`).join('.<wbr>');
+const tag=s=>`<span class="tag ${/^\d{3,4}p$/.test(s)?'res':/HDR|DV/.test(s)?'hdr':''}">${s}</span>`;
+const tags=a=>a.map(tag).join('');
+const own=`<span class="st own">${ic('check_circle','f')}In library</span>`;
+const fol=`<span class="st fol">${ic('bookmark','f')}Following</span>`;
+const nw=n=>`<span class="st new">${n} new</span>`;
+const meta=(p,x)=>`<div class="rm"><span>${p.y}</span>·${ic('star','f')}<span>${p.r}</span>·<span style="overflow:hidden;text-overflow:ellipsis">${x||p.g}</span></div>`;
+const row=(i,{m,s='',side='',sel}={})=>`<div class="row${sel?' sel':''}">${poster(i)}<div class="ri"><div class="rt">${P[i].t}</div>${m||meta(P[i])}<div class="rs">${s}</div></div>${side?`<div class="side num">${side}</div>`:''}</div>`;
+const seed=n=>`<span class="seed">${ic('arrow_drop_up')}${n}</span>`;
+const leech=n=>`<span class="leech">${ic('arrow_drop_down')}${n}</span>`;
+const NAV=[['new_releases','Releases'],['video_library','Library'],['bookmarks','Watchlist'],['explore','Discover']];
+const nav=(a)=>NAV.map(([i,l],n)=>`<a class="${n===a?'on':''}" href="#" ${n===a?'aria-current="page"':''}><span class="pill">${ic(i,n===a?'f':'')}${n===2?'<span class="dot">3</span>':''}</span>${l}</a>`).join('');
+const bnav=a=>`<nav class="bnav" aria-label="Main">${nav(a)}</nav>`;
+const rail=a=>`<nav class="rail" aria-label="Main">${nav(a)}<span class="sp"></span><span class="ibtn">${ic('settings')}</span><span class="avatar">M</span></nav>`;
+const search=(q,av=true,scope='',val='')=>`<div class="search">${ic('search')}<span class="q${val?' val':''}">${val||q}</span>${val?`<span class="ibtn" style="margin-right:-6px">${ic('close')}</span>`:''}${scope?`<span class="scope">${scope}${ic('arrow_drop_down')}</span>`:''}${av?'<span class="avatar">M</span>':''}</div>`;
+const chips=a=>`<div class="chips">${a.map(c=>c==='|'?'<i></i>':c[0]==='*'?`<span class="chip on">${ic('check','s')}${c.slice(1)}</span>`:`<span class="chip">${c}</span>`).join('')}</div>`;
+const sys=(icn,lab,v,sub,cls='')=>`<div class="sys ${cls}"><small>${ic(icn)}${lab}</small><div class="v"><b>${v}</b>${sub?`<span class="d">${sub}</span>`:''}</div></div>`;
+const act=(i,l,on)=>`<span class="a${on?' on':''}">${ic(i,on?'f':'')}${l}</span>`;
+const ab=({fol,like,more}={})=>`<div class="ab">${fol?act('bookmark_added','Following',1):act('bookmark_add','Follow')}${act('smart_display','Trailer')}${act('open_in_new','IMDb')}${more?act('more_horiz','More'):''}<i></i>${act('thumb_up','Like',like)}${act('thumb_down','Dislike')}</div>`;
+const plotS=(t,n=3)=>`<div class="stack" style="gap:5px"><div class="sh"><h4>Plot</h4></div><p class="plot" style="-webkit-line-clamp:${n}">${t}</p></div>`;
+const star=r=>`<span style="display:inline-flex;gap:4px;align-items:center">${ic('star','f')}<b>${r}</b></span>`;
+const REL=[
+ ['The.Quiet.Years.2026.2160p.UHD.BluRay.REMUX.DV.HDR10.HEVC.TrueHD.7.1.Atmos-DEMO',['2160p','DV','HDR10','REMUX','Atmos'],'58.4 GB','1 284','37',1,'nCore'],
+ ['The.Quiet.Years.2026.2160p.WEB-DL.DV.HDR10P.HEVC.DDP5.1.Atmos-DEMO',['2160p','DV','HDR10+','WEB-DL'],'21.7 GB','912','14',0,'Tracker 2'],
+ ['The.Quiet.Years.2026.1080p.BluRay.x264.DTS-HD.MA.5.1-DEMO',['1080p','BluRay','DTS-HD'],'13.2 GB','806','9',0,'nCore'],
+ ['The.Quiet.Years.2026.1080p.WEB-DL.H264.DDP5.1-DEMO',['1080p','WEB-DL'],'8.2 GB','655','4',0,'nCore'],
+ ['The.Quiet.Years.2026.720p.WEB-DL.H264-DEMO',['720p','WEB-DL'],'3.1 GB','120','2',0,'Tracker 2'],
+];
+const relRow=r=>`<div class="rel"><div><div class="tg">${tags(r[1])}</div><div class="rn mono">${rn(r[0])}</div></div><div class="trk">${r[6]}${r[5]?'<span class="fl" title="Freeleech">FL</span>':''}</div><div class="r num">${r[2]}</div><div class="r num">${seed(r[3])}</div><div class="r num">${leech(r[4])}</div><div class="ax"><span class="ibtn" title="Show NFO">${ic('description')}</span><span class="ibtn tonal" title="Send to qBittorrent">${ic('download')}</span></div></div>`;
+const pRel=r=>`<div class="prel"><div class="tg">${tags(r[1])}</div><div class="rn mono" style="margin-top:4px">${rn(r[0])}</div><div class="ft num"><span class="trk">${r[6]}${r[5]?'<span class="fl" title="Freeleech">FL</span>':''}</span><span>${r[2]}</span>${seed(r[3])}${leech(r[4])}<span class="g"></span><span class="ibtn">${ic('description')}</span><span class="ibtn tonal">${ic('download')}</span></div></div>`;
+const hero=(i,facts,extra='')=>`<div class="hero">${poster(i)}<div class="hi"><h3>${P[i].t}</h3><div class="facts">${facts}</div>${extra}</div></div>`;
+const f1=`<span>Movie</span><i></i><span>2026</span><i></i><span>2h 14m</span><i></i><span>16</span><i></i><span style="display:inline-flex;gap:4px;align-items:center">${ic('star','f')}<b>7.8</b></span>`;
+const plot1=plotS('A retired sound engineer is cataloguing old tapes when he hears a conversation on one of them that should never have taken place. The longer he listens, the less sure he is whose voice it is.');
+const shot=(html,cap,wide)=>`<div class="shot${wide?' wide':''}"><div class="fit" data-w="${wide?1280:410}">${html}</div><p class="cap">${cap}</p></div>`;
+const phone=h=>`<div class="phone">${h}</div>`, desk=h=>`<div class="desk">${h}</div>`;
+
+/* ---------------- Releases ---------------- */
+const relRows=sel=>[
+ row(0,{s:tags(['2160p','1080p'])+own,side:seed('1 284')+'<small>5 releases</small>',sel}),
+ row(1,{s:tags(['2160p','HDR10','1080p']),side:seed('1 102')+'<small>4 releases</small>'}),
+ row(2,{m:meta(P[2],'Sci-Fi · S02E05'),s:tags(['1080p','720p'])+fol,side:seed('987')+'<small>2 releases</small>'}),
+ row(3,{s:tags(['1080p']),side:seed('731')+'<small>1 release</small>'}),
+ row(4,{s:tags(['2160p','1080p'])+own,side:seed('604')+'<small>3 releases</small>'}),
+ row(5,{s:tags(['1080p','720p']),side:seed('412')+'<small>2 releases</small>'}),
+ row(6,{m:meta(P[6],'War · S01 pack'),s:tags(['2160p','HDR10']),side:seed('377')+'<small>1 release</small>'}),
+];
+const relList=`<div class="scroll">${search('Search releases…',true,'All trackers')}${chips(['*All','Movies','TV Shows','|','4K only'])}<div class="lhead"><b>Top releases</b><span>by seeders · page 1 of 13</span></div><div class="list">${relRows(false).join('')}</div></div>${bnav(0)}`;
+const join1=`<div class="join">${sys('cloud_download','Trackers','5 releases','on 2 trackers · 2160p, 1080p, 720p')}${sys('video_library','Library','In library','1080p WEB-DL · 8.2 GB','yes')}${sys('bookmarks','Watchlist','Not following','Follow to hear about new releases')}</div>`;
+const relDetail=`<div class="appbar"><span class="ibtn">${ic('arrow_back')}</span><h3>Releases</h3><span class="ibtn">${ic('more_vert')}</span></div><div class="scroll" style="padding-top:2px;gap:16px">${hero(0,f1,`<div class="rm" style="white-space:normal">Drama, Thriller</div>`)}${ab({like:1})}${plot1}${join1}<div class="sh"><h4>Releases on this page</h4><span>5 · by seeders</span></div><div class="list">${REL.slice(0,3).map(pRel).join('')}</div></div>`;
+const dlSheet=`${relDetail}<div class="scrim"></div><div class="sheet" role="dialog" aria-label="Send to qBittorrent"><h3>Send to qBittorrent</h3><div class="prel" style="border-radius:16px;background:var(--tile)"><div class="tg">${tags(REL[1][1])}</div><div class="rn mono" style="margin-top:4px">${rn(REL[1][0])}</div><div class="ft num"><span class="trk">Tracker 2</span><span>21.7 GB</span>${seed('912')}${leech('14')}</div></div><div class="kv" style="border-radius:16px;align-items:center"><small>Type</small><span>Movie</span></div><div><div class="status" style="padding:0 4px 8px">Category</div>${chips(['*movies','tv'])}</div><div class="field focus"><label>Save path</label><div class="v mono" style="font-size:13px">${ic('folder')}/media/Movies/The Quiet Years (2026)<span class="caret"></span></div></div><p class="hint">Suggested from the title. Edit it if this should go somewhere else.</p><div class="sacts"><span class="g"></span><span class="btn text">Cancel</span><span class="btn fill">${ic('download')}Download</span></div></div>`;
+const relDesk=`${rail(0)}<div class="col">${search('Search releases…',false,'All trackers')}${chips(['*All','Movies','TV Shows','|','4K only'])}<div class="lhead"><b>Top releases</b><span>by seeders · 312 results</span></div><div class="list">${relRows(true).slice(0,6).join('')}</div><div class="pager num"><span>1–25 of 312</span><span class="ibtn">${ic('chevron_left')}</span><span class="ibtn">${ic('chevron_right')}</span></div></div><div class="pane">${hero(0,f1,`<div class="rm" style="margin-bottom:10px">Drama, Thriller</div>${plot1}`)}${ab({like:1,more:1})}${join1}<div class="sh"><h4>Releases on this page</h4><span>sorted by seeders</span></div><div class="list"><div class="rel h"><span>Release</span><span>Tracker</span><span class="r">Size</span><span class="r">Seed</span><span class="r">Leech</span><span></span></div>${REL.slice(0,4).map(relRow).join('')}</div></div>`;
+document.getElementById('s-rel').innerHTML=
+ shot(phone(relList),'<b>List.</b> Search and filter chips stay visible. Each row carries the resolutions on offer, the top seeder count, and whether you own or follow the title. The search bar names its scope and holds the tracker picker.')+
+ shot(phone(relDetail),'<b>Title page.</b> One action bar holds every per-title action in the same shape. Plot gets a heading. Status is three full-width rows, so nothing is cut off. Each release names its tracker; FL sits beside it, away from the quality tags.')+
+ shot(phone(dlSheet),'<b>Download.</b> A bottom sheet in thumb reach. The save path is the focused field, so the one editable thing is the obvious thing.')+
+ shot(desk(relDesk),'<b>Desktop.</b> Navigation rail, list and detail side by side. Selecting a row fills the pane on the right. The plot sits beside the poster under its own heading, the action bar spans the pane with Like and Dislike set apart on the right, and releases become a table with a tracker column.',true);
+
+/* ---------------- Library ---------------- */
+const libRows=sel=>[
+ row(2,{m:meta(P[2],'3 seasons · 28 episodes'),s:tags(['2160p','DV','HEVC','Atmos']),side:'<b>164.3 GB</b>',sel}),
+ row(0,{s:tags(['1080p','H264','DD+ 5.1']),side:'<b>8.2 GB</b>'}),
+ row(4,{s:tags(['2160p','HDR10','HEVC','TrueHD']),side:'<b>41.9 GB</b>'}),
+ row(6,{m:meta(P[6],'1 season · 8 episodes'),s:tags(['1080p','HEVC','DD+ 5.1']),side:'<b>22.6 GB</b>'}),
+ row(7,{s:tags(['1080p','H264','AAC']),side:'<b>4.7 GB</b>'}),
+ row(8,{m:meta(P[8],'2 seasons · 16 episodes'),s:tags(['1080p','HEVC']),side:'<b>19.4 GB</b>'}),
+ row(9,{s:tags(['2160p','DV','HEVC','Atmos']),side:'<b>52.0 GB</b>'}),
+];
+const libHead='<div class="lhead"><b>412 items</b><span>1.82 TB remaining</span></div>';
+const libList=`<div class="scroll">${search('Search library…')}${chips(['*All','Movies','TV Shows'])}${libHead}<div class="list">${libRows(false).join('')}</div></div>${bnav(1)}`;
+const kv=(k,v,m)=>`<div class="kv"><small>${k}</small><span class="${m?'mono':''}" style="${m?'font-size:12.5px;overflow-wrap:anywhere':''}">${v}</span></div>`;
+const libDesk=`${rail(1)}<div class="col">${search('Search library…',false)}${chips(['*All','Movies','TV Shows'])}${libHead}<div class="list">${libRows(true).slice(0,6).join('')}</div><div class="pager num"><span>1–25 of 412</span><span class="ibtn">${ic('chevron_left')}</span><span class="ibtn">${ic('chevron_right')}</span></div></div><div class="pane">${hero(2,`<span>TV Show</span><i></i><span>2025</span><i></i><span>16</span><i></i>${star('8.2')}`,`<div class="rm" style="margin-bottom:10px">Sci-Fi, Drama</div>${plotS('In a city built under a glass dome, everyone knows the world outside cannot be survived. Then someone knocks from the other side.')}`)}<div style="display:flex;gap:12px;align-items:center"><span class="btn fill" style="height:68px;border-radius:18px;padding:0 24px">${ic('play_circle','f')}Open in Jellyfin</span><div style="flex:1;min-width:0">${ab({fol:1,more:1})}</div></div><div class="join">${sys('video_library','Library','In library','3 seasons · 28 episodes · 164.3 GB','yes')}${sys('bookmarks','Watchlist','Following','filter: 2160p, web-dl')}${sys('cloud_download','Trackers','Search releases','look this title up on your trackers')}</div><div class="two"><div class="stack"><div class="sh"><h4>Seasons</h4><span>28 episodes</span></div><div class="list">${kv('Season 1','10 episodes')}${kv('Season 2','10 episodes')}${kv('Season 3','8 episodes')}</div></div><div class="stack"><div class="sh"><h4>Media info</h4><span>first episode</span></div><div class="list">${kv('Video','4K HEVC · Dolby Vision · HDR10')}${kv('Audio','English TrueHD Atmos · English DD+ 5.1')}${kv('Subtitles','English · German')}${kv('Path','/media/TV_Shows/Glass City (2025)',1)}</div></div></div></div>`;
+document.getElementById('s-lib').innerHTML=
+ shot(phone(libList),'<b>List.</b> The row keeps its shape; the trailing column switches from seeders to size on disk. Item count and remaining space sit in the list header.')+
+ shot(desk(libDesk),'<b>Desktop.</b> The same detail view with library content: seasons and media info as segmented lists, file path in mono. Open in Jellyfin is the one filled button; Delete moves into More, as it is today.',true);
+
+/* ---------------- Watchlist ---------------- */
+const wm=(i,x)=>`<div class="rm"><span>${P[i].y}</span>·<span>${P[i].k}</span></div><div class="rm">${ic('filter_alt','s')}<span style="overflow:hidden;text-overflow:ellipsis">${x}</span></div>`;
+const watRows=sel=>[
+ row(2,{m:wm(2,'2160p, web-dl'),side:nw(2),sel}),
+ row(6,{m:wm(6,'All releases'),side:nw(1)}),
+ row(1,{m:wm(1,'bluray, 2160p'),side:'<small>14 known</small>'}),
+ row(3,{m:wm(3,'remux'),side:'<small>6 known</small>'}),
+ row(8,{m:wm(8,'All releases'),side:'<small>9 known</small>'}),
+ row(9,{m:wm(9,'2160p, hdr'),side:'<small>3 known</small>'}),
+ row(7,{m:wm(7,'bluray'),side:'<small>0 known</small>'}),
+];
+const watCss='<style>.wl .row .rm .ms{color:var(--on-var)}.wl .rs{display:none}</style>';
+const watHead=`<div class="lhead" style="align-items:center"><div><b>7 titles</b> <span>· 3 new releases</span></div><span class="btn tonal sm">${ic('refresh')}Check now</span></div>`;
+const watList=`<div class="scroll wl"><div class="ptitle">Watchlist<span style="flex:1"></span><span class="ibtn tonal" title="Add a title">${ic('add')}</span><span class="avatar">M</span></div>${watHead}<div class="list">${watRows(false).join('')}</div></div>${bnav(2)}`;
+const kc=(a,x)=>a.map(k=>`<span class="chip${x?' on':''}" style="${x?'padding:0 6px 0 10px':''}">${k}${x?ic('close','s'):''}</span>`).join('');
+const watSheet=`${watList}<div class="scrim"></div><div class="sheet" role="dialog" aria-label="Edit watchlist item"><h3>Edit watchlist item</h3><div class="row" style="border-radius:16px;padding-right:14px">${poster(2)}<div class="ri"><div class="rt">Glass City</div><div class="rm">2025 · TV Show</div></div></div><div class="field focus"><label>Release filter keywords</label><div class="v">${kc(['2160p','web-dl'],1)}<span class="caret"></span></div></div><p class="hint">Leave empty to be notified about every new release.</p><div><div class="status" style="padding:0 4px 8px">Suggestions</div><div class="kchips"><span class="chip on">${ic('check','s')}2160p</span><span class="chip">1080p</span><span class="chip">bluray</span><span class="chip on">${ic('check','s')}web-dl</span><span class="chip">remux</span><span class="chip">hdr</span></div></div><div class="sacts"><span class="btn text danger">${ic('bookmark_remove')}Remove</span><span class="g"></span><span class="btn text">Cancel</span><span class="btn fill">${ic('save')}Save</span></div></div>`;
+const newRel=(n,sz,d)=>`<div class="prel"><div class="rn mono" style="margin:0">${rn(n)}</div><div class="ft num" style="min-height:24px"><span>${sz}</span><span>Found ${d}</span></div></div>`;
+const watDesk=`${rail(2)}<div class="col wl"><div class="ptitle">Watchlist<span class="btn tonal sm">${ic('add')}Add title</span></div>${watHead}<div class="list">${watRows(true).slice(0,6).join('')}</div></div><div class="pane">${hero(2,`<span>TV Show</span><i></i><span>2025</span><i></i>${star('8.2')}`,`<div class="rm">Sci-Fi, Drama</div><div class="acts" style="margin-top:auto"><span class="btn fill">${ic('done_all')}Mark as read</span><span class="btn tonal">${ic('search')}Show releases</span><span class="btn tonal">${ic('tune')}Edit filter</span></div>`)}${ab({fol:1,more:1})}<div class="join">${sys('bookmarks','Watchlist','2 new releases','since 2026-11-10 09:00','hot')}${sys('video_library','Library','In library','3 seasons · 28 episodes','yes')}${sys('cloud_download','Trackers','14 known releases','last checked 2026-11-11 09:00')}</div><div class="two" style="grid-template-columns:1.5fr 1fr"><div class="stack"><div class="sh"><h4>New releases</h4><span>matching your filter</span></div><div class="list">${newRel('Glass.City.S03E08.2160p.WEB-DL.DV.HDR10P.HEVC.DDP5.1-DEMO','7.4 GB','2026-11-11 09:00')}${newRel('Glass.City.S03E07.2160p.WEB-DL.DV.HDR10P.HEVC.DDP5.1-DEMO','7.1 GB','2026-11-10 09:00')}</div></div><div class="stack"><div class="sh"><h4>Release filter</h4><span>any keyword matches</span></div><div class="kchips"><span class="chip">2160p</span><span class="chip">web-dl</span></div><p class="status">A new release only counts when its name contains at least one of these.</p></div></div></div>`;
+document.getElementById('s-wat').innerHTML=watCss+
+ shot(phone(watList),'<b>List.</b> Titles with unseen releases carry an amber count; the rest show how many releases are already known. Check now sits in the header as a real button, and the plus in the top bar opens the all-titles search.')+
+ shot(phone(watSheet),'<b>Edit filter.</b> Keywords as removable chips, suggestions one tap away, Remove kept apart from Save.')+
+ shot(desk(watDesk),'<b>Desktop.</b> The status strip leads with what is new and when it was found. Mark as read is the primary action because it is the one that clears the badge.',true);
+
+/* ---------------- Discover ---------------- */
+const tile=(i,o,sel)=>`<div class="tile${sel?' sel':''}">${poster(i).replace('</div>',(o?`<span class="ownb" title="In library">${ic('check','f')}</span>`:'')+'</div>')}<b>${P[i].t}</b><div class="rm"><span>${P[i].y}</span>·${ic('star','f')}<span>${P[i].r}</span></div></div>`;
+const more=`<div class="more">${ic('refresh','l')}Get new recommendations</div>`;
+const rh=(i,t)=>`<div class="sh" style="padding:0 4px"><h4 style="display:flex;gap:8px;align-items:center">${ic(i)}${t}</h4></div>`;
+const tabs=a=>`<div class="tabs" role="tablist"><span class="${a?'':'on'}">${ic('local_fire_department',a?'':'f')}Trending</span><span class="${a?'on':''}">${ic('auto_awesome',a?'f':'')}Personalized</span></div>`;
+const disPhone=`<div class="scroll" style="gap:14px">${search('Search all titles…')}${tabs(0)}${rh('movie','Movies')}<div class="rib">${tile(1)}${tile(0,1)}${tile(5)}${tile(3)}</div>${rh('tv','TV Shows')}<div class="rib">${tile(2,1)}${tile(8)}${tile(6)}${tile(2)}</div></div>${bnav(3)}`;
+const sm=i=>`<div class="rm"><span>${P[i].y}</span>·<span>${P[i].k}</span>·${ic('star','f')}<span>${P[i].r}</span></div>`;
+const fbtn=on=>on?`<span class="ibtn" style="color:var(--primary)" title="Following">${ic('bookmark_added','f')}</span>`:`<span class="ibtn tonal" title="Follow">${ic('bookmark_add')}</span>`;
+const disSearch=`<div class="scroll">${search('',true,'','long')}${chips(['*All','Movies','TV Shows'])}<div class="lhead"><b>5 titles</b><span>all titles · from TMDB</span></div><div class="list">${row(3,{m:sm(3),side:fbtn(0)})}${row(4,{m:sm(4),s:own,side:fbtn(0)})}${row(10,{m:sm(10),s:fol,side:fbtn(1)})}${row(11,{m:sm(11),side:fbtn(0)})}${row(12,{m:sm(12),side:fbtn(0)})}</div></div>${bnav(3)}`;
+const disDesk=`${rail(3)}<div class="col" style="width:auto;flex:1;min-width:0;padding-right:20px;gap:16px"><div style="max-width:560px">${search('Search all titles…',false)}</div>${tabs(1)}${rh('movie','Movies')}<div class="rib">${tile(3,0,1)}${tile(7)}${tile(4,1)}${tile(9)}${more}</div>${rh('tv','TV Shows')}<div class="rib">${tile(8)}${tile(6,1)}${tile(2,1)}${more}</div></div><div class="pane" style="flex:none;width:452px">${hero(3,`<span>Movie</span><i></i><span>2026</span><i></i>${star('6.9')}`,`<div class="rm">Drama</div><div class="acts" style="margin-top:auto"><span class="btn fill">${ic('search')}Search releases</span></div>`)}${ab({})}${plotS('Three siblings return to the family orchard for one last season before it is sold, and find the work harder to leave than the land.',4)}<div class="why">${ic('auto_awesome','f')}<div><b>Why this pick</b><br>You liked slow family dramas with a strong sense of place, and you own two films by the same director.</div></div><div class="join">${sys('video_library','Library','Not in library','')}${sys('bookmarks','Watchlist','Not following','')}</div></div>`;
+document.getElementById('s-dis').innerHTML=
+ shot(phone(disPhone),'<b>Phone.</b> The same top bar as every other page, here searching all titles. Two ribbons, bigger posters, and a check on the poster for what is already in the library.')+
+ shot(phone(disSearch),'<b>Title search.</b> The Discover search bar looks up any title on TMDB, whether or not a tracker has it yet. Follow straight from the row; opening a title leads to the same detail page.')+
+ shot(desk(disDesk),'<b>Desktop.</b> A pick opens in the same detail pane as everywhere else. Search releases is the one filled button; the action bar and the AI reason follow.',true);
+
+/* ---------------- board behaviour ---------------- */
+const fit=()=>document.querySelectorAll('.fit').forEach(f=>{f.style.zoom=1;const w=+f.dataset.w,a=f.parentElement.clientWidth;if(a>0)f.style.zoom=Math.min(1,a/w)});
+addEventListener('resize',fit);fit();
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{document.body.className=b.dataset.t;document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b))}));
+</script>
+</body>
+</html>

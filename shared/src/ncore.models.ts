@@ -1,4 +1,5 @@
 import type { MetadataLookup, MovieMetadata } from './tmdb.models.js';
+import type { TrackerId } from './tracker.models.js';
 
 export type NcoreCategoryKey = 'all' | 'movies' | 'tv';
 
@@ -11,6 +12,7 @@ export interface TvInfo {
 }
 
 export interface NcoreResult {
+  tracker: TrackerId;
   torrent_id: string;
   category: string;
   release_name: string;

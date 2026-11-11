@@ -1,7 +1,7 @@
 import { config } from '../config.js';
 import { asRecord, asString, asNumber } from '../utils/coerce.js';
 import { TMDB_GENRE_MAP } from 'shared/constants';
-import type { MovieMetadata, MetadataLookup, MediaType } from 'shared/tmdb.models';
+import type { MovieMetadata, MetadataLookup, MediaType, TitleSummary } from 'shared/tmdb.models';
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w342';
@@ -39,6 +39,29 @@ class TmdbService {
     async fetchTrending(mediaType: MediaType): Promise<TmdbRecommendationRef[]> {
         const data = await this.tmdbGet(`/trending/${mediaType}/week`, { language: 'en-US' });
         return this.toRefs(data, mediaType, undefined, true);
+    }
+
+    async searchTitles(query: string, mediaType?: MediaType): Promise<Omit<TitleSummary, 'inJellyfinLibrary'>[]> {
+        const data = await this.tmdbGet(`/search/${mediaType ?? 'multi'}`, { query, language: 'en-US' });
+        if (!data) return [];
+
+        return this.records(data['results']).flatMap((record) => {
+            const type = mediaType ?? asString(record['media_type']);
+            const tmdbId = asNumber(record['id']);
+            if (!tmdbId || (type !== 'movie' && type !== 'tv')) return [];
+
+            const posterPath = asString(record['poster_path']);
+            const voteAverage = asNumber(record['vote_average']);
+            return {
+                tmdbId,
+                mediaType: type,
+                title: this.getTitle(record, type),
+                year: this.getYear(record, type),
+                poster: posterPath ? `${IMAGE_BASE}${posterPath}` : '',
+                genre: this.resolveGenres(this.array(record['genre_ids'])),
+                rating: voteAverage ? String(Math.round(voteAverage * 10) / 10) : '',
+            };
+        });
     }
 
     private async resolveItem(lookup: MetadataLookup): Promise<FindResult | null> {

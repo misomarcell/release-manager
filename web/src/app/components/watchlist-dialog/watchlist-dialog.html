@@ -1,15 +1,26 @@
 <h2 mat-dialog-title>{{ data.item ? 'Edit watchlist item' : 'Add to watchlist' }}</h2>
 <mat-dialog-content>
-    <p class="media-title">{{ data.title }}</p>
+    <div class="tile title">
+        <app-poster [src]="data.item?.poster || data.poster" [mediaType]="data.mediaType" />
+        <div>
+            <b>{{ data.title }}</b>
+            <p class="hint">
+                @if (data.item?.year || data.year; as year) {
+                    {{ year }} ·
+                }
+                {{ data.mediaType === 'tv' ? 'TV Show' : 'Movie' }}
+            </p>
+        </div>
+    </div>
 
-    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="keywords-field">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>Release filter keywords</mat-label>
         <mat-chip-grid #keywordGrid aria-label="Release filter keywords">
             @for (keyword of keywords(); track keyword) {
                 <mat-chip-row (removed)="removeKeyword(keyword)">
                     {{ keyword }}
                     <button matChipRemove [attr.aria-label]="'Remove ' + keyword">
-                        <mat-icon>cancel</mat-icon>
+                        <mat-icon>close</mat-icon>
                     </button>
                 </mat-chip-row>
             }
@@ -27,34 +38,43 @@
         <mat-hint>Leave empty to be notified about every new release.</mat-hint>
     </mat-form-field>
 
-    <span class="suggestions-label">Suggestions</span>
-    <mat-chip-listbox multiple aria-label="Keyword suggestions">
-        @for (suggestion of suggestions; track suggestion) {
-            <mat-chip-option
-                [selected]="hasKeyword(suggestion)"
-                [disabled]="limitReached() && !hasKeyword(suggestion)"
-                (selectionChange)="toggleSuggestion(suggestion, $event.selected)"
-            >
-                {{ suggestion }}
-            </mat-chip-option>
-        }
-    </mat-chip-listbox>
+    <div>
+        <p class="hint label">Suggestions</p>
+        <div class="chips" role="group" aria-label="Keyword suggestions">
+            @for (suggestion of suggestions; track suggestion) {
+                @let on = hasKeyword(suggestion);
+                <button
+                    class="chip pressable"
+                    type="button"
+                    [class.on]="on"
+                    [attr.aria-pressed]="on"
+                    [disabled]="limitReached() && !on"
+                    (click)="toggleSuggestion(suggestion)"
+                >
+                    @if (on) {
+                        <mat-icon aria-hidden="true">check</mat-icon>
+                    }
+                    {{ suggestion }}
+                </button>
+            }
+        </div>
+    </div>
 
     @if (saving()) {
         <mat-progress-bar mode="indeterminate" />
     }
     @if (error(); as err) {
-        <p class="error">{{ err }}</p>
+        <p class="error" role="alert">{{ err }}</p>
     }
 </mat-dialog-content>
-<mat-dialog-actions align="end">
+<mat-dialog-actions>
     @if (data.item) {
-        <button mat-button class="remove-btn" [disabled]="saving()" (click)="remove()">
+        <button mat-button class="remove" [disabled]="saving()" (click)="remove()">
             <mat-icon>bookmark_remove</mat-icon>
             Remove
         </button>
-        <div class="spacer"></div>
     }
+    <span class="spacer"></span>
     <button mat-button mat-dialog-close [disabled]="saving()">Cancel</button>
     <button mat-flat-button [disabled]="saving()" (click)="save()">
         <mat-icon>{{ data.item ? 'save' : 'bookmark_add' }}</mat-icon>
