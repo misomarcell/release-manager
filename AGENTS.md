@@ -163,6 +163,28 @@ backend/src/
 - `pnpm validate` runs all checks and should pass before pushing.
 - Always run `pnpm validate` at the end of every task to catch errors early.
 
+## Maintainability Lint Rules
+
+`eslint.config.js` enforces these as errors for all TypeScript in `web`, `backend` and `shared`:
+
+| Rule                     | Limit                                             |
+| ------------------------ | ------------------------------------------------- |
+| `complexity`             | 10 per function (`??`, `\|\|`, `&&`, `?.` count)   |
+| `max-lines-per-function` | 50 (blank lines and comments excluded)            |
+| `max-params`             | 4                                                 |
+| `max-depth`              | 3                                                 |
+| `max-nested-callbacks`   | 3                                                 |
+| `max-lines`              | 300 per file (blank lines and comments excluded)  |
+| `no-nested-ternary`      | —                                                 |
+| `no-else-return`         | —                                                 |
+
+Angular templates: `@angular-eslint/template/cyclomatic-complexity` 12 (counted over the whole template) and `@angular-eslint/template/conditional-complexity` 5 (per expression).
+
+- Write code to fit the limits from the start; do not raise a threshold or add `eslint-disable` to get a change through.
+- A fix must make the code simpler to read, not just move the count around. Prefer, in this order: a lookup table instead of an `if`/`else if` chain, an options object instead of a long parameter list, a named helper for one self-contained step, data-driven `@for` rendering instead of repeated template blocks.
+- Do not split a function into fragments that only make sense together, and do not add a component, service or abstraction solely to satisfy a rule.
+- Long static data (SQL schema, prompts, tables) belongs in a module-level constant or its own file, not inside a function body.
+
 ## Pre-commit Hook
 
 - Husky + lint-staged is configured for pre-commit checks.
