@@ -1,0 +1,29 @@
+<a
+    class="main"
+    [routerLink]="[]"
+    [queryParams]="{ open: key() }"
+    queryParamsHandling="merge"
+    [replaceUrl]="replaceUrl()"
+    [attr.aria-current]="selected() ? 'true' : null"
+>
+    <app-poster [src]="poster()" [mediaType]="mediaType()" />
+    <span class="info">
+        <span class="title">{{ title() }}</span>
+        <span class="meta">
+            @if (year()) {
+                <span>{{ year() }}</span>
+            }
+            @if (rating()) {
+                <span class="rating">
+                    <mat-icon class="filled" aria-label="Rating">star</mat-icon>
+                    {{ rating() }}
+                </span>
+            }
+            @if (info()) {
+                <span class="rest">{{ info() }}</span>
+            }
+        </span>
+        <span class="tags"><ng-content /></span>
+    </span>
+</a>
+<span class="side num"><ng-content select="[side]" /></span>

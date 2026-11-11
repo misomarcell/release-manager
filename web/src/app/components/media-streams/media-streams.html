@@ -1,20 +1,11 @@
-<mat-expansion-panel>
-    <mat-expansion-panel-header>
-        <mat-panel-title>
-            <mat-icon>perm_media</mat-icon>
-            Media info
-        </mat-panel-title>
-    </mat-expansion-panel-header>
-
-    @for (group of groups(); track group.label) {
-        <div class="info-group">
-            <span class="group-label">{{ group.label }}</span>
-            @for (item of group.items; track $index) {
-                <div class="info-row">
-                    <mat-icon class="info-icon">{{ group.icon }}</mat-icon>
-                    <span>{{ item }}</span>
-                </div>
-            }
+<div class="section-head">
+    <h3>Media info</h3>
+</div>
+<div class="seg-list">
+    @for (row of rows(); track row.label) {
+        <div class="tile kv">
+            <span>{{ row.label }}</span>
+            <span [class.mono]="row.mono">{{ row.value }}</span>
         </div>
     }
-</mat-expansion-panel>
+</div>

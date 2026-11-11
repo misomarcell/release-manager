@@ -1,0 +1,28 @@
+.row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+}
+
+.poster {
+    width: 56px;
+    aspect-ratio: 2 / 3;
+    border-radius: 10px;
+}
+
+.lines {
+    flex: 1;
+    display: grid;
+    gap: 8px;
+}
+
+.title {
+    height: 18px;
+    width: 55%;
+}
+
+.meta {
+    height: 13px;
+    width: 35%;
+}

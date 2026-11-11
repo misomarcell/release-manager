@@ -1,16 +1,11 @@
-import { Component, computed, input, linkedSignal, output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { MatBadgeModule } from '@angular/material/badge';
+import { Component, ElementRef, afterNextRender, computed, input, linkedSignal, output, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
+import { AccountMenuComponent } from '../account-menu/account-menu';
 
 export type SearchFilterValue = string | boolean;
 
-export interface SearchFilterOption {
+interface SearchFilterOption {
     value: string;
     label: string;
 }
@@ -20,10 +15,10 @@ export interface SearchFilterDefinition {
     label: string;
     control: 'select' | 'toggle';
     defaultValue: SearchFilterValue;
-    options?: SearchFilterOption[];
+    options: SearchFilterOption[];
 }
 
-export type SearchFilterValues = Record<string, SearchFilterValue>;
+type SearchFilterValues = Record<string, SearchFilterValue>;
 
 export interface FilterSearchSubmit {
     query: string;
@@ -32,84 +27,56 @@ export interface FilterSearchSubmit {
 
 @Component({
     selector: 'app-filter-search',
-    imports: [
-        FormsModule,
-        MatBadgeModule,
-        MatButtonModule,
-        MatDividerModule,
-        MatFormFieldModule,
-        MatIconModule,
-        MatInputModule,
-        MatMenuModule,
-    ],
+    imports: [MatButtonModule, MatIconModule, AccountMenuComponent],
     templateUrl: './filter-search.html',
     styleUrl: './filter-search.scss',
 })
 export class FilterSearchComponent {
-    placeholder = input('Search...');
+    placeholder = input('Search…');
     filters = input<SearchFilterDefinition[]>([]);
     query = input('');
     values = input<SearchFilterValues>({});
+    focusOnInit = input(false);
     searchSubmit = output<FilterSearchSubmit>();
 
+    private field = viewChild.required<ElementRef<HTMLInputElement>>('field');
     protected searchQuery = linkedSignal(() => this.query());
     private selectedFilters = linkedSignal(() => this.values());
 
     protected filterValues = computed(() => ({
-        ...this.defaultFilterValues(),
+        ...Object.fromEntries(this.filters().map((filter) => [filter.key, filter.defaultValue])),
         ...this.selectedFilters(),
     }));
 
-    protected activeFilterCount = computed(() =>
-        this.filters().filter((filter) => this.isFilterActive(filter)).length,
-    );
-
-    setQuery(query: string): void {
-        this.searchQuery.set(query);
-        this.emitSearch();
-    }
-
-    protected onSearch(): void {
-        this.emitSearch();
-    }
-
-    protected clearAndSearch(): void {
-        this.searchQuery.set('');
-        this.emitSearch();
-    }
-
-    protected selectedValue(key: string): SearchFilterValue {
-        return this.filterValues()[key];
-    }
-
-    protected onSelectFilter(key: string, value: string): void {
-        this.setFilterValue(key, value);
-        this.emitSearch();
-    }
-
-    protected onToggleFilter(event: MouseEvent, filter: SearchFilterDefinition): void {
-        event.stopPropagation();
-        this.setFilterValue(filter.key, this.selectedValue(filter.key) !== true);
-        this.emitSearch();
-    }
-
-    private setFilterValue(key: string, value: SearchFilterValue): void {
-        this.selectedFilters.update((filters) => ({ ...filters, [key]: value }));
-    }
-
-    private emitSearch(): void {
-        this.searchSubmit.emit({
-            query: this.searchQuery(),
-            filters: this.filterValues(),
+    constructor() {
+        afterNextRender(() => {
+            if (this.focusOnInit()) this.field().nativeElement.focus();
         });
     }
 
-    private isFilterActive(filter: SearchFilterDefinition): boolean {
-        const value = this.selectedValue(filter.key);
-        return filter.control === 'toggle' ? value === true : value !== filter.defaultValue;
+    protected submit(): void {
+        this.field().nativeElement.blur();
+        this.emitSearch();
     }
 
-    private defaultFilterValues(): SearchFilterValues {
-        return Object.fromEntries(this.filters().map((filter) => [filter.key, filter.defaultValue]));
+    protected clear(): void {
+        this.searchQuery.set('');
+        this.emitSearch();
+        this.field().nativeElement.focus();
+    }
+
+    protected isOn(filter: SearchFilterDefinition, option: SearchFilterOption): boolean {
+        const value = this.filterValues()[filter.key];
+        return filter.control === 'toggle' ? value === true : value === option.value;
+    }
+
+    protected choose(filter: SearchFilterDefinition, option: SearchFilterOption): void {
+        const value = filter.control === 'toggle' ? !this.isOn(filter, option) : option.value;
+        this.selectedFilters.update((filters) => ({ ...filters, [filter.key]: value }));
+        this.emitSearch();
+    }
+
+    private emitSearch(): void {
+        this.searchSubmit.emit({ query: this.searchQuery(), filters: this.filterValues() });
     }
 }

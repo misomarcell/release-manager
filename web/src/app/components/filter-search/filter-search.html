@@ -1,60 +1,46 @@
-<div class="search-bar">
-  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-input">
+<div class="search" role="search">
+    <mat-icon aria-hidden="true">search</mat-icon>
     <input
-      matInput
-      [(ngModel)]="searchQuery"
-      (keydown.enter)="onSearch()"
-      [placeholder]="placeholder()"
-      autocomplete="off"
+        #field
+        type="search"
+        enterkeyhint="search"
+        autocomplete="off"
+        [value]="searchQuery()"
+        [placeholder]="placeholder()"
+        [attr.aria-label]="placeholder()"
+        (input)="searchQuery.set(field.value)"
+        (keydown.enter)="submit()"
     />
-    <mat-icon matPrefix>search</mat-icon>
     @if (searchQuery()) {
-      <button mat-icon-button matSuffix type="button" (click)="clearAndSearch()" aria-label="Clear">
-        <mat-icon>close</mat-icon>
-      </button>
+        <button mat-icon-button type="button" aria-label="Clear search" (click)="clear()">
+            <mat-icon>close</mat-icon>
+        </button>
     }
-  </mat-form-field>
-
-  @if (filters().length > 0) {
-    <button
-      mat-icon-button
-      type="button"
-      [matMenuTriggerFor]="filterMenu"
-      class="filter-btn"
-      [matBadge]="activeFilterCount()"
-      [matBadgeHidden]="activeFilterCount() === 0"
-      matBadgeColor="primary"
-      aria-label="Filters"
-    >
-      <mat-icon>tune</mat-icon>
-    </button>
-
-    <mat-menu #filterMenu="matMenu">
-      @for (filter of filters(); track filter.key; let isLast = $last) {
-        <div class="filter-section-label" mat-menu-item disabled>{{ filter.label }}</div>
-
-        @if (filter.control === 'select') {
-          @for (option of filter.options ?? []; track option.value) {
-            <button mat-menu-item type="button" (click)="onSelectFilter(filter.key, option.value)">
-              @if (selectedValue(filter.key) === option.value) {
-                <mat-icon>check</mat-icon>
-              }
-              <span>{{ option.label }}</span>
-            </button>
-          }
-        } @else {
-          <button mat-menu-item type="button" (click)="onToggleFilter($event, filter)">
-            @if (selectedValue(filter.key) === true) {
-              <mat-icon>check</mat-icon>
-            }
-            <span>{{ filter.options?.[0]?.label ?? filter.label }}</span>
-          </button>
-        }
-
-        @if (!isLast) {
-          <mat-divider />
-        }
-      }
-    </mat-menu>
-  }
+    <ng-content select="[trailing]" />
+    <app-account-menu class="phone-only" />
 </div>
+
+@if (filters().length > 0) {
+    <div class="chips filters" role="group" aria-label="Filters">
+        @for (filter of filters(); track filter.key; let first = $first) {
+            @if (!first) {
+                <i class="divider"></i>
+            }
+            @for (option of filter.options; track option.value) {
+                @let on = isOn(filter, option);
+                <button
+                    class="chip pressable"
+                    type="button"
+                    [class.on]="on"
+                    [attr.aria-pressed]="on"
+                    (click)="choose(filter, option)"
+                >
+                    @if (on) {
+                        <mat-icon aria-hidden="true">check</mat-icon>
+                    }
+                    {{ option.label }}
+                </button>
+            }
+        }
+    </div>
+}

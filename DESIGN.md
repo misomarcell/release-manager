@@ -1,267 +1,248 @@
 ---
 name: Release Manager
-description: A dark, quiet front end to a home media setup, where the posters are the only bright thing.
+description: A calm, green-tinted Material 3 front end to a home media setup, built from one row, one title page and one status strip.
 colors:
-  primary: "#abc7ff"
-  on-primary: "#002f65"
-  secondary-container: "#3e4759"
-  on-secondary-container: "#dae2f9"
-  tertiary: "#bec2ff"
-  surface: "#121316"
-  surface-container-lowest: "#0d0e11"
-  surface-container: "#1f2022"
-  surface-container-highest: "#343537"
-  surface-variant: "#44474e"
-  outline-variant: "#44474e"
-  on-surface: "#e3e2e6"
-  on-surface-variant: "#c4c6d0"
+  surface: "#0e1514"
+  surface-container-low: "#141b1a"
+  surface-container: "#1a2120"
+  surface-container-high: "#242b2a"
+  bar: "#161d1c"
+  on-surface: "#dde4e2"
+  on-surface-variant: "#b4bfbc"
+  outline: "#889391"
+  outline-variant: "#3a4442"
+  primary: "#82d5c8"
+  on-primary: "#003731"
+  primary-container: "#00504a"
+  on-primary-container: "#a4f4e7"
+  secondary-container: "#30514b"
+  on-secondary-container: "#d2ede6"
+  tertiary: "#f2c04e"
+  on-tertiary: "#402d00"
+  tertiary-container: "#574000"
+  on-tertiary-container: "#ffe0a0"
   error: "#ffb4ab"
-  on-error: "#690005"
-  drift-positive: "#4caf50"
-  drift-positive-deep: "#2e7d32"
-  drift-badge-4k: "#a78bfa"
-  drift-badge-dv: "#fb923c"
-  drift-badge-hdr: "#fbbf24"
-  drift-badge-codec: "#9ca3af"
-  drift-badge-audio: "#60a5fa"
+  positive: "#8bd89a"
 typography:
-  display:
-    fontFamily: "Roboto, sans-serif"
-    fontSize: "1.75rem"
-    fontWeight: 300
-    letterSpacing: "0.05em"
-  title:
-    fontFamily: "Roboto, sans-serif"
-    fontSize: "1.1rem"
-    fontWeight: 500
-  body:
-    fontFamily: "Roboto, sans-serif"
-    fontSize: "0.875rem"
-    fontWeight: 400
-    lineHeight: "1.25rem"
-  meta:
-    fontFamily: "Roboto, sans-serif"
-    fontSize: "0.8rem"
-    fontWeight: 400
-  label:
-    fontFamily: "Roboto, sans-serif"
-    fontSize: "0.85rem"
+  detail-title:
+    fontFamily: "'Google Sans Flex', system-ui, sans-serif"
+    fontSize: "30px"
+    fontWeight: 650
+    lineHeight: "36px"
+  page-title:
+    fontFamily: "'Google Sans Flex', system-ui, sans-serif"
+    fontSize: "26px"
+    fontWeight: 650
+    lineHeight: "32px"
+  row-title:
+    fontFamily: "'Google Sans Flex', system-ui, sans-serif"
+    fontSize: "16px"
     fontWeight: 600
-    letterSpacing: "0.04em"
-  badge:
-    fontFamily: "Roboto, sans-serif"
-    fontSize: "0.6rem"
-    fontWeight: 700
-    lineHeight: 1.6
-    letterSpacing: "0.05em"
+    lineHeight: "21px"
+  body:
+    fontFamily: "'Google Sans Flex', system-ui, sans-serif"
+    fontSize: "14px"
+    fontWeight: 400
+    lineHeight: "20px"
+  meta:
+    fontFamily: "'Google Sans Flex', system-ui, sans-serif"
+    fontSize: "13px"
+    fontWeight: 400
+    lineHeight: "18px"
+  tag:
+    fontFamily: "'Google Sans Flex', system-ui, sans-serif"
+    fontSize: "11.5px"
+    fontWeight: 500
+    lineHeight: "20px"
   mono:
-    fontFamily: "monospace"
-    fontSize: "0.75rem"
+    fontFamily: "'Google Sans Code', ui-monospace, monospace"
+    fontSize: "12.5px"
+    lineHeight: "18px"
 rounded:
-  badge: "3px"
-  skeleton: "4px"
-  poster: "6px"
-  tile: "8px"
-  panel: "12px"
+  seam: "6px"
+  tag: "6px"
+  chip: "8px"
+  poster: "10px"
+  poster-large: "16px"
+  group: "20px"
+  pane: "28px"
+  pill: "9999px"
 spacing:
-  xs: "0.25rem"
-  sm: "0.5rem"
-  md: "0.75rem"
-  lg: "1rem"
-  xl: "1.25rem"
-  page-x-desktop: "2rem"
-  page-y-desktop: "1.5rem"
+  seam: "2px"
+  xs: "4px"
+  sm: "8px"
+  md: "12px"
+  lg: "16px"
+  pane: "28px"
 components:
   button-filled:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.on-primary}"
-    typography: "{typography.body}"
-    height: "48px"
-  button-stroked:
-    textColor: "{colors.primary}"
-    typography: "{typography.body}"
-  button-text:
-    textColor: "{colors.primary}"
-    typography: "{typography.body}"
+    rounded: "{rounded.pill}"
+    height: "40px"
   title-row:
     backgroundColor: "{colors.surface-container}"
     textColor: "{colors.on-surface}"
-    rounded: "{rounded.panel}"
-    padding: "0.5rem"
+    rounded: "{rounded.seam}"
+    padding: "8px 12px 8px 8px"
+  title-row-selected:
+    backgroundColor: "{colors.secondary-container}"
+    textColor: "{colors.on-secondary-container}"
+    rounded: "{rounded.group}"
   poster-thumb:
-    backgroundColor: "{colors.surface-variant}"
-    textColor: "{colors.on-surface-variant}"
+    backgroundColor: "{colors.surface-container-high}"
     rounded: "{rounded.poster}"
     width: "56px"
-    height: "84px"
-  poster-tile:
-    backgroundColor: "{colors.surface-container}"
-    textColor: "{colors.on-surface}"
-    rounded: "{rounded.tile}"
-    width: "150px"
-  toolbar:
-    backgroundColor: "{colors.surface-container}"
-    textColor: "{colors.on-surface}"
-    typography: "{typography.title}"
-  nav-item:
-    textColor: "{colors.on-surface}"
-    typography: "{typography.body}"
-    height: "48px"
+  filter-chip:
+    textColor: "{colors.on-surface-variant}"
+    rounded: "{rounded.chip}"
+    height: "32px"
+  tag:
+    backgroundColor: "{colors.surface-container-high}"
+    textColor: "{colors.on-surface-variant}"
+    typography: "{typography.tag}"
+    rounded: "{rounded.tag}"
+    height: "20px"
+  search-bar:
+    backgroundColor: "{colors.surface-container-high}"
+    rounded: "{rounded.pill}"
+    height: "56px"
   nav-item-active:
     backgroundColor: "{colors.secondary-container}"
     textColor: "{colors.on-secondary-container}"
-  media-badge:
-    typography: "{typography.badge}"
-    rounded: "{rounded.badge}"
-    padding: "1px 5px"
 ---
 
 # Design System: Release Manager
 
+The frontmatter lists the dark values. Light values and the role mapping are in the Colors table. The source of truth is `web/src/styles.scss`; the brief behind it is `docs/redesign-brief.md`.
+
 ## Overview
 
-**Creative North Star: "The Projection Booth"**
+Release Manager stays inside Material 3 but does not look like stock Angular Material. Neutrals are tinted green, the accent is teal, and surfaces are separated by tone, never by shadow. Posters are the only saturated imagery.
 
-The interface is a dark, quiet control room. The only saturated, bright things in it are the film posters; everything the app itself draws is near-black surface, soft grey text and one pale blue accent. Chrome never competes with artwork. A person opens it on a phone, scans a column of titles, opens one, acts, and leaves.
+Every feature page is built from the same three parts:
 
-It is stock Angular Material 3, dark scheme, used as shipped. Controls are unfussy: no custom button shapes, no gradients, no decorative illustration, no brand flourish. The customization that exists is practical tightening for dense lists (compact expansion headers, square nav items, smaller meta text). The system is dark only; there is no light theme.
+1. **One title row** (`app-title-row`): poster, title, a meta line, a line of tags and state chips, and a trailing column whose content depends on the page.
+2. **One title page** (`app-title-detail`): header, plot, action bar, at most one filled button, status cells, then page-specific content.
+3. **One segmented group** (`.seg-list`): items 2px apart with 6px inner corners and 20px outer corners. Lists, status cells, the action bar, key/value lists and release lists all use it.
 
-The implementation reads color from the Material system custom properties (`--mat-sys-*`), generated in `web/src/styles.scss` from `mat.$azure-palette` (primary) and `mat.$blue-palette` (tertiary). Those properties are the source of truth; the hex values in the frontmatter are the dark-scheme values they resolve to, derived from the palette, not hand-picked.
-
-**Key Characteristics:**
-- Dark only, near-black surfaces separated by tone, not by shadow.
-- Posters carry all the color; the UI stays achromatic plus one pale blue.
-- A single column of expandable title rows is the main pattern on every list page.
-- Stock Material components, tightened for density, never restyled for personality.
-- Phone layout is the design; one breakpoint at 960px adds room, not new structure.
+The interface follows the device colour scheme (light and dark) and is English only.
 
 ## Colors
 
-A cool near-black field with soft grey text, one pale azure accent and a neighbouring periwinkle for ownership state.
+All colour comes from theme roles. Components never contain hexes.
 
-### Primary
-- **Booth Light Azure** (`primary`): links (release names, commit hash), the filled button, the user icon, list-title icons, the unread indicator on a watchlist row, badges, and hover on the dashed "refresh" tile. It marks things you can act on or that are new.
-
-### Tertiary
-- **Shelf Periwinkle** (`tertiary`): reserved for "this is yours" information: the "In library" Jellyfin mark and the keyword summary on a watchlist row. It never appears on a control.
-
-### Neutral
-- **Booth Black** (`surface`): the page.
-- **Console Grey** (`surface-container`): every raised thing: title rows, poster tiles, toolbar, skeleton rows.
-- **Slate Fill** (`surface-variant`): missing-poster placeholders and skeleton blocks.
-- **Hairline Slate** (`outline-variant`): 1px dividers under the toolbar and user block, the dashed refresh tile, the scrollbar thumb.
-- **Screen White** (`on-surface`): titles and primary text.
-- **Dim Grey** (`on-surface-variant`): the workhorse. Meta lines, sizes, counts, section labels, empty states. It is the most used color in the stylesheets.
-- **Selected Slate** (`secondary-container` with `on-secondary-container`): the active navigation item only.
-
-### Error
-- **Soft Red** (`error`): error messages, leecher counts, the dislike control.
-
-### Tolerated drift
-These are hard-coded outside the theme. They are recorded as they are and are candidates to fold into theme tokens later. Reuse them where they already appear; do not add a sixth badge hue or a second green.
-- **Seeder Green** (`drift-positive`): seeder count and the freeleech "FL" mark.
-- **Like Green** (`drift-positive-deep`): the like control, at 8% and 18% tint when idle and hovered, solid when selected.
-- **Media badge tints** (`drift-badge-4k`, `-dv`, `-hdr`, `-codec`, `-audio`): text color of the quality badges on library rows, each on an 18% tint of its own hue.
+| Role | Token | Dark | Light | Used for |
+| --- | --- | --- | --- | --- |
+| Ground | `--mat-sys-surface` | `#0e1514` | `#edf3f0` | Page background |
+| Pane | `--mat-sys-surface-container-low` | `#141b1a` | `#f7fbf9` | Desktop detail pane, sheets |
+| Tile | `--mat-sys-surface-container` | `#1a2120` | `#ffffff` | Rows, cells, action bar |
+| Tile high | `--mat-sys-surface-container-high` | `#242b2a` | `#f3f8f6` | Nested fills, rail icon shape, tags, search field (dark) |
+| Bar | `--rm-bar` | `#161d1c` | `#e4ebe8` | Bottom navigation, rail |
+| On surface | `--mat-sys-on-surface` | `#dde4e2` | `#161d1c` | Titles, primary text |
+| On surface variant | `--mat-sys-on-surface-variant` | `#b4bfbc` | `#414b49` | Secondary text |
+| Outline / variant | `--mat-sys-outline(-variant)` | `#889391` / `#3a4442` | `#6f7977` / `#c3cdca` | Borders, dividers |
+| Primary / on | `--mat-sys-primary` | `#82d5c8` / `#003731` | `#006a60` / `#ffffff` | Filled button, links, focus ring |
+| Primary container / on | `--mat-sys-primary-container` | `#00504a` / `#a4f4e7` | `#a4f4e7` / `#00201c` | "In library", active Like and Following |
+| Secondary container / on | `--mat-sys-secondary-container` | `#30514b` / `#d2ede6` | `#cfe9e2` / `#06201c` | Selected row, active nav, selected chip, resolution tag |
+| Tertiary / on | `--mat-sys-tertiary` | `#f2c04e` / `#402d00` | `#755800` / `#ffffff` | "New" count, rating star |
+| Tertiary container / on | `--mat-sys-tertiary-container` | `#574000` / `#ffe0a0` | `#ffe0a0` / `#251a00` | HDR and DV tags, "Why this pick" |
+| Error | `--mat-sys-error` | `#ffb4ab` | `#ba1a1a` | Leechers, destructive actions |
+| Positive | `--rm-positive` | `#8bd89a` | `#1c6c35` | Seeders, FL badge |
 
 ### Named Rules
-**The Poster Rule.** Posters are the only saturated imagery on a screen. The interface does not introduce color that competes with them.
 
-**The Theme Token Rule.** New color comes from `--mat-sys-*`. A hard-coded hex needs a reason, and the existing hard-coded ones are drift, not precedent.
+- **One job per colour.** Amber means "new since you last looked", plus rating stars, and nothing else.
+- **Theme roles only.** A new colour is a new role in `styles.scss`, defined for both schemes with `light-dark()`.
 
 ## Typography
 
-**Font:** Roboto (300, 400, 500 loaded), via the Material theme.
-**Mono:** the platform `monospace`, for machine text only.
-
-**Character:** One sans family doing every job by size and weight. Sizes are small and close together because the content is dense lists on a narrow screen.
-
-### Hierarchy
-- **Display** (300, 1.75rem, 0.05em tracking): the app name on the login screen. Nowhere else.
-- **Title** (500, 1.1rem): toolbar page title, list titles, and row titles from 960px up. On phones a row title is body size at weight 500.
-- **Body** (400, 0.875rem / 1.25rem): Material `body-medium`, the default for everything.
-- **Meta** (400, 0.8rem to 0.85rem, 0.9rem from 960px): year, rating, genre, file size, counts, release names. Always Dim Grey except release names, which are links.
-- **Label** (600, 0.85rem, 0.04em, uppercase): section headings inside an opened row ("Releases on this page").
-- **Badge** (700, 0.6rem, 0.05em, uppercase): media quality badges.
-- **Mono** (0.75rem): NFO text, log lines, the commit hash.
-
-### Named Rules
-**The Long String Rule.** Release names are unbreakable scene strings. Inside an opened row they wrap with `word-break: break-all`; in a collapsed row a title truncates to one line with an ellipsis. Never let either cause horizontal scroll.
+- **Google Sans Flex** for all interface text. **Google Sans Code** (`.mono`) only for release names, file paths and NFO text.
+- Weights: 650 page and detail titles and section headings, 600 row titles, 500 to 550 buttons and labels, 450 to 500 chips and tags, 400 body.
+- Sizes: detail title 30px (23px on phones), page title 26px, row title 16px, section heading 16px, body 14 to 14.5px, meta 13px, tags 11.5px, release names 12.5px.
+- Numbers that line up in columns use `.num` (tabular figures).
+- Chips and tags must stay light: small, medium weight, no uppercase.
 
 ## Layout
 
-- **Shell:** a full-height column: toolbar on top, then a side navigation (256px) beside the scrolling content. Below 960px the navigation is an overlay drawer opened from a menu button; from 960px it is permanently open and the menu button disappears.
-- **Page container:** one centered column, 960px wide at most with 1rem padding, growing to 1000px with 1.5rem / 2rem padding from 960px. Children stack with a 1rem gap.
-- **Lists:** rows stack with 0.5rem between them. There is no multi-column grid of rows at any width.
-- **Row anatomy:** poster thumb (56 by 84px, 90 by 135px from 960px), then a text block with 2px between its lines, 0.75rem gap (1.25rem from 960px).
-- **Ribbons:** horizontal scroll-snap strips of poster tiles (150px wide, 190px from 960px, poster at 2:3) with 0.75rem gaps, used for recommendations.
-- **Breakpoint:** one, at 960px, in both CSS and the shell. Everything is authored for the phone first and widened there.
-- **Rhythm:** 0.25, 0.5, 0.75, 1 and 1.25rem cover nearly all gaps and padding.
+- **Phone (default):** a bottom navigation bar with Releases, Library, Watchlist and Discover. Opening a title is a full-screen page that slides over the list.
+- **Desktop (from 960px):** an 88px navigation rail, a list column up to 432px wide and a detail pane. The first row is shown in the pane until another is selected.
+- The top bar is always 56px tall: a search field (`app-filter-search`), a page title (`app-page-title`) or back button and label (title page on phones).
+- Manage Users, Administration, Logs and Sign out are behind the account avatar: in the top bar on phones, at the bottom of the rail on desktop.
+- Fixed bars pad by the safe-area insets.
 
 ## Elevation & Depth
 
-Flat. No component stylesheet declares a shadow; the three `box-shadow` declarations in the codebase all set `none`. Depth comes from tone: Console Grey panels on the Booth Black page, with Hairline Slate 1px lines where two same-tone regions meet (toolbar edge, user block). Overlays (dialogs, menus, the drawer) keep whatever elevation Material gives them by default.
-
-### Named Rules
-**The Tone-Not-Shadow Rule.** A surface is raised by moving one step up the surface-container scale, never by adding a shadow.
+No shadows on content. Depth is tone: ground, pane, tile, tile high. Menus keep Material's own elevation.
 
 ## Shapes
 
-Soft but not round. Radius grows with the size of the object: 3px on badges, 4px on skeleton text bars, 6px on poster thumbs, 8px on poster tiles and the like/dislike bar, 12px on panels and dialogs. Buttons and form fields keep their stock Material 3 shapes. Navigation items are deliberately square (radius 0) and span the full drawer width. Borders are rare and always 1px Hairline Slate; the one exception is the 2px dashed outline of the "refresh" tile.
+- Segmented groups: 2px seams, 6px inner corners, 18 to 20px outer corners. A selected row rounds fully to 20px.
+- Posters 10px in rows, 14 to 16px on title pages and tiles.
+- Buttons are pills (40px, 34px small). Filter chips 8px. Tags 6px. Detail pane, dialogs and sheets 28px.
 
 ## Components
 
-### Buttons
-Stock Material buttons, chosen by weight of the action.
-- **Filled** (`mat-flat-button`): the one primary action on a screen, such as "Sign in with Passkey" (48px tall, full width up to 360px).
-- **Stroked** (`mat-stroked-button`): secondary actions with a label, such as "Register" or enabling a user.
-- **Text** (`mat-button`): low-emphasis inline actions, such as searching for a title.
-- **Icon** (`mat-icon-button`): per-row actions (download, show NFO, filters), each with an `aria-label`.
-- Hover, focus and pressed states are Material's own state layers; none are overridden.
+### Title row
 
-### Title Row (signature)
-The expandable row used for releases, library items and watchlist items. A `mat-expansion-panel` on Console Grey with an auto-height header.
-- **Collapsed:** poster thumb, title (one line, ellipsis), meta line (year, rating, genre), then an optional state line: "In library" in Shelf Periwinkle, quality badges, or the keyword summary.
-- **Opened:** a divider, the media details, an uppercase section label, then a list of releases separated by dividers. Each release is its name as a link, and a line with size, seeders, leechers and icon actions pushed to the right.
-- **Loading:** a skeleton row of the same dimensions (12px radius) with a shimmer sweep (1.5s linear, infinite).
+Poster (56px), title on one line, a meta line (year, star rating, one more fact), then tags and state chips. The trailing column changes per page: top seeder count and release count (Releases), size on disk (Library), new or known count (Watchlist), a Follow button (title search). The whole row is one link.
 
-### Poster Tile
-A vertical tile for recommendation ribbons: 2:3 poster on top, two-line clamped title, meta and genre below, on Console Grey with 8px corners. The last tile of a ribbon can be a dashed "refresh" tile that turns Booth Light Azure on hover (0.15s).
+### Title page
 
-### Chips and Badges
-- **Media badge:** tiny uppercase tag (3px radius, 1px 5px padding) in a drift hue on its own 18% tint.
-- **Keyword chips:** stock `mat-chip-grid` in the watchlist dialog.
-- **Count badge:** stock `matBadge` for unread watchlist releases and active filter count; hidden at zero.
+1. Header: poster, title, a facts line (type, year, runtime, rating, star score), genres.
+2. Plot, always under a "Plot" heading. On wide panes it sits beside the poster.
+3. Action bar: equal cells with the icon above the label. Follow (becomes Following), Trailer, IMDb, and More on desktop; then a gap; then Like and Dislike. Active cells fill with the primary container.
+4. At most one filled button: Open in Jellyfin (Library), Mark as read (Watchlist), Search releases (Discover). Releases has none.
+5. Status: Trackers, Library, Watchlist. Three columns on wide panes, three full-width rows on phones.
+6. Page content: release list, seasons and media info, new releases and filter, or the AI reason.
 
-### Inputs / Fields
-Stock outlined `mat-form-field` with `subscriptSizing="dynamic"` so no space is reserved for hints. The search field has a leading search icon and a trailing clear button that appears only when there is text. Filters live in a `mat-menu` behind a tune icon, with a check icon marking the selected option.
+### Releases
+
+Each release shows parsed tags first, then the raw name in mono, breaking at the dots. It names its tracker; freeleech is a compact **FL** badge next to the tracker and never sits among the quality tags. Seeders are green with an up arrow, leechers red with a down arrow. A release is never labelled "best".
+
+### Tags and state chips
+
+`.tag` is neutral; `.tag.res` (resolution) and `.tag.hdr` (HDR, DV) are the only two emphases. `.state.own` is "In library", `.state.following` is "Following", `.state.new` is the amber new count.
+
+### Search and filters
+
+A 56px pill with the search icon, the field, a clear button and optional trailing content (the tracker picker on Releases, the account avatar on phones). Filters are visible chips under it; the selected chip fills and gains a check.
 
 ### Navigation
-- **Toolbar:** Console Grey with a Hairline Slate bottom line, showing only the current page title (and the menu button on phones).
-- **Drawer:** user block on top, 48px square list items with a leading icon, a divider before the admin-only items, and a footer with the commit hash (mono, linked) and "Sign out".
-- **Active item:** Selected Slate background with matching text and icon.
 
-### Feedback Bar
-Two equal halves, like and dislike, in one 8px-rounded bar. Idle halves are an 8% tint, hovered 18%, selected solid. Disabled is 40% opacity.
+Rail items sit on a 56×48 shape with a 14px radius; the active one fills with the secondary container and its icon becomes filled. The bottom bar uses a 60×32 pill for the active item. The watchlist count is an amber badge on the icon.
 
-### Dialogs
-Stock Material dialogs with a 12px container. The poster dialog is the exception: a transparent, shadowless surface so the enlarged poster floats alone.
+### Sheets
+
+Download ("Send to qBittorrent"), the watchlist editor and the NFO viewer are bottom sheets on phones and centred dialogs otherwise. In the download sheet the save path is the focused field. In the watchlist sheet Remove is kept apart from Save.
+
+### Loading
+
+Skeletons in the shape of what is loading: `app-row-skeletons` for lists, poster-shaped blocks for ribbons, two lines for the plot.
+
+## Motion and feedback
+
+- Hand-built controls share `.pressable`: hover tints, press scales to 0.97, keyboard focus draws a 2px primary outline.
+- Route changes cross-fade in 160ms. On phones the title page slides in from the right and back out. Filter and page changes do not animate.
+- Sheets slide up on phones.
+- All of it is disabled under `prefers-reduced-motion`.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** read color from `--mat-sys-*` custom properties so the theme stays the single source.
-- **Do** use Dim Grey (`on-surface-variant`) for anything secondary and keep Screen White for titles.
-- **Do** build list pages as one centered column of Title Rows (max 960px, 1000px from the breakpoint).
-- **Do** raise a surface by tone (Console Grey on Booth Black) and separate same-tone regions with a 1px Hairline Slate line.
-- **Do** keep Shelf Periwinkle for ownership and watch state, and Booth Light Azure for links and actions.
-- **Do** truncate collapsed titles to one line and let opened release names break anywhere.
-- **Do** match a skeleton's size and radius to the thing it stands in for.
-- **Do** author for the phone first and widen at 960px only.
+
+- Build new lists from `app-title-row` inside `.seg-list`, and new title content inside `app-title-detail`.
+- Say "trackers", and let each release name its tracker.
+- Show library and watchlist state on the title wherever it appears.
+- Keep long machine strings in `.mono` and let them wrap.
 
 ### Don't:
-- **Don't** add shadows to cards, rows or tiles.
-- **Don't** restyle Material buttons, fields or chips for looks; override only for density or layout.
-- **Don't** add a light theme variant or assume one exists.
-- **Don't** introduce new hard-coded colors. The seeder green and the five badge tints are tolerated drift, not a palette to extend.
-- **Don't** add a second breakpoint or a multi-column grid of rows.
-- **Don't** let the interface draw saturated color next to posters.
+
+- Don't add a colour that is not a theme role, or reuse amber for anything but "new" and rating stars.
+- Don't add a second filled button to a page.
+- Don't put shadows on content or expand rows in place.
+- Don't rank releases or call one "best".
+
+## Not designed yet
+
+Login, Manage Users, Administration and Logs use the theme but have not been redesigned.

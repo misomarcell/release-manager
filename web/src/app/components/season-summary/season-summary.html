@@ -1,18 +1,12 @@
-<div class="header">
-    <span class="title">
-        <mat-icon>video_library</mat-icon>
-        Seasons
-    </span>
-    <span class="totals">
-        {{ seasonCount() }} {{ seasonCount() === 1 ? 'season' : 'seasons' }} · {{ episodeCount() }}
-        {{ episodeCount() === 1 ? 'episode' : 'episodes' }}
-    </span>
+<div class="section-head">
+    <h3>Seasons</h3>
+    <span>{{ episodeCount() }} {{ episodeCount() === 1 ? 'episode' : 'episodes' }}</span>
 </div>
-@for (season of seasons(); track season.seasonNumber) {
-    <div class="season-row">
-        <span>{{ seasonLabel(season) }}</span>
-        <span class="episode-count">
-            {{ season.episodeCount }} {{ season.episodeCount === 1 ? 'episode' : 'episodes' }}
-        </span>
-    </div>
-}
+<div class="seg-list">
+    @for (season of seasons(); track season.seasonNumber) {
+        <div class="tile kv">
+            <span>{{ season.seasonNumber === 0 ? 'Specials' : 'Season ' + season.seasonNumber }}</span>
+            <span>{{ season.episodeCount }} {{ season.episodeCount === 1 ? 'episode' : 'episodes' }}</span>
+        </div>
+    }
+</div>

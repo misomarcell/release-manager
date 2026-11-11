@@ -3,13 +3,15 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { ncoreService, NcoreNoResultsError } from '../services/ncore.service.js';
 import { getMetadata, getCacheKey } from '../services/metadata.service.js';
+import { tmdbService } from '../services/tmdb.service.js';
+import { isInLibrary } from '../repositories/jellyfin.repository.js';
 import { qbittorrentService } from '../services/qbittorrent.service.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { DOWNLOAD_CATEGORIES } from 'shared/constants';
 import type { NcoreResult, NcoreSearchResponse } from 'shared/ncore.models';
 import type { DownloadResponse } from 'shared/download.models';
-import type { MetadataLookup } from 'shared/tmdb.models';
+import type { MetadataLookup, TitleSearchResponse } from 'shared/tmdb.models';
 import { logger } from '../utils/logger.js';
 import { MediaTypeSchema, parseBody, parseParams, parseQuery } from '../middleware/validate.js';
 
@@ -30,6 +32,11 @@ const MetadataParamsSchema = z.object({
 
 const MetadataQuerySchema = z.object({
     type: MediaTypeSchema,
+});
+
+const TitleSearchQuerySchema = z.object({
+    q: z.string().trim().min(1, 'Search query is required').max(200),
+    type: MediaTypeSchema.optional(),
 });
 
 const NfoParamsSchema = z.object({
@@ -120,18 +127,25 @@ router.get('/metadata/:tmdbId', requireAuth, async (req: Request, res: Response)
             res.status(404).json({ error: 'Detail metadata not found' });
             return;
         }
-        res.json({
-            plot: metadata.plot,
-            runtime: metadata.runtime,
-            rated: metadata.rated,
-            releaseDate: metadata.releaseDate,
-            trailerKey: metadata.trailerKey,
-            imdbId: metadata.imdbId,
-        });
+        res.json(metadata);
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Metadata fetch failed';
         res.status(502).json({ error: message });
     }
+});
+
+router.get('/titles', requireAuth, async (req: Request, res: Response) => {
+    const query = parseQuery(TitleSearchQuerySchema, req.query, res);
+    if (!query) return;
+
+    const titles = await tmdbService.searchTitles(query.q, query.type);
+    const response: TitleSearchResponse = {
+        results: titles.map((title) => ({
+            ...title,
+            inJellyfinLibrary: isInLibrary(title.tmdbId, title.title, title.year),
+        })),
+    };
+    res.json(response);
 });
 
 router.get('/nfo/:id', requireAuth, async (req: Request, res: Response) => {

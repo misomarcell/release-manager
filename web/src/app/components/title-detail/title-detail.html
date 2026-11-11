@@ -1,0 +1,161 @@
+<header class="appbar phone-only">
+    <button mat-icon-button type="button" aria-label="Back" (click)="close()">
+        <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span class="label">{{ backLabel() }}</span>
+    <button mat-icon-button type="button" aria-label="More actions" [matMenuTriggerFor]="more">
+        <mat-icon>more_vert</mat-icon>
+    </button>
+</header>
+
+<div class="hero">
+    <button class="poster pressable" type="button" aria-label="Enlarge poster" (click)="openPoster()">
+        <app-poster [src]="shownPoster()" [mediaType]="mediaType()" [eager]="true" />
+    </button>
+    <div class="head">
+        <h2>{{ title() }}</h2>
+        <p class="facts">
+            @for (fact of facts(); track $index) {
+                <span>{{ fact }}</span>
+            }
+            @if (shownRating(); as value) {
+                <span class="rating">
+                    <mat-icon class="filled" aria-label="Rating">star</mat-icon>
+                    {{ value }}
+                </span>
+            }
+        </p>
+        @if (shownGenre(); as value) {
+            <p class="genres">{{ value }}</p>
+        }
+    </div>
+    @if (detailLoading()) {
+        <div class="plot" aria-busy="true">
+            <div class="skeleton line"></div>
+            <div class="skeleton line short"></div>
+        </div>
+    } @else if (detail()?.plot; as plot) {
+        <div class="plot">
+            <h3>Plot</h3>
+            <p>{{ plot }}</p>
+        </div>
+    }
+</div>
+
+<div class="actions">
+    <div class="group main">
+        <button
+            class="cell pressable"
+            type="button"
+            [class.on]="watchItem()"
+            [attr.aria-pressed]="!!watchItem()"
+            [disabled]="!media()"
+            (click)="follow()"
+        >
+            <mat-icon [class.filled]="watchItem()" aria-hidden="true">
+                {{ watchItem() ? 'bookmark_added' : 'bookmark_add' }}
+            </mat-icon>
+            {{ watchItem() ? 'Following' : 'Follow' }}
+        </button>
+        <a class="cell pressable" [class.off]="!trailerUrl()" [href]="trailerUrl()" target="_blank" rel="noopener">
+            <mat-icon aria-hidden="true">smart_display</mat-icon>
+            Trailer
+        </a>
+        <a class="cell pressable" [class.off]="!imdbUrl()" [href]="imdbUrl()" target="_blank" rel="noopener">
+            <mat-icon aria-hidden="true">open_in_new</mat-icon>
+            IMDb
+        </a>
+        <button class="cell pressable desktop-only" type="button" [matMenuTriggerFor]="more">
+            <mat-icon aria-hidden="true">more_horiz</mat-icon>
+            More
+        </button>
+    </div>
+    <div class="group">
+        <button
+            class="cell pressable"
+            type="button"
+            [class.on]="feedback() === 'like'"
+            [attr.aria-pressed]="feedback() === 'like'"
+            [disabled]="feedbackBusy()"
+            (click)="sendFeedback('like')"
+        >
+            <mat-icon [class.filled]="feedback() === 'like'" aria-hidden="true">thumb_up</mat-icon>
+            Like
+        </button>
+        <button
+            class="cell pressable"
+            type="button"
+            [class.on]="feedback() === 'dislike'"
+            [attr.aria-pressed]="feedback() === 'dislike'"
+            [disabled]="feedbackBusy()"
+            (click)="sendFeedback('dislike')"
+        >
+            <mat-icon [class.filled]="feedback() === 'dislike'" aria-hidden="true">thumb_down</mat-icon>
+            Dislike
+        </button>
+    </div>
+</div>
+
+<div class="cta"><ng-content select="[primary]" /></div>
+
+<div class="status">
+    @if (trackers(); as cell) {
+        <div class="tile cell" [class]="cell.tone">
+            <small><mat-icon aria-hidden="true">cloud_download</mat-icon>Trackers</small>
+            <div class="value">
+                <b>{{ cell.value }}</b>
+                <span>{{ cell.detail }}</span>
+            </div>
+        </div>
+    } @else if (!hideTrackers()) {
+        <a class="tile cell pressable" routerLink="/releases" [queryParams]="releasesQuery()">
+            <small><mat-icon aria-hidden="true">cloud_download</mat-icon>Trackers</small>
+            <div class="value">
+                <b>Search releases</b>
+                <span>Look this title up on your trackers</span>
+            </div>
+        </a>
+    }
+    @let lib = libraryStatus();
+    <div class="tile cell" [class]="lib.tone">
+        <small><mat-icon aria-hidden="true">video_library</mat-icon>Library</small>
+        <div class="value">
+            <b>{{ lib.value }}</b>
+            <span>{{ lib.detail }}</span>
+        </div>
+    </div>
+    @let watch = watchlistStatus();
+    <div class="tile cell" [class]="watch.tone">
+        <small><mat-icon aria-hidden="true">bookmarks</mat-icon>Watchlist</small>
+        <div class="value">
+            <b>{{ watch.value }}</b>
+            <span>{{ watch.detail }}</span>
+        </div>
+    </div>
+</div>
+
+<ng-content />
+
+<mat-menu #more="matMenu">
+    <a mat-menu-item routerLink="/releases" [queryParams]="releasesQuery()">
+        <mat-icon>search</mat-icon>
+        <span>Search releases</span>
+    </a>
+    <a mat-menu-item [href]="wokeUrl()" target="_blank" rel="noopener">
+        <mat-icon>fact_check</mat-icon>
+        <span>Is It Woke?</span>
+    </a>
+    @if (jellyfinUrl(); as url) {
+        <a mat-menu-item [href]="url" target="_blank" rel="noopener">
+            <mat-icon>play_circle</mat-icon>
+            <span>Open in Jellyfin</span>
+        </a>
+    }
+    @if (canDelete()) {
+        <mat-divider />
+        <button mat-menu-item class="danger" [disabled]="deleting()" (click)="deleteAction.emit()">
+            <mat-icon>delete</mat-icon>
+            <span>Delete item</span>
+        </button>
+    }
+</mat-menu>

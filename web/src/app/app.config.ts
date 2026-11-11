@@ -1,15 +1,21 @@
 import { ApplicationConfig, isDevMode, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter, withComponentInputBinding, withRouterConfig } from '@angular/router';
+import { provideRouter, withComponentInputBinding, withRouterConfig, withViewTransitions } from '@angular/router';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideServiceWorker } from '@angular/service-worker';
 
 import { routes } from './app.routes';
+import { skipSameViewTransitions } from './utils/view-transitions';
 import { provideClientHydration } from '@angular/platform-browser';
 
 export const appConfig: ApplicationConfig = {
     providers: [
         provideBrowserGlobalErrorListeners(),
-        provideRouter(routes, withComponentInputBinding(), withRouterConfig({ onSameUrlNavigation: 'reload' })),
+        provideRouter(
+            routes,
+            withComponentInputBinding(),
+            withRouterConfig({ onSameUrlNavigation: 'reload' }),
+            withViewTransitions({ onViewTransitionCreated: skipSameViewTransitions }),
+        ),
         provideHttpClient(withFetch()),
         provideClientHydration(),
         provideServiceWorker('ngsw-worker.js', {

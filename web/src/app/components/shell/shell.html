@@ -1,94 +1,26 @@
-<mat-toolbar class="toolbar">
-    @if (!isDesktop()) {
-        <button mat-icon-button (click)="toggleSidenav()" aria-label="Open menu">
-            <mat-icon
-                aria-hidden="false"
-                [matBadge]="watchlist.unreadCount()"
-                [matBadgeHidden]="watchlist.unreadCount() === 0"
-            >
-                menu
-            </mat-icon>
-        </button>
+<nav class="nav" aria-label="Main">
+    @for (item of navItems; track item.path) {
+        <a
+            class="item"
+            [routerLink]="item.path"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            #link="routerLinkActive"
+            [attr.aria-label]="item.showsUnread && watchlist.unreadCount() ? item.label + ', ' + watchlist.unreadCount() + ' new releases' : null"
+        >
+            <span class="pill pressable">
+                <mat-icon [class.filled]="link.isActive" aria-hidden="true">{{ item.icon }}</mat-icon>
+                @if (item.showsUnread && watchlist.unreadCount(); as count) {
+                    <span class="count num" aria-hidden="true">{{ count }}</span>
+                }
+            </span>
+            {{ item.label }}
+        </a>
     }
-    <span class="toolbar-title">{{ pageTitle.title() }}</span>
-</mat-toolbar>
+    <span class="spacer"></span>
+    <app-account-menu class="desktop-only" />
+</nav>
 
-<mat-sidenav-container class="sidenav-container">
-    <mat-sidenav
-        [opened]="isDesktop() || mobileOpen()"
-        [mode]="isDesktop() ? 'side' : 'over'"
-        [disableClose]="isDesktop()"
-        (closedStart)="closeSidenav()"
-    >
-        <div class="sidenav-inner">
-            <span class="focus-sink" cdkFocusInitial tabindex="-1" aria-hidden="true"></span>
-            <div class="sidenav-user">
-                <mat-icon class="user-icon">person</mat-icon>
-                <span class="username">{{ auth.username() }}</span>
-            </div>
-            <mat-nav-list class="sidenav-nav">
-                <a mat-list-item routerLink="/releases" routerLinkActive="active-link" (click)="closeSidenav()">
-                    <mat-icon matListItemIcon>new_releases</mat-icon>
-                    <span matListItemTitle>Releases</span>
-                </a>
-                <a mat-list-item routerLink="/library" routerLinkActive="active-link" (click)="closeSidenav()">
-                    <mat-icon matListItemIcon>video_library</mat-icon>
-                    <span matListItemTitle>Library</span>
-                </a>
-                <a mat-list-item routerLink="/watchlist" routerLinkActive="active-link" (click)="closeSidenav()">
-                    <mat-icon
-                        matListItemIcon
-                        aria-hidden="false"
-                        [matBadge]="watchlist.unreadCount()"
-                        [matBadgeHidden]="watchlist.unreadCount() === 0"
-                    >
-                        bookmarks
-                    </mat-icon>
-                    <span matListItemTitle>Watchlist</span>
-                </a>
-                <a mat-list-item routerLink="/recommendations" routerLinkActive="active-link" (click)="closeSidenav()">
-                    <mat-icon matListItemIcon>explore</mat-icon>
-                    <span matListItemTitle>Recommendations</span>
-                </a>
-                @if (auth.admin()) {
-                    <mat-divider />
-                    <a mat-list-item routerLink="/users" routerLinkActive="active-link" (click)="closeSidenav()">
-                        <mat-icon matListItemIcon>group</mat-icon>
-                        <span matListItemTitle>Manage Users</span>
-                    </a>
-                    <a mat-list-item routerLink="/admin" routerLinkActive="active-link" (click)="closeSidenav()">
-                        <mat-icon matListItemIcon>admin_panel_settings</mat-icon>
-                        <span matListItemTitle>Administration</span>
-                    </a>
-                    <a mat-list-item routerLink="/logs" routerLinkActive="active-link" (click)="closeSidenav()">
-                        <mat-icon matListItemIcon>receipt_long</mat-icon>
-                        <span matListItemTitle>Logs</span>
-                    </a>
-                }
-            </mat-nav-list>
-            <div class="sidenav-footer">
-                @if (version.commitHash()) {
-                    <div class="version-info">
-                        <a [href]="version.commitUrl()" target="_blank" rel="noopener" class="commit-link">{{
-                            version.commitHash()
-                        }}</a>
-                        @if (version.commitDate(); as date) {
-                            <span class="commit-date">{{ date | date: 'yyyy-MM-dd HH:mm' }}</span>
-                        }
-                    </div>
-                }
-                <mat-divider />
-                <mat-nav-list>
-                    <button mat-list-item class="signout-item" (click)="logout()">
-                        <mat-icon matListItemIcon>logout</mat-icon>
-                        <span matListItemTitle>Sign out</span>
-                    </button>
-                </mat-nav-list>
-            </div>
-        </div>
-    </mat-sidenav>
-
-    <mat-sidenav-content>
-        <router-outlet />
-    </mat-sidenav-content>
-</mat-sidenav-container>
+<div class="content">
+    <router-outlet />
+</div>

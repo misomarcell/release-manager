@@ -1,0 +1,6 @@
+<section #list class="list" [attr.inert]="openKey() && !isDesktop() ? '' : null">
+    <ng-content />
+</section>
+<section #detail class="detail" tabindex="-1" aria-label="Title details">
+    <ng-content select="[detail]" />
+</section>

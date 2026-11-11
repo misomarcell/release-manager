@@ -1,11 +1,8 @@
 import type { MediaStream } from '@rm/shared/jellyfin.models';
+import type { ReleaseTag } from '@rm/shared/release-tags';
 
-export interface Badge {
-    label: string;
-    cls: string;
-}
 
-function bestAudioBadge(streams: MediaStream[]): Badge | null {
+function bestAudioBadge(streams: MediaStream[]): ReleaseTag | null {
     let best: { priority: number; label: string } | null = null;
     for (const s of streams) {
         if (s.type !== 'audio') continue;
@@ -23,28 +20,31 @@ function bestAudioBadge(streams: MediaStream[]): Badge | null {
         }
         if (candidate && (!best || candidate.priority > best.priority)) best = candidate;
     }
-    return best ? { label: best.label, cls: 'badge-audio' } : null;
+    return best ? { label: best.label, kind: 'plain' } : null;
 }
 
-export function computeMediaBadges(streams: MediaStream[]): Badge[] {
-    const result: Badge[] = [];
+export function computeMediaBadges(streams: MediaStream[]): ReleaseTag[] {
+    const result: ReleaseTag[] = [];
     const video = streams.find((s) => s.type === 'video');
 
     if (video) {
-        if ((video.width ?? 0) >= 3840) result.push({ label: '4K', cls: 'badge-4k' });
+        const width = video.width ?? 0;
+        if (width >= 3840) result.push({ label: '2160p', kind: 'res' });
+        else if (width >= 1920) result.push({ label: '1080p', kind: 'res' });
+        else if (width >= 1280) result.push({ label: '720p', kind: 'res' });
 
         const vrt = (video.videoRangeType ?? '').toUpperCase();
-        if (vrt.includes('DOVI')) result.push({ label: 'DoVi', cls: 'badge-dv' });
-        else if (vrt === 'HDR10PLUS') result.push({ label: 'HDR10+', cls: 'badge-hdr' });
-        else if (vrt === 'HDR10') result.push({ label: 'HDR10', cls: 'badge-hdr' });
-        else if (vrt === 'HDR') result.push({ label: 'HDR', cls: 'badge-hdr' });
+        if (vrt.includes('DOVI')) result.push({ label: 'DV', kind: 'hdr' });
+        else if (vrt === 'HDR10PLUS') result.push({ label: 'HDR10+', kind: 'hdr' });
+        else if (vrt === 'HDR10') result.push({ label: 'HDR10', kind: 'hdr' });
+        else if (vrt === 'HDR') result.push({ label: 'HDR', kind: 'hdr' });
 
         const codec = video.codec.toLowerCase();
-        if (codec === 'hevc') result.push({ label: 'HEVC', cls: 'badge-codec' });
-        else if (codec === 'av1') result.push({ label: 'AV1', cls: 'badge-codec' });
-        else if (codec === 'h264' || codec === 'avc') result.push({ label: 'AVC', cls: 'badge-codec' });
-        else if (codec === 'vp9') result.push({ label: 'VP9', cls: 'badge-codec' });
-        else if (codec === 'mpeg4') result.push({ label: 'MPEG-4', cls: 'badge-codec' });
+        if (codec === 'hevc') result.push({ label: 'HEVC', kind: 'plain' });
+        else if (codec === 'av1') result.push({ label: 'AV1', kind: 'plain' });
+        else if (codec === 'h264' || codec === 'avc') result.push({ label: 'AVC', kind: 'plain' });
+        else if (codec === 'vp9') result.push({ label: 'VP9', kind: 'plain' });
+        else if (codec === 'mpeg4') result.push({ label: 'MPEG-4', kind: 'plain' });
     }
 
     const audioBadge = bestAudioBadge(streams);

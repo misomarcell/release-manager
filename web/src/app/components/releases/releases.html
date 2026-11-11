@@ -1,51 +1,120 @@
-<main class="container">
+@let current = selected();
+<app-list-detail [openKey]="current?.key ?? null">
     <app-filter-search
-        placeholder="Search movies, TV shows..."
+        placeholder="Search releases…"
         [filters]="releaseFilters"
         [query]="q()"
         [values]="searchFilterValues()"
         (searchSubmit)="onSearch($event)"
-    />
+    >
+        <button trailing class="scope pressable" type="button" [matMenuTriggerFor]="trackerMenu">
+            {{ trackerLabel() }}
+            <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+        </button>
+    </app-filter-search>
+
+    <mat-menu #trackerMenu="matMenu">
+        <a mat-menu-item [routerLink]="[]" [queryParams]="{ tracker: null, open: null }" queryParamsHandling="merge">
+            All trackers
+        </a>
+        @for (option of trackers; track option.id) {
+            <a
+                mat-menu-item
+                [routerLink]="[]"
+                [queryParams]="{ tracker: option.id, open: null }"
+                queryParamsHandling="merge"
+            >
+                {{ option.name }}
+            </a>
+        }
+    </mat-menu>
 
     @if (loading()) {
-        <div class="release-skeletons">
-            @for (i of skeletonItems; track i) {
-                <div class="skeleton-card-row">
-                    <div class="skeleton skel-poster"></div>
-                    <div class="skel-text">
-                        <div class="skeleton skel-title"></div>
-                        <div class="skeleton skel-meta"></div>
-                    </div>
-                </div>
+        <app-row-skeletons />
+    } @else if (error(); as err) {
+        <p class="message error" role="alert">{{ err }}</p>
+    } @else if (groups().length > 0) {
+        <div class="list-head">
+            <b>{{ heading() }}</b>
+            <span class="num">by seeders · page {{ page() }} of {{ pageCount() }}</span>
+        </div>
+        <div class="seg-list">
+            @for (group of groups(); track group.key) {
+                @let count = group.releases.length;
+                <app-title-row
+                    [key]="group.key"
+                    [title]="group.title"
+                    [poster]="group.metadata?.poster"
+                    [mediaType]="group.metadata?.mediaType"
+                    [year]="group.metadata?.year"
+                    [rating]="group.metadata?.rating"
+                    [info]="group.metadata?.genre"
+                    [selected]="group.key === current?.key"
+                    [replaceUrl]="!!open()"
+                >
+                    @for (resolution of group.resolutions; track resolution) {
+                        <span class="tag res">{{ resolution }}</span>
+                    }
+                    @if (group.metadata?.inJellyfinLibrary) {
+                        <span class="state own">
+                            <mat-icon class="filled" aria-hidden="true">check_circle</mat-icon>
+                            In library
+                        </span>
+                    }
+                    @if (isFollowing(group)) {
+                        <span class="state following">
+                            <mat-icon class="filled" aria-hidden="true">bookmark</mat-icon>
+                            Following
+                        </span>
+                    }
+                    <ng-container side>
+                        <span class="seed" title="Most seeders">
+                            <mat-icon aria-label="Seeders">arrow_drop_up</mat-icon>{{ group.topSeeders }}
+                        </span>
+                        <small>{{ count }} {{ count === 1 ? 'release' : 'releases' }}</small>
+                    </ng-container>
+                </app-title-row>
             }
         </div>
-    }
-
-    @if (error(); as err) {
-        <p class="error">{{ err }}</p>
-    }
-
-    @if (!loading() && groupedMovies().length > 0) {
-        <mat-accordion class="results">
-            @for (movie of groupedMovies(); track movie.key; let i = $index) {
-                <app-release-card
-                    [movie]="movie"
-                    [searchQuery]="q()"
-                    (searchTitle)="onSearchByTitle($event)"
-                />
-            }
-        </mat-accordion>
-
         <mat-paginator
             [length]="totalResults()"
             [pageSize]="pageSize"
             [pageIndex]="page() - 1"
             [hidePageSize]="true"
             (page)="onPage($event)"
-            showFirstLastButtons
             aria-label="Page selector"
         />
-    } @else if (!loading() && !error()) {
-        <p class="empty">No results found.</p>
+    } @else {
+        <p class="message">No results found.</p>
     }
-</main>
+
+    @if (current) {
+        <app-title-detail
+            detail
+            backLabel="Releases"
+            [title]="current.title"
+            [tmdbId]="current.metadata?.tmdbId"
+            [mediaType]="current.metadata?.mediaType"
+            [poster]="current.metadata?.poster"
+            [year]="current.metadata?.year"
+            [rating]="current.metadata?.rating"
+            [genre]="current.metadata?.genre"
+            [imdbId]="current.imdbId"
+            [trackers]="trackerStatus()"
+            [library]="libraryStatus()"
+        >
+            <div class="section-head">
+                <h3>Releases on this page</h3>
+                @if (titleQuery(); as query) {
+                    <a mat-button routerLink="/releases" [queryParams]="{ q: query }">
+                        <mat-icon>search</mat-icon>
+                        Search this title
+                    </a>
+                } @else {
+                    <span>sorted by seeders</span>
+                }
+            </div>
+            <app-release-list [releases]="current.releases" [title]="current.title" />
+        </app-title-detail>
+    }
+</app-list-detail>

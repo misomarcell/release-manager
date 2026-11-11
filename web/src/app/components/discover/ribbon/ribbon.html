@@ -1,0 +1,52 @@
+<h2>
+    <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
+    {{ heading() }}
+</h2>
+@if (loading()) {
+    <div class="scroller" aria-busy="true">
+        @for (i of skeletons; track i) {
+            <div class="tile-card">
+                <div class="skeleton poster"></div>
+                <div class="skeleton line"></div>
+            </div>
+        }
+    </div>
+} @else if (items().length > 0) {
+    <div class="scroller">
+        @for (rec of items(); track rec.tmdbId) {
+            @let key = rec.mediaType + ':' + rec.tmdbId;
+            <a
+                class="tile-card"
+                [class.selected]="key === selectedKey()"
+                [routerLink]="[]"
+                [queryParams]="{ open: key }"
+                queryParamsHandling="merge"
+                [replaceUrl]="!!selectedKey()"
+            >
+                <span class="poster">
+                    <app-poster [src]="rec.poster" [mediaType]="rec.mediaType" />
+                    @if (rec.inJellyfinLibrary) {
+                        <span class="own" title="In library">
+                            <mat-icon aria-label="In library">check</mat-icon>
+                        </span>
+                    }
+                </span>
+                <b>{{ rec.title }}</b>
+                <span class="meta">
+                    {{ rec.year }}
+                    @if (rec.rating) {
+                        · <mat-icon class="filled" aria-label="Rating">star</mat-icon> {{ rec.rating }}
+                    }
+                </span>
+            </a>
+        }
+        @if (canRefresh()) {
+            <button class="more pressable" type="button" (click)="refresh.emit()">
+                <mat-icon aria-hidden="true">refresh</mat-icon>
+                Get new recommendations
+            </button>
+        }
+    </div>
+} @else {
+    <p class="hint">Nothing to show here right now.</p>
+}

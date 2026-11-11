@@ -6,6 +6,7 @@ import { MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { PosterComponent } from '../poster/poster';
 import { WatchlistService } from '../../services/watchlist.service';
 import { extractHttpError } from '../../utils/http-error';
 import type { MediaType } from '@rm/shared/tmdb.models';
@@ -19,6 +20,8 @@ export interface WatchlistDialogData {
     tmdbId: number;
     mediaType: MediaType;
     title: string;
+    year?: string | null;
+    poster?: string | null;
     item: WatchlistItem | null;
 }
 
@@ -35,6 +38,7 @@ const KEYWORD_SUGGESTIONS = ['2160p', '1080p', 'BluRay', 'Blu-ray', 'REMUX', 'WE
         MatFormFieldModule,
         MatIconModule,
         MatProgressBarModule,
+        PosterComponent,
     ],
     templateUrl: './watchlist-dialog.html',
     styleUrl: './watchlist-dialog.scss',
@@ -61,11 +65,11 @@ export class WatchlistDialogComponent {
         event.chipInput.clear();
     }
 
-    protected toggleSuggestion(keyword: string, selected: boolean): void {
-        if (selected) {
-            this.addKeyword(keyword);
-        } else {
+    protected toggleSuggestion(keyword: string): void {
+        if (this.hasKeyword(keyword)) {
             this.removeKeyword(keyword);
+        } else {
+            this.addKeyword(keyword);
         }
     }
 

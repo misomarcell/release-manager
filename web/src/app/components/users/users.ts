@@ -11,10 +11,10 @@ import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { extractHttpError } from '../../utils/http-error';
 import type { UserInfo } from '@rm/shared/user.models';
-
+import { PageTitleComponent } from '../page-title/page-title';
 @Component({
     selector: 'app-users',
-    imports: [DatePipe, MatButtonModule, MatIconModule, MatProgressBarModule, MatCardModule],
+    imports: [PageTitleComponent, DatePipe, MatButtonModule, MatIconModule, MatProgressBarModule, MatCardModule],
     templateUrl: './users.html',
     styleUrl: './users.scss',
 })

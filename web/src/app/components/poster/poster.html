@@ -1,0 +1,5 @@
+@if (src(); as url) {
+    <img [src]="url" alt="" decoding="async" [attr.loading]="eager() ? null : 'lazy'" />
+} @else {
+    <mat-icon aria-hidden="true">{{ mediaType() === 'tv' ? 'tv' : 'movie' }}</mat-icon>
+}
