@@ -165,6 +165,11 @@ backend/src/
 - `pnpm validate` runs all checks and should pass before pushing.
 - Always run `pnpm validate` at the end of every task to catch errors early.
 
+## CI
+
+- `.github/workflows/checks.yml` runs on every pull request to `master` and on pushes to `master`, as four parallel jobs: 🎨 Formatting (`pnpm format:check`), 🧹 Lint (`pnpm lint`), 🏗️ Build (`pnpm build`) and 🧟 Dead code (`pnpm knip`, after building `shared`).
+- Together they cover the same ground as `pnpm validate`; when a gate is added to `validate`, add a matching job here.
+
 ## Formatting
 
 - Prettier is the only formatter; its version is pinned in the root `package.json` and configured in `.prettierrc` (120 columns, single quotes, 4 spaces, 2 spaces for JSON/YAML/Markdown, LF line endings). `.prettierignore` lists what it skips.
