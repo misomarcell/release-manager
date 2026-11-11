@@ -7,6 +7,7 @@ A self-hosted web app for browsing and searching Hungarian nCore torrents, enric
 - **nCore integration**: Search torrents by category or keyword, sorted by seeders
 - **TMDB enrichment**: Movie posters, ratings, genres, plots via TMDB API
 - **PostgreSQL caching**: TMDB data cached for 1 week to reduce API calls
+- **Release watchlist**: Follow titles and get a badge when new nCore releases (optionally matching keywords) appear
 - **Passkey authentication**: WebAuthn/FIDO2 login — no passwords
 - **Dark theme**: Angular Material 3 dark mode
 - **Docker**: One-command deployment with `docker compose up`
@@ -89,6 +90,7 @@ To connect to the database, register a new server in pgAdmin:
 | `RP_ORIGIN`         | WebAuthn origin URL          | `http://localhost:4000`                         |
 | `QBITTORRENT_CRON`  | qBittorrent torrent sync cron schedule | `0 6 * * *`                            |
 | `JELLYFIN_CRON`     | Jellyfin library sync cron schedule | `0 6 * * *`                                |
+| `WATCHLIST_CRON`    | Watchlist release check cron schedule | `0 9 * * *`                              |
 
 ## Authentication
 

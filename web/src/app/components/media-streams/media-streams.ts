@@ -3,6 +3,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatExpansionModule } from '@angular/material/expansion';
 import type { MediaStream } from '@rm/shared/jellyfin.models';
 import { formatVideoStream } from '../../utils/media-badges';
+import { formatBytes } from '../../utils/format-bytes';
 
 interface MediaInfoGroup {
     label: string;
@@ -35,8 +36,7 @@ export class MediaStreamsComponent {
         }
 
         if (fileInfo.sizeBytes) {
-            const sizeGb = (fileInfo.sizeBytes / 1_073_741_824).toFixed(2);
-            result.push({ label: 'File Size', icon: 'storage', items: [`${sizeGb} GB`] });
+            result.push({ label: 'File Size', icon: 'storage', items: [formatBytes(fileInfo.sizeBytes)] });
         }
 
         const streams = this.streams();

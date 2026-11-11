@@ -1,0 +1,40 @@
+<main class="container">
+    @if (!watchlist.loaded()) {
+        <div class="release-skeletons">
+            @for (i of skeletonItems; track i) {
+                <div class="skeleton-card-row">
+                    <div class="skeleton skel-poster"></div>
+                    <div class="skel-text">
+                        <div class="skeleton skel-title"></div>
+                        <div class="skeleton skel-meta"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    } @else if (items().length > 0) {
+        <div class="results-header">
+            <span class="results-count">
+                {{ items().length }} {{ items().length === 1 ? 'title' : 'titles' }}
+                @if (watchlist.unreadCount(); as count) {
+                    · {{ count }} new {{ count === 1 ? 'release' : 'releases' }}
+                }
+            </span>
+            <button mat-button [disabled]="checking()" (click)="checkNow()">
+                <mat-icon [class.spinning]="checking()">refresh</mat-icon>
+                Check now
+            </button>
+        </div>
+        <mat-accordion class="results">
+            @for (item of items(); track item.id) {
+                <app-watchlist-card [item]="item" />
+            }
+        </mat-accordion>
+    } @else if (watchlist.error()) {
+        <p class="error">Failed to load your watchlist.</p>
+    } @else {
+        <p class="empty">
+            Your watchlist is empty. Use the bookmark button on a release or a recommendation to get notified about new
+            releases.
+        </p>
+    }
+</main>

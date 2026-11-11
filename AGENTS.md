@@ -7,8 +7,8 @@
   - `backend/`: Express API server with PostgreSQL
   - `shared/`: shared TypeScript models used by both app and backend
 - Frontend serves Angular SSR and proxies `/api/*` requests to the backend.
-- Backend handles nCore search, TMDB enrichment, caching, Passkey authentication, qBittorrent integration, and Jellyfin library sync.
-- PostgreSQL stores metadata cache, user credentials, and sessions.
+- Backend handles nCore search, TMDB enrichment, caching, Passkey authentication, qBittorrent integration, Jellyfin library sync, and the per-user release watchlist.
+- PostgreSQL stores metadata cache, user credentials, sessions, and watchlist items with their known releases.
 
 ## Workflow
 
@@ -32,6 +32,7 @@
 - `shared/src/recommendations.models.ts` — Recommendation types: `Recommendation`, `FeedbackValue`, `RecommendationFeedbackRequest`.
 - `shared/src/constants.ts` — Shared constants: `TMDB_GENRE_MAP`, `DOWNLOAD_CATEGORIES`, `DownloadCategory`.
 - `shared/src/jellyfin.models.ts` — Jellyfin library types: `MediaStream`, `MediaInfo`, `SeasonInfo`, `LibraryItem` (includes per-season episode counts for TV), `LibraryResponse`.
+- `shared/src/watchlist.models.ts` — Watchlist types: `WatchlistItem`, `WatchlistRelease`, `WatchlistAddRequest`, `WatchlistUpdateRequest`, `WatchlistResponse`, keyword limits.
 - `shared/src/log.models.ts` — Logging types: `LogLevel`, `LogEntry`, `LogsResponse`.
 - Both frontend and backend import from `shared` — never duplicate these types.
 
@@ -51,10 +52,12 @@ backend/src/
     version.routes.ts   # App version endpoint (latest GitHub commit)
     recommendations.routes.ts # AI-powered recommendations + feedback
     admin.routes.ts     # Admin actions incl. Jellyfin sync + qBittorrent test
+    watchlist.routes.ts # Per-user watchlist CRUD, mark as read, manual check
   services/
     auth.service.ts     # WebAuthn/Passkey logic
     github.service.ts   # GitHub API integration (latest commit info)
-    ncore.service.ts    # nCore API: search, NFO, torrent file download
+    ncore.service.ts    # nCore API: search (by name or IMDb id), NFO, torrent file download
+    watchlist.service.ts # Watchlist release check: nCore lookup, keyword filter, new release detection
     tmdb.service.ts     # TMDB API + PostgreSQL caching; enriches all results with inJellyfinLibrary
     qbittorrent.service.ts # qBittorrent Web API integration
     jellyfin.service.ts # Jellyfin API: library sync (incl. per-season episode counts) + connection test
@@ -66,6 +69,7 @@ backend/src/
     user.repository.ts  # User/credential/session database operations
     recommendations.repository.ts # Feedback and recommendation cache DB operations
     log.repository.ts           # Log query database operations
+    watchlist.repository.ts     # Watchlist items + known/unseen release DB operations
     jellyfin.repository.ts      # Jellyfin library DB operations + in-memory lookup cache + owned titles for recs
   utils/
     coerce.ts           # Type coercion helpers
@@ -88,6 +92,15 @@ backend/src/
 4. `ncore.service.downloadTorrentFile(downloadUrl)` fetches the `.torrent` file using nCore cookies, with hostname validation against `config.ncore.baseUrl`.
 5. `qbittorrent.service.addTorrent(torrentBuffer, savePath, category)` uploads the torrent to qBittorrent.
 6. nCore cookies are built via a private `getCookieHeader()` helper in `ncore.service.ts`.
+
+## Watchlist
+
+- Any title with TMDB metadata can be added from the release card, library card or recommendation dialog (`app-watchlist-button` → `app-watchlist-dialog`); items are stored per user in `watchlist_items`.
+- `watchlist_releases` keeps every known nCore torrent id per item. The first successful check is the baseline (all `seen`); later checks insert unknown torrent ids as unseen.
+- Releases are looked up through the nCore JSON search by IMDb id (`miben=imdb`, newest first), falling back to a title search filtered by parsed title/year when no IMDb id is known.
+- Optional per-item keywords (`mat-chip-grid` in the dialog): a new release only counts when its name contains at least one keyword (case-insensitive). Non-matching releases are stored as already seen.
+- The unseen count is shown as a `matBadge` on the Watchlist nav item, the mobile menu button and the watchlist card; "Mark as read" resets it for an item.
+- Checks run on `WATCHLIST_CRON` and on demand via "Check now" (`POST /api/watchlist/check`).
 
 ## Docker
 
@@ -123,6 +136,7 @@ backend/src/
 | `JELLYFIN_API_KEY`     | Jellyfin admin API key                                                 |
 | `JELLYFIN_USER_ID`     | Jellyfin user ID to scope library sync to (optional)                   |
 | `JELLYFIN_CRON`        | Cron schedule for library sync (default: `0 6 * * *` — daily at 6 AM)  |
+| `WATCHLIST_CRON`       | Cron schedule for watchlist check (default: `0 9 * * *` — daily at 9 AM) |
 
 ## Validation Rules
 

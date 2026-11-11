@@ -157,5 +157,35 @@ export async function initDatabase(): Promise<void> {
     );
 
     CREATE INDEX IF NOT EXISTS sync_log_service_started_at_idx ON sync_log (service, started_at DESC);
+
+    CREATE TABLE IF NOT EXISTS watchlist_items (
+      id              SERIAL PRIMARY KEY,
+      user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      tmdb_id         INTEGER NOT NULL,
+      media_type      VARCHAR(10) NOT NULL,
+      title           TEXT NOT NULL,
+      year            TEXT NOT NULL DEFAULT '',
+      poster          TEXT NOT NULL DEFAULT '',
+      imdb_id         TEXT NOT NULL DEFAULT '',
+      keywords        TEXT[] NOT NULL DEFAULT '{}',
+      last_checked_at TIMESTAMPTZ,
+      created_at      TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS watchlist_items_user_tmdb_media_idx
+      ON watchlist_items (user_id, tmdb_id, media_type);
+
+    CREATE TABLE IF NOT EXISTS watchlist_releases (
+      item_id      INTEGER NOT NULL REFERENCES watchlist_items(id) ON DELETE CASCADE,
+      torrent_id   VARCHAR(32) NOT NULL,
+      release_name TEXT NOT NULL,
+      details_url  TEXT NOT NULL DEFAULT '',
+      size         BIGINT NOT NULL DEFAULT 0,
+      seen         BOOLEAN NOT NULL DEFAULT TRUE,
+      found_at     TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (item_id, torrent_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS watchlist_releases_unseen_idx ON watchlist_releases (item_id) WHERE NOT seen;
   `);
 }

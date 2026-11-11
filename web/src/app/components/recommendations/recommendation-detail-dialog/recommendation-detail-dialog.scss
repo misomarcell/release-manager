@@ -71,8 +71,9 @@ mat-dialog-actions {
         margin: 0;
     }
 
-    app-media-actions-menu {
-        align-self: flex-start;
+    .dialog-actions-row {
+        display: flex;
+        align-items: center;
         margin-left: -0.5rem;
     }
 }

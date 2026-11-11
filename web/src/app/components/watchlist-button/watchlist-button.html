@@ -1,0 +1,9 @@
+<button
+    mat-icon-button
+    [class.watched]="item()"
+    [matTooltip]="label()"
+    [attr.aria-label]="label()"
+    (click)="open()"
+>
+    <mat-icon>{{ item() ? 'bookmark_added' : 'bookmark_add' }}</mat-icon>
+</button>

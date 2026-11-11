@@ -35,7 +35,12 @@ interface NormalizedSearchParams {
     perPage: number;
     searchQuery: string;
     uhdOnly: boolean;
+    searchIn: NcoreSearchField;
+    sortBy: NcoreSortField;
 }
+
+type NcoreSearchField = 'name' | 'imdb';
+type NcoreSortField = 'seeders' | 'fid';
 
 interface NcoreSearchParams {
     category?: string;
@@ -43,6 +48,8 @@ interface NcoreSearchParams {
     page?: number;
     perPage?: number;
     uhd?: boolean;
+    searchIn?: NcoreSearchField;
+    sortBy?: NcoreSortField;
 }
 
 interface NcoreRawResponse {
@@ -72,7 +79,7 @@ class NcoreService {
 
         return {
             category: context.categoryKey,
-            results: this.mapTorrentResults(body, ncore.baseUrl),
+            results: this.mapTorrentResults(body, ncore.baseUrl, context.sortBy === 'seeders'),
             totalResults: this.getTotalResults(body),
             page: context.page,
             perPage: context.perPage,
@@ -138,6 +145,8 @@ class NcoreService {
             perPage: Math.min(100, Math.max(1, params.perPage ?? 100)),
             searchQuery: params.search?.trim() || '',
             uhdOnly: params.uhd === true,
+            searchIn: params.searchIn ?? 'name',
+            sortBy: params.sortBy ?? 'seeders',
         };
     }
 
@@ -150,13 +159,16 @@ class NcoreService {
         const searchUrl = new URL('/torrents.php', baseUrl);
         searchUrl.searchParams.set('kivalasztott_tipus', context.category);
         searchUrl.searchParams.set('tipus', 'kivalasztottak_kozott');
-        searchUrl.searchParams.set('miszerint', 'seeders');
+        searchUrl.searchParams.set('miszerint', context.sortBy);
         searchUrl.searchParams.set('hogyan', 'DESC');
         searchUrl.searchParams.set('tags', '');
         searchUrl.searchParams.set('jsons', 'true');
 
         if (context.searchQuery) {
             searchUrl.searchParams.set('mire', context.searchQuery);
+            if (context.searchIn !== 'name') {
+                searchUrl.searchParams.set('miben', context.searchIn);
+            }
         } else if (context.uhdOnly) {
             searchUrl.searchParams.set('mire', '2160p');
         } else {
@@ -198,10 +210,9 @@ class NcoreService {
         }
     }
 
-    private mapTorrentResults(body: Record<string, unknown>, baseUrl: string): NcoreResult[] {
-        return this.records(body['results'])
-            .map((item) => this.toNcoreResult(item, baseUrl))
-            .sort((a, b) => b.seeders - a.seeders);
+    private mapTorrentResults(body: Record<string, unknown>, baseUrl: string, sortBySeeders: boolean): NcoreResult[] {
+        const results = this.records(body['results']).map((item) => this.toNcoreResult(item, baseUrl));
+        return sortBySeeders ? results.sort((a, b) => b.seeders - a.seeders) : results;
     }
 
     private toNcoreResult(item: Record<string, unknown>, baseUrl: string): NcoreResult {

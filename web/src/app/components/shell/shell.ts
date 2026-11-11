@@ -10,12 +10,15 @@ import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
-import { filter } from 'rxjs';
+import { MatBadgeModule } from '@angular/material/badge';
+import { filter, timer } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { VersionService } from '../../services/version.service';
 import { TitleService } from '../../services/title.service';
+import { WatchlistService } from '../../services/watchlist.service';
 
 const DESKTOP_BREAKPOINT = '(min-width: 960px)';
+const WATCHLIST_REFRESH_MS = 5 * 60 * 1000;
 
 @Component({
     selector: 'app-shell',
@@ -31,6 +34,7 @@ const DESKTOP_BREAKPOINT = '(min-width: 960px)';
         MatIconModule,
         MatButtonModule,
         MatDividerModule,
+        MatBadgeModule,
     ],
     templateUrl: './shell.html',
     styleUrl: './shell.scss',
@@ -43,6 +47,7 @@ export class ShellComponent implements OnInit {
     protected auth = inject(AuthService);
     protected version = inject(VersionService);
     protected pageTitle = inject(TitleService);
+    protected watchlist = inject(WatchlistService);
     protected isDesktop = signal(false);
     protected mobileOpen = signal(false);
     private previousPath = '';
@@ -59,6 +64,9 @@ export class ShellComponent implements OnInit {
                 }
             });
         this.setTitleFromRoute();
+        timer(0, WATCHLIST_REFRESH_MS)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => void this.watchlist.load());
         this.router.events
             .pipe(
                 filter((e): e is NavigationEnd => e instanceof NavigationEnd),
