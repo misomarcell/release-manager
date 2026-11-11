@@ -6,6 +6,7 @@ const tseslint = require('typescript-eslint');
 const requireFromWeb = createRequire(require.resolve('./web/package.json'));
 const angular = requireFromWeb('angular-eslint');
 
+/** @type {import('eslint').Linter.RulesRecord} */
 const maintainabilityRules = {
   complexity: ['error', 10],
   'max-lines-per-function': ['error', { max: 50, skipBlankLines: true, skipComments: true }],
