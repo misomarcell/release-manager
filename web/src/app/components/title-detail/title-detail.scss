@@ -132,17 +132,6 @@ h2 {
     &.main {
         flex: 3;
     }
-
-    > :first-child {
-        border-start-start-radius: 18px;
-        border-end-start-radius: 18px;
-    }
-
-    > :last-child,
-    > :nth-last-child(2):has(+ .desktop-only) {
-        border-start-end-radius: 18px;
-        border-end-end-radius: 18px;
-    }
 }
 
 .actions .cell {
@@ -183,6 +172,23 @@ h2 {
     &.off {
         opacity: 0.45;
         pointer-events: none;
+    }
+}
+
+.group > .cell:first-child {
+    border-start-start-radius: 18px;
+    border-end-start-radius: 18px;
+}
+
+.group > .cell:last-child {
+    border-start-end-radius: 18px;
+    border-end-end-radius: 18px;
+}
+
+@media (max-width: 959.98px) {
+    .group > .cell:has(+ .desktop-only) {
+        border-start-end-radius: 18px;
+        border-end-end-radius: 18px;
     }
 }
 

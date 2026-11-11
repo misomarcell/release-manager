@@ -1,12 +1,12 @@
+<div class="columns head" aria-hidden="true">
+    <span>Release</span>
+    <span>Tracker</span>
+    <span class="end">Size</span>
+    <span class="end">Seed</span>
+    <span class="end">Leech</span>
+    <span></span>
+</div>
 <div class="seg-list" role="list">
-    <div class="columns head" aria-hidden="true">
-        <span>Release</span>
-        <span>Tracker</span>
-        <span class="end">Size</span>
-        <span class="end">Seed</span>
-        <span class="end">Leech</span>
-        <span></span>
-    </div>
     @for (row of rows(); track row.release.torrent_id) {
         @let r = row.release;
         <div class="tile columns" role="listitem">
