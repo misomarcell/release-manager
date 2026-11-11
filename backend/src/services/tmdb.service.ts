@@ -5,6 +5,14 @@ import type { MovieMetadata, MetadataLookup, MediaType, TitleSummary } from 'sha
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w342';
+
+function posterUrl(posterPath: string): string {
+    return posterPath ? `${IMAGE_BASE}${posterPath}` : '';
+}
+
+function formatRating(voteAverage: number): string {
+    return voteAverage ? String(Math.round(voteAverage * 10) / 10) : '';
+}
 const REQUEST_TIMEOUT_MS = 10_000;
 
 interface FindResult {
@@ -57,9 +65,9 @@ class TmdbService {
                 mediaType: type,
                 title: this.getTitle(record, type),
                 year: this.getYear(record, type),
-                poster: posterPath ? `${IMAGE_BASE}${posterPath}` : '',
+                poster: posterUrl(posterPath),
                 genre: this.resolveGenres(this.array(record['genre_ids'])),
-                rating: voteAverage ? String(Math.round(voteAverage * 10) / 10) : '',
+                rating: formatRating(voteAverage),
             };
         });
     }
@@ -159,9 +167,9 @@ class TmdbService {
             mediaType: item.type,
             title,
             year,
-            poster: posterPath ? `${IMAGE_BASE}${posterPath}` : '',
+            poster: posterUrl(posterPath),
             genre: this.getGenres(details) || this.resolveGenres(this.array(item.data['genre_ids'])),
-            rating: voteAverage ? String(Math.round(voteAverage * 10) / 10) : '',
+            rating: formatRating(voteAverage),
             plot: asString(details['overview']),
             runtime: this.getRuntime(details, item.type),
             rated: this.getCertification(details, item.type),

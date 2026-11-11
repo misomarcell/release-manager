@@ -72,13 +72,13 @@ export async function finishRegistration(username: string, response: Registratio
   }
 
   const { credential } = verification.registrationInfo;
-  await createCredential(
-    credential.id,
-    user.id,
-    Buffer.from(credential.publicKey),
-    credential.counter,
-    (credential.transports ?? []) as string[],
-  );
+  await createCredential({
+    id: credential.id,
+    userId: user.id,
+    publicKey: Buffer.from(credential.publicKey),
+    counter: credential.counter,
+    transports: (credential.transports ?? []) as string[],
+  });
 
   return { verified: true };
 }

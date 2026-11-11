@@ -71,16 +71,18 @@ export async function getCredentialById(credId: string): Promise<CredentialRow |
   return result.rows[0] ?? null;
 }
 
-export async function createCredential(
-  id: string,
-  userId: number,
-  publicKey: Buffer,
-  counter: number,
-  transports: string[],
-): Promise<void> {
+interface NewCredential {
+  id: string;
+  userId: number;
+  publicKey: Buffer;
+  counter: number;
+  transports: string[];
+}
+
+export async function createCredential(credential: NewCredential): Promise<void> {
   await query(
     'INSERT INTO credentials (id, user_id, public_key, counter, transports) VALUES ($1, $2, $3, $4, $5)',
-    [id, userId, publicKey, counter, transports],
+    [credential.id, credential.userId, credential.publicKey, credential.counter, credential.transports],
   );
 }
 

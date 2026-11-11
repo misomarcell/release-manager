@@ -7,6 +7,7 @@ import { logSync } from '../repositories/sync.repository.js';
 
 const REQUEST_TIMEOUT_MS = 15_000;
 const SYNC_TIMEOUT_MS = 180_000;
+const STREAM_TYPES = { Video: 'video', Audio: 'audio', Subtitle: 'subtitle' } as const;
 
 interface JellyfinRawMediaStream {
     Type: 'Video' | 'Audio' | 'Subtitle';
@@ -43,6 +44,10 @@ interface JellyfinRawItem {
 interface JellyfinRawEpisode {
     SeriesId?: string;
     ParentIndexNumber?: number;
+}
+
+function parseTmdbId(raw: JellyfinRawItem): number | null {
+    return parseInt(raw.ProviderIds?.['Tmdb'] ?? '', 10) || null;
 }
 
 interface JellyfinConnectionConfig {
@@ -136,24 +141,17 @@ class JellyfinService {
         const mediaType = this.mapMediaType(raw.Type);
         if (!mediaType || !raw.Name) return null;
 
-        const tmdbIdRaw = raw.ProviderIds?.['Tmdb'];
-        const tmdbId = tmdbIdRaw ? parseInt(tmdbIdRaw, 10) || null : null;
-        const year = raw.ProductionYear ? String(raw.ProductionYear) : null;
-        const dateCreated = raw.DateCreated ? new Date(raw.DateCreated) : null;
-        const mediaInfo = this.parseMediaInfo(raw.MediaSources);
-        const sizeBytes = raw.MediaSources?.[0]?.Size ?? null;
-
         return {
             jellyfinId: raw.Id,
-            tmdbId,
+            tmdbId: parseTmdbId(raw),
             mediaType,
             title: raw.Name,
-            year,
-            dateCreated,
-            mediaInfo,
-            sizeBytes,
+            year: raw.ProductionYear ? String(raw.ProductionYear) : null,
+            dateCreated: raw.DateCreated ? new Date(raw.DateCreated) : null,
+            mediaInfo: this.parseMediaInfo(raw.MediaSources),
+            sizeBytes: raw.MediaSources?.[0]?.Size ?? null,
             path: raw.Path ?? null,
-            seasons: mediaType === 'tv' ? (seasonsBySeries.get(raw.Id) ?? null) : null,
+            seasons: seasonsBySeries.get(raw.Id) ?? null,
         };
     }
 
@@ -162,10 +160,10 @@ class JellyfinService {
         if (!streams?.length) return null;
 
         const mapped = streams
-            .filter((s) => s.Type === 'Video' || s.Type === 'Audio' || s.Type === 'Subtitle')
+            .filter((s) => s.Type in STREAM_TYPES)
             .map((s): MediaStream => {
                 const base: MediaStream = {
-                    type: s.Type === 'Video' ? 'video' : s.Type === 'Audio' ? 'audio' : 'subtitle',
+                    type: STREAM_TYPES[s.Type],
                     codec: s.Codec ?? '',
                     language: s.Language ?? '',
                     displayTitle: s.DisplayTitle ?? '',

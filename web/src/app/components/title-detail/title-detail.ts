@@ -15,6 +15,9 @@ import { cleanSearchTerm } from '../../utils/search-term';
 import type { FeedbackValue } from '@rm/shared/recommendations.models';
 import type { MediaType } from '@rm/shared/tmdb.models';
 
+const MEDIA_TYPE_LABELS: Record<MediaType, string> = { movie: 'Movie', tv: 'TV Show' };
+const RELEASE_CATEGORIES: Record<MediaType, string> = { movie: 'movies', tv: 'tv' };
+
 export interface StatusCell {
     value: string;
     detail?: string;
@@ -70,7 +73,7 @@ export class TitleDetailComponent {
         const detail = this.detail();
         const mediaType = this.mediaType();
         return [
-            mediaType ? (mediaType === 'tv' ? 'TV Show' : 'Movie') : '',
+            mediaType ? MEDIA_TYPE_LABELS[mediaType] : '',
             this.year() || detail?.year,
             detail?.runtime,
             detail?.rated,
@@ -88,10 +91,10 @@ export class TitleDetailComponent {
         return key ? `https://www.youtube.com/watch?v=${key}` : null;
     });
     protected wokeUrl = computed(() => `https://isitwokeornot.com/search?q=${encodeURIComponent(this.title())}`);
-    protected releasesQuery = computed(() => ({
-        q: cleanSearchTerm(this.title()),
-        category: this.mediaType() === 'tv' ? 'tv' : this.mediaType() === 'movie' ? 'movies' : null,
-    }));
+    protected releasesQuery = computed(() => {
+        const mediaType = this.mediaType();
+        return { q: cleanSearchTerm(this.title()), category: mediaType ? RELEASE_CATEGORIES[mediaType] : null };
+    });
 
     protected watchItem = computed(() => {
         const media = this.media();

@@ -10,7 +10,7 @@ import {
 } from '../repositories/watchlist.repository.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import { logger } from '../utils/logger.js';
-import type { NcoreResult } from 'shared/ncore.models';
+import type { NcoreResult, NcoreSearchResponse } from 'shared/ncore.models';
 import type { WatchlistAddRequest, WatchlistItem } from 'shared/watchlist.models';
 
 const MAX_PAGES = 5;
@@ -116,28 +116,32 @@ class WatchlistService {
         const collected = new Map<string, NcoreResult>();
 
         for (let page = 1; page <= MAX_PAGES; page++) {
-            let results: NcoreResult[];
-            let totalResults: number;
-            try {
-                ({ results, totalResults } = await ncoreService.search({
-                    category: item.mediaType === 'tv' ? 'tv' : 'movies',
-                    search: byImdb ? item.imdbId : item.title,
-                    searchIn: byImdb ? 'imdb' : 'name',
-                    sortBy: 'fid',
-                    page,
-                }));
-            } catch (error: unknown) {
-                if (error instanceof NcoreNoResultsError) break;
-                throw error;
-            }
+            const response = await this.fetchPage(item, page);
+            if (!response) break;
 
             const sizeBefore = collected.size;
-            for (const result of results) collected.set(result.torrent_id, result);
-            if (collected.size === sizeBefore || collected.size >= totalResults) break;
+            for (const result of response.results) collected.set(result.torrent_id, result);
+            if (collected.size === sizeBefore || collected.size >= response.totalResults) break;
         }
 
         const releases = [...collected.values()];
         return byImdb ? releases : releases.filter((release) => isSameTitle(release, item));
+    }
+
+    private async fetchPage(item: WatchlistItem, page: number): Promise<NcoreSearchResponse | null> {
+        const byImdb = Boolean(item.imdbId);
+        try {
+            return await ncoreService.search({
+                category: item.mediaType === 'tv' ? 'tv' : 'movies',
+                search: byImdb ? item.imdbId : item.title,
+                searchIn: byImdb ? 'imdb' : 'name',
+                sortBy: 'fid',
+                page,
+            });
+        } catch (error: unknown) {
+            if (error instanceof NcoreNoResultsError) return null;
+            throw error;
+        }
     }
 }
 

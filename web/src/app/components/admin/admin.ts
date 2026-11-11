@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, Signal, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,6 +11,17 @@ import { AdminService, type SyncStatus } from '../../services/admin.service';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { extractHttpError } from '../../utils/http-error';
 import { PageTitleComponent } from '../page-title/page-title';
+
+interface AdminAction {
+    id: string;
+    icon: string;
+    title: string;
+    description: string;
+    busyLabel: string;
+    sync?: { status: Signal<SyncStatus | null>; unit: string };
+    run: () => Promise<void>;
+}
+
 @Component({
     selector: 'app-admin',
     imports: [PageTitleComponent, DatePipe, MatButtonModule, MatIconModule, MatCardModule],
@@ -26,6 +37,73 @@ export class AdminComponent implements OnInit {
     protected clearing = signal<string | null>(null);
     protected jellyfinStatus = signal<SyncStatus | null>(null);
     protected qbittorrentStatus = signal<SyncStatus | null>(null);
+
+    protected actions: AdminAction[] = [
+        {
+            id: 'metadata',
+            icon: 'delete_sweep',
+            title: 'Clear metadata cache',
+            description:
+                'Deletes all TMDB data stored in the cache. The next search will re-fetch fresh metadata from TMDB for each result.',
+            busyLabel: 'Clearing…',
+            run: () => this.clearMetadataCache(),
+        },
+        {
+            id: 'expired',
+            icon: 'auto_delete',
+            title: 'Clear expired data',
+            description:
+                'Purges authentication challenges and sessions that have already expired. This frees up database space without affecting active users.',
+            busyLabel: 'Clearing…',
+            run: () => this.clearExpiredData(),
+        },
+        {
+            id: 'sessions',
+            icon: 'logout',
+            title: 'Log out all users',
+            description: 'Terminates all active sessions, including your own. Everyone will need to log in again.',
+            busyLabel: 'Logging out…',
+            run: () => this.logOutAllUsers(),
+        },
+        {
+            id: 'qbittorrent',
+            icon: 'lan',
+            title: 'Test qBittorrent connection',
+            description:
+                'Checks whether the backend can reach the configured qBittorrent instance and authenticate successfully.',
+            busyLabel: 'Testing…',
+            run: () => this.testQbittorrent(),
+        },
+        {
+            id: 'qbittorrent-sync',
+            icon: 'downloading',
+            title: 'qBittorrent torrent sync',
+            description:
+                'Fetches the current torrent list from qBittorrent and stores names, hashes, content paths, and added dates for later library matching.',
+            busyLabel: 'Syncing…',
+            sync: { status: this.qbittorrentStatus, unit: 'torrents' },
+            run: () => this.syncQbittorrent(),
+        },
+        {
+            id: 'jellyfin-sync',
+            icon: 'video_library',
+            title: 'Jellyfin library sync',
+            description:
+                'Fetches all movies and TV shows from Jellyfin and stores them locally so titles can be marked as available in your library. Runs automatically every day at 6:00 AM.',
+            busyLabel: 'Syncing…',
+            sync: { status: this.jellyfinStatus, unit: 'items' },
+            run: () => this.syncJellyfin(),
+        },
+        {
+            id: 'jellyfin-test',
+            icon: 'cast_connected',
+            title: 'Test Jellyfin connection',
+            description:
+                'Checks whether the backend can reach the configured Jellyfin server and authenticate successfully.',
+            busyLabel: 'Testing…',
+            run: () => this.testJellyfin(),
+        },
+    ];
 
     ngOnInit(): void {
         void this.loadSyncStatuses();

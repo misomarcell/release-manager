@@ -60,6 +60,7 @@ backend/src/
   index.ts              # Express app entry point
   config.ts             # Environment configuration
   db/connection.ts      # PostgreSQL pool + schema init
+  db/schema.ts          # Schema SQL run on startup
   middleware/auth.ts     # Session authentication middleware
   routes/
     auth.routes.ts      # Passkey registration/login endpoints
