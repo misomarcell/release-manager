@@ -112,11 +112,11 @@ export class TitleDetailComponent {
         if (this.detailLoading()) return { value: '…' };
         return this.detail()?.inJellyfinLibrary
             ? { value: 'In library', tone: 'yes' }
-            : { value: 'Not in library' };
+            : { value: 'Not in the library' };
     });
     protected watchlistStatus = computed<StatusCell>(() => {
         const item = this.watchItem();
-        if (!item) return { value: 'Not following', detail: 'Follow to hear about new releases' };
+        if (!item) return { value: 'Not following' };
         const filter = item.keywords.length ? `filter: ${item.keywords.join(', ')}` : 'all releases';
         const count = item.newReleases.length;
         return count
@@ -135,7 +135,11 @@ export class TitleDetailComponent {
         if (this.router.lastSuccessfulNavigation()?.previousNavigation) {
             this.location.back();
         } else {
-            void this.router.navigate([], { queryParams: { open: null }, queryParamsHandling: 'merge', replaceUrl: true });
+            void this.router.navigate([], {
+                queryParams: { open: null },
+                queryParamsHandling: 'merge',
+                replaceUrl: true,
+            });
         }
     }
 
@@ -146,7 +150,8 @@ export class TitleDetailComponent {
 
     protected follow(): void {
         const media = this.media();
-        if (media) this.watchlistSheet.open({ ...media, title: this.title(), year: this.year(), poster: this.shownPoster() });
+        if (media)
+            this.watchlistSheet.open({ ...media, title: this.title(), year: this.year(), poster: this.shownPoster() });
     }
 
     protected sendFeedback(value: FeedbackValue): void {

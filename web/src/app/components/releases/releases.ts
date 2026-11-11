@@ -161,7 +161,7 @@ export class ReleasesComponent {
     protected libraryStatus = computed<StatusCell | null>(() => {
         const metadata = this.selected()?.metadata;
         if (!metadata) return { value: 'Unknown title', detail: 'No metadata found for this release' };
-        return metadata.inJellyfinLibrary ? { value: 'In library', tone: 'yes' } : { value: 'Not in library' };
+        return metadata.inJellyfinLibrary ? { value: 'In library', tone: 'yes' } : { value: 'Not in the library' };
     });
 
     protected titleQuery = computed(() => {

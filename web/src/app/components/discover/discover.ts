@@ -109,7 +109,7 @@ export class DiscoverComponent {
         return selected && 'reason' in selected ? selected.reason : undefined;
     });
     protected libraryStatus = computed<StatusCell>(() =>
-        this.selected()?.inJellyfinLibrary ? { value: 'In library', tone: 'yes' } : { value: 'Not in library' },
+        this.selected()?.inJellyfinLibrary ? { value: 'In library', tone: 'yes' } : { value: 'Not in the library' },
     );
     protected releasesQuery = computed(() => {
         const selected = this.selected();
