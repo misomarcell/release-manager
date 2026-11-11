@@ -1,18 +1,18 @@
 :host {
-  display: block;
+    display: block;
 
-  ::ng-deep .mat-mdc-dialog-surface {
-    background: transparent;
-    box-shadow: none;
-    overflow: visible;
-  }
+    ::ng-deep .mat-mdc-dialog-surface {
+        background: transparent;
+        box-shadow: none;
+        overflow: visible;
+    }
 }
 
 .poster-full {
-  display: block;
-  max-width: 90vw;
-  max-height: 85vh;
-  object-fit: contain;
-  border-radius: 12px;
-  cursor: pointer;
+    display: block;
+    max-width: 90vw;
+    max-height: 85vh;
+    object-fit: contain;
+    border-radius: 12px;
+    cursor: pointer;
 }

@@ -1,7 +1,11 @@
 import { config } from '../config.js';
 import { logger } from '../utils/logger.js';
 import { asNumber, asRecord, asString } from '../utils/coerce.js';
-import { deleteTorrentByHash, replaceTorrents, type QbittorrentTorrent } from '../repositories/qbittorrent.repository.js';
+import {
+    deleteTorrentByHash,
+    replaceTorrents,
+    type QbittorrentTorrent,
+} from '../repositories/qbittorrent.repository.js';
 import { logSync } from '../repositories/sync.repository.js';
 import type { DownloadCategory } from 'shared/constants';
 

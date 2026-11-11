@@ -6,11 +6,7 @@ import type { AuthenticatedRequest } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
 import { recommendationsService } from '../services/recommendations.service.js';
 import { getMetadata } from '../services/metadata.service.js';
-import {
-    upsertFeedback,
-    deleteFeedback,
-    getFeedbackForItem,
-} from '../repositories/recommendations.repository.js';
+import { upsertFeedback, deleteFeedback, getFeedbackForItem } from '../repositories/recommendations.repository.js';
 import {
     MediaTypeSchema,
     FeedbackValueSchema,
@@ -45,10 +41,7 @@ router.get('/personalized/:mediaType', requireAuth, async (req: Request, res: Re
     if (!params) return;
 
     try {
-        const response = await recommendationsService.getPersonalizedRecommendations(
-            authUser.userId,
-            params.mediaType,
-        );
+        const response = await recommendationsService.getPersonalizedRecommendations(authUser.userId, params.mediaType);
         res.json({ ...response, canRefresh: authUser.admin ? response.canRefresh : false });
     } catch (err) {
         logger.error('Recommendations: personalized GET error', {

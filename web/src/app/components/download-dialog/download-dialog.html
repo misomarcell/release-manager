@@ -8,7 +8,9 @@
             }
         </div>
         <p class="mono">
-            @for (part of release.nameParts; track $index) {{{ part }}<wbr />}
+            @for (part of release.nameParts; track $index) {
+                {{ part }}<wbr />
+            }
         </p>
         <p class="stats num">
             <span>{{ release.tracker }}</span>

@@ -19,7 +19,9 @@
                     </div>
                 }
                 <a class="mono" [href]="r.details_url" target="_blank" rel="noopener">
-                    @for (part of row.nameParts; track $index) {{{ part }}<wbr />}
+                    @for (part of row.nameParts; track $index) {
+                        {{ part }}<wbr />
+                    }
                 </a>
             </div>
             <span class="tracker">
@@ -40,7 +42,13 @@
                     <mat-icon>description</mat-icon>
                 </button>
                 @if (auth.admin()) {
-                    <button mat-icon-button class="tonal" type="button" aria-label="Send to qBittorrent" (click)="download(r)">
+                    <button
+                        mat-icon-button
+                        class="tonal"
+                        type="button"
+                        aria-label="Send to qBittorrent"
+                        (click)="download(r)"
+                    >
                         <mat-icon>download</mat-icon>
                     </button>
                 }

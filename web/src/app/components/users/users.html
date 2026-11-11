@@ -1,75 +1,75 @@
 @if (loading()) {
-  <mat-progress-bar mode="indeterminate" />
+    <mat-progress-bar mode="indeterminate" />
 }
 
 <main class="container">
-  <app-page-title title="Manage Users" />
-  @if (error(); as err) {
-    <p class="error">{{ err }}</p>
-  }
+    <app-page-title title="Manage Users" />
+    @if (error(); as err) {
+        <p class="error">{{ err }}</p>
+    }
 
-  @if (!loading() && users().length > 0) {
-    <div class="user-cards">
-      @for (user of users(); track user.id) {
-        <mat-card class="user-card">
-          <mat-card-header>
-            <mat-icon mat-card-avatar class="user-avatar">person</mat-icon>
-            <mat-card-title>{{ user.username }}</mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="user-details">
-              <div class="detail-row">
-                <span class="detail-label">Passkeys</span>
-                <span>{{ user.credential_count }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Created At</span>
-                <span>{{ user.created_at | date: 'yyyy-MM-dd HH:mm' }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Last Login</span>
-                <span>{{ user.last_login ? (user.last_login | date: 'yyyy-MM-dd HH:mm') : '—' }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">IP Address</span>
-                <span>{{ user.ip_address ?? '—' }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">User Agent</span>
-                <span class="ua-value">{{ user.user_agent ?? '—' }}</span>
-              </div>
-            </div>
-          </mat-card-content>
-          <mat-card-actions>
-            <button
-              mat-icon-button
-              color="warn"
-              [disabled]="isSelf(user)"
-              (click)="deleteUser(user)"
-              [attr.aria-label]="'Delete ' + user.username"
-            >
-              <mat-icon>delete</mat-icon>
-            </button>
-            <button
-              mat-icon-button
-              [disabled]="isSelf(user)"
-              (click)="toggleAdmin(user)"
-              [attr.aria-label]="(user.admin ? 'Revoke admin from' : 'Make admin') + ' ' + user.username"
-            >
-              <mat-icon>{{ user.admin ? 'remove_moderator' : 'shield' }}</mat-icon>
-            </button>
-            <button
-              mat-stroked-button
-              [disabled]="isSelf(user)"
-              (click)="toggleValid(user)"
-              [attr.aria-label]="(user.valid ? 'Disable' : 'Enable') + ' ' + user.username"
-            >
-              <mat-icon>{{ user.valid ? 'block' : 'check_circle' }}</mat-icon>
-              {{ user.valid ? 'Disable' : 'Enable' }}
-            </button>
-          </mat-card-actions>
-        </mat-card>
-      }
-    </div>
-  }
+    @if (!loading() && users().length > 0) {
+        <div class="user-cards">
+            @for (user of users(); track user.id) {
+                <mat-card class="user-card">
+                    <mat-card-header>
+                        <mat-icon mat-card-avatar class="user-avatar">person</mat-icon>
+                        <mat-card-title>{{ user.username }}</mat-card-title>
+                    </mat-card-header>
+                    <mat-card-content>
+                        <div class="user-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Passkeys</span>
+                                <span>{{ user.credential_count }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Created At</span>
+                                <span>{{ user.created_at | date: 'yyyy-MM-dd HH:mm' }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Last Login</span>
+                                <span>{{ user.last_login ? (user.last_login | date: 'yyyy-MM-dd HH:mm') : '—' }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">IP Address</span>
+                                <span>{{ user.ip_address ?? '—' }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">User Agent</span>
+                                <span class="ua-value">{{ user.user_agent ?? '—' }}</span>
+                            </div>
+                        </div>
+                    </mat-card-content>
+                    <mat-card-actions>
+                        <button
+                            mat-icon-button
+                            color="warn"
+                            [disabled]="isSelf(user)"
+                            (click)="deleteUser(user)"
+                            [attr.aria-label]="'Delete ' + user.username"
+                        >
+                            <mat-icon>delete</mat-icon>
+                        </button>
+                        <button
+                            mat-icon-button
+                            [disabled]="isSelf(user)"
+                            (click)="toggleAdmin(user)"
+                            [attr.aria-label]="(user.admin ? 'Revoke admin from' : 'Make admin') + ' ' + user.username"
+                        >
+                            <mat-icon>{{ user.admin ? 'remove_moderator' : 'shield' }}</mat-icon>
+                        </button>
+                        <button
+                            mat-stroked-button
+                            [disabled]="isSelf(user)"
+                            (click)="toggleValid(user)"
+                            [attr.aria-label]="(user.valid ? 'Disable' : 'Enable') + ' ' + user.username"
+                        >
+                            <mat-icon>{{ user.valid ? 'block' : 'check_circle' }}</mat-icon>
+                            {{ user.valid ? 'Disable' : 'Enable' }}
+                        </button>
+                    </mat-card-actions>
+                </mat-card>
+            }
+        </div>
+    }
 </main>

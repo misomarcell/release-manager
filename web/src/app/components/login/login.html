@@ -1,38 +1,38 @@
 <div class="login-container">
-  <h1 class="app-title">Release Manager</h1>
+    <h1 class="app-title">Release Manager</h1>
 
-  @if (error()) {
-    <p class="error">{{ error() }}</p>
-  }
-
-  @if (success()) {
-    <p class="success">{{ success() }}</p>
-  }
-
-  <button mat-flat-button class="login-btn" (click)="login()" [disabled]="loading()">
-    @if (loading()) {
-      <mat-spinner diameter="20" />
-    } @else {
-      <ng-container>
-        <mat-icon>fingerprint</mat-icon>
-        Sign in with Passkey
-      </ng-container>
+    @if (error()) {
+        <p class="error">{{ error() }}</p>
     }
-  </button>
 
-  <mat-expansion-panel class="register-panel">
-    <mat-expansion-panel-header>
-      <mat-panel-title>Create an account</mat-panel-title>
-    </mat-expansion-panel-header>
-    <form class="register-form" [formRoot]="registrationForm">
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Username</mat-label>
-        <input matInput [formField]="registrationForm.username" />
-      </mat-form-field>
-      <button mat-stroked-button type="submit" [disabled]="loading() || registrationForm().invalid()">
-        <mat-icon>person_add</mat-icon>
-        Register
-      </button>
-    </form>
-  </mat-expansion-panel>
+    @if (success()) {
+        <p class="success">{{ success() }}</p>
+    }
+
+    <button mat-flat-button class="login-btn" (click)="login()" [disabled]="loading()">
+        @if (loading()) {
+            <mat-spinner diameter="20" />
+        } @else {
+            <ng-container>
+                <mat-icon>fingerprint</mat-icon>
+                Sign in with Passkey
+            </ng-container>
+        }
+    </button>
+
+    <mat-expansion-panel class="register-panel">
+        <mat-expansion-panel-header>
+            <mat-panel-title>Create an account</mat-panel-title>
+        </mat-expansion-panel-header>
+        <form class="register-form" [formRoot]="registrationForm">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Username</mat-label>
+                <input matInput [formField]="registrationForm.username" />
+            </mat-form-field>
+            <button mat-stroked-button type="submit" [disabled]="loading() || registrationForm().invalid()">
+                <mat-icon>person_add</mat-icon>
+                Register
+            </button>
+        </form>
+    </mat-expansion-panel>
 </div>
