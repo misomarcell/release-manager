@@ -66,7 +66,8 @@ export class ReleaseListComponent {
 
     private tvPath(release: NcoreResult): string {
         const tv = release.tvInfo;
-        const season = tv?.type === 'episode' && tv.season != null ? `/Season ${String(tv.season).padStart(2, '0')}` : '';
+        const season =
+            tv?.type === 'episode' && tv.season != null ? `/Season ${String(tv.season).padStart(2, '0')}` : '';
         return `${TV_BASE}/${this.title()}${season}`;
     }
 }

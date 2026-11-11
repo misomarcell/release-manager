@@ -23,23 +23,23 @@ All titles, posters, plots and release names in the mockup are invented placehol
 
 Theme roles only; no hard-coded hexes in components. Green-tinted neutrals with a teal primary.
 
-| Role | Dark | Light | Used for |
-| --- | --- | --- | --- |
-| Ground | `#0e1514` | `#edf3f0` | Page background |
-| Tile | `#1a2120` | `#ffffff` | Rows, cells, action bar cells |
-| Tile high | `#242b2a` | `#f3f8f6` | Nested fills, rail icon shape, search field (dark) |
-| Pane | `#141b1a` | `#f7fbf9` | Desktop detail pane, bottom sheets |
-| Bar | `#161d1c` | `#e4ebe8` | Bottom navigation, rail |
-| On surface | `#dde4e2` | `#161d1c` | Titles, primary text |
-| On surface variant | `#b4bfbc` | `#414b49` | Secondary text |
-| Outline / outline variant | `#889391` / `#3a4442` | `#6f7977` / `#c3cdca` | Borders, dividers |
-| Primary / on primary | `#82d5c8` / `#003731` | `#006a60` / `#ffffff` | Filled button, links, focus |
-| Primary container / on | `#00504a` / `#a4f4e7` | `#a4f4e7` / `#00201c` | "In library", active Like/Following |
-| Secondary container / on | `#30514b` / `#d2ede6` | `#cfe9e2` / `#06201c` | Selected row, active nav, selected chip, resolution tag |
-| Tertiary / on | `#f2c04e` / `#402d00` | `#755800` / `#ffffff` | "New" count, rating star |
-| Tertiary container / on | `#574000` / `#ffe0a0` | `#ffe0a0` / `#251a00` | HDR/DV tag, "Why this pick" block |
-| Error | `#ffb4ab` | `#ba1a1a` | Leechers, destructive actions |
-| Positive | `#8bd89a` | `#1c6c35` | Seeders, FL badge |
+| Role                      | Dark                  | Light                 | Used for                                                |
+| ------------------------- | --------------------- | --------------------- | ------------------------------------------------------- |
+| Ground                    | `#0e1514`             | `#edf3f0`             | Page background                                         |
+| Tile                      | `#1a2120`             | `#ffffff`             | Rows, cells, action bar cells                           |
+| Tile high                 | `#242b2a`             | `#f3f8f6`             | Nested fills, rail icon shape, search field (dark)      |
+| Pane                      | `#141b1a`             | `#f7fbf9`             | Desktop detail pane, bottom sheets                      |
+| Bar                       | `#161d1c`             | `#e4ebe8`             | Bottom navigation, rail                                 |
+| On surface                | `#dde4e2`             | `#161d1c`             | Titles, primary text                                    |
+| On surface variant        | `#b4bfbc`             | `#414b49`             | Secondary text                                          |
+| Outline / outline variant | `#889391` / `#3a4442` | `#6f7977` / `#c3cdca` | Borders, dividers                                       |
+| Primary / on primary      | `#82d5c8` / `#003731` | `#006a60` / `#ffffff` | Filled button, links, focus                             |
+| Primary container / on    | `#00504a` / `#a4f4e7` | `#a4f4e7` / `#00201c` | "In library", active Like/Following                     |
+| Secondary container / on  | `#30514b` / `#d2ede6` | `#cfe9e2` / `#06201c` | Selected row, active nav, selected chip, resolution tag |
+| Tertiary / on             | `#f2c04e` / `#402d00` | `#755800` / `#ffffff` | "New" count, rating star                                |
+| Tertiary container / on   | `#574000` / `#ffe0a0` | `#ffe0a0` / `#251a00` | HDR/DV tag, "Why this pick" block                       |
+| Error                     | `#ffb4ab`             | `#ba1a1a`             | Leechers, destructive actions                           |
+| Positive                  | `#8bd89a`             | `#1c6c35`             | Seeders, FL badge                                       |
 
 Each color has one job. Amber means "new since you last looked" (plus rating stars) and nothing else. The five unrelated badge hues of the old design are gone.
 
@@ -107,15 +107,15 @@ Download ("Send to qBittorrent") and the watchlist add/edit dialog are bottom sh
 
 These are not in the app today. Check before building the UI around them.
 
-| Design element | Needs |
-| --- | --- |
-| Quality tags on rows and releases | The release parser exposing resolution, source and HDR tags. Not verified. |
+| Design element                           | Needs                                                                                                   |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Quality tags on rows and releases        | The release parser exposing resolution, source and HDR tags. Not verified.                              |
 | Tracker name per release, tracker picker | A tracker field on release models. Only nCore exists, so the picker has one entry until more are added. |
-| "on N trackers" in the status cell | Same as above. |
-| Search all titles | A backend TMDB search endpoint and a results view. |
-| "Search releases" from a Library title | A shortcut that exists today only on release cards and recommendations. |
-| Light theme | The app is dark only today (`color-scheme: dark` in `styles.scss`). |
-| Like/Dislike on every title page | Present today inside media details; confirm it is available in all four contexts. |
+| "on N trackers" in the status cell       | Same as above.                                                                                          |
+| Search all titles                        | A backend TMDB search endpoint and a results view.                                                      |
+| "Search releases" from a Library title   | A shortcut that exists today only on release cards and recommendations.                                 |
+| Light theme                              | The app is dark only today (`color-scheme: dark` in `styles.scss`).                                     |
+| Like/Dislike on every title page         | Present today inside media details; confirm it is available in all four contexts.                       |
 
 Small copy additions in the mockup that the owner has seen but not singled out: the hint under the save path, and the explanation under the watchlist release filter.
 

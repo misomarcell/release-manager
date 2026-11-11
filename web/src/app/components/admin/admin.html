@@ -1,212 +1,46 @@
 <main class="container">
-  <app-page-title title="Administration" />
-  <div class="admin-actions">
-    <mat-card class="action-card">
-      <mat-card-header>
-        <mat-icon mat-card-avatar class="action-icon">delete_sweep</mat-icon>
-        <mat-card-title>Clear metadata cache</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="action-description">
-          Deletes all TMDB data stored in the cache. The next search will re-fetch fresh metadata from TMDB for each
-          result.
-        </p>
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-stroked-button (click)="clearMetadataCache()" [disabled]="clearing() !== null">
-          @if (clearing() === 'metadata') {
-            Clearing…
-          } @else {
-            <ng-container>
-              <mat-icon>play_arrow</mat-icon>
-              Execute action
-            </ng-container>
-          }
-        </button>
-      </mat-card-actions>
-    </mat-card>
-
-    <mat-card class="action-card">
-      <mat-card-header>
-        <mat-icon mat-card-avatar class="action-icon">auto_delete</mat-icon>
-        <mat-card-title>Clear expired data</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="action-description">
-          Purges authentication challenges and sessions that have already expired. This frees up database space without
-          affecting active users.
-        </p>
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-stroked-button (click)="clearExpiredData()" [disabled]="clearing() !== null">
-          @if (clearing() === 'expired') {
-            Clearing…
-          } @else {
-            <ng-container>
-              <mat-icon>play_arrow</mat-icon>
-              Execute action
-            </ng-container>
-          }
-        </button>
-      </mat-card-actions>
-    </mat-card>
-
-    <mat-card class="action-card">
-      <mat-card-header>
-        <mat-icon mat-card-avatar class="action-icon">logout</mat-icon>
-        <mat-card-title>Log out all users</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="action-description">
-          Terminates all active sessions, including your own. Everyone will need to log in again.
-        </p>
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-stroked-button (click)="logOutAllUsers()" [disabled]="clearing() !== null">
-          @if (clearing() === 'sessions') {
-            Logging out…
-          } @else {
-            <ng-container>
-              <mat-icon>play_arrow</mat-icon>
-              Execute action
-            </ng-container>
-          }
-        </button>
-      </mat-card-actions>
-    </mat-card>
-
-    <mat-card class="action-card">
-      <mat-card-header>
-        <mat-icon mat-card-avatar class="action-icon">lan</mat-icon>
-        <mat-card-title>Test qBittorrent connection</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="action-description">
-          Checks whether the backend can reach the configured qBittorrent instance and authenticate successfully.
-        </p>
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-stroked-button (click)="testQbittorrent()" [disabled]="clearing() !== null">
-          @if (clearing() === 'qbittorrent') {
-            Testing…
-          } @else {
-            <ng-container>
-              <mat-icon>play_arrow</mat-icon>
-              Execute action
-            </ng-container>
-          }
-        </button>
-      </mat-card-actions>
-    </mat-card>
-
-    <mat-card class="action-card">
-      <mat-card-header>
-        <mat-icon mat-card-avatar class="action-icon">downloading</mat-icon>
-        <mat-card-title>qBittorrent torrent sync</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="action-description">
-          Fetches the current torrent list from qBittorrent and stores names, hashes, content paths, and added dates for
-          later library matching.
-        </p>
-        @if (qbittorrentStatus(); as status) {
-          <div class="sync-status">
-            @if (status.lastSync) {
-              <span class="sync-meta">
-                Last sync: {{ status.lastSync | date: 'medium' }}
-                @if (status.success) {
-                  &middot; {{ status.itemCount }} torrents
-                  <mat-icon class="status-icon success">check_circle</mat-icon>
-                } @else {
-                  <mat-icon class="status-icon error">error</mat-icon>
-                  <span class="sync-error">{{ status.errorMessage }}</span>
-                }
-              </span>
-            } @else {
-              <span class="sync-meta">No sync has run yet.</span>
-            }
-          </div>
+    <app-page-title title="Administration" />
+    <div class="admin-actions">
+        @for (action of actions; track action.id) {
+            <mat-card class="action-card">
+                <mat-card-header>
+                    <mat-icon mat-card-avatar class="action-icon">{{ action.icon }}</mat-icon>
+                    <mat-card-title>{{ action.title }}</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                    <p class="action-description">{{ action.description }}</p>
+                    @if (action.sync?.status(); as status) {
+                        <div class="sync-status">
+                            @if (status.lastSync) {
+                                <span class="sync-meta">
+                                    Last sync: {{ status.lastSync | date: 'medium' }}
+                                    @if (status.success) {
+                                        · {{ status.itemCount }} {{ action.sync.unit }}
+                                        <mat-icon class="status-icon success">check_circle</mat-icon>
+                                    } @else {
+                                        <mat-icon class="status-icon error">error</mat-icon>
+                                        <span class="sync-error">{{ status.errorMessage }}</span>
+                                    }
+                                </span>
+                            } @else {
+                                <span class="sync-meta">No sync has run yet.</span>
+                            }
+                        </div>
+                    }
+                </mat-card-content>
+                <mat-card-actions>
+                    <button mat-stroked-button (click)="action.run()" [disabled]="clearing() !== null">
+                        @if (clearing() === action.id) {
+                            {{ action.busyLabel }}
+                        } @else {
+                            <ng-container>
+                                <mat-icon>{{ action.sync ? 'sync' : 'play_arrow' }}</mat-icon>
+                                {{ action.sync ? 'Sync now' : 'Execute action' }}
+                            </ng-container>
+                        }
+                    </button>
+                </mat-card-actions>
+            </mat-card>
         }
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-stroked-button (click)="syncQbittorrent()" [disabled]="clearing() !== null">
-          @if (clearing() === 'qbittorrent-sync') {
-            Syncing...
-          } @else {
-            <ng-container>
-              <mat-icon>sync</mat-icon>
-              Sync now
-            </ng-container>
-          }
-        </button>
-      </mat-card-actions>
-    </mat-card>
-
-    <mat-card class="action-card">
-      <mat-card-header>
-        <mat-icon mat-card-avatar class="action-icon">video_library</mat-icon>
-        <mat-card-title>Jellyfin library sync</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="action-description">
-          Fetches all movies and TV shows from Jellyfin and stores them locally so titles can be marked as available in
-          your library. Runs automatically every day at 6:00 AM.
-        </p>
-        @if (jellyfinStatus(); as status) {
-          <div class="sync-status">
-            @if (status.lastSync) {
-              <span class="sync-meta">
-                Last sync: {{ status.lastSync | date: 'medium' }}
-                @if (status.success) {
-                  · {{ status.itemCount }} items
-                  <mat-icon class="status-icon success">check_circle</mat-icon>
-                } @else {
-                  <mat-icon class="status-icon error">error</mat-icon>
-                  <span class="sync-error">{{ status.errorMessage }}</span>
-                }
-              </span>
-            } @else {
-              <span class="sync-meta">No sync has run yet.</span>
-            }
-          </div>
-        }
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-stroked-button (click)="syncJellyfin()" [disabled]="clearing() !== null">
-          @if (clearing() === 'jellyfin-sync') {
-            Syncing…
-          } @else {
-            <ng-container>
-              <mat-icon>sync</mat-icon>
-              Sync now
-            </ng-container>
-          }
-        </button>
-      </mat-card-actions>
-    </mat-card>
-
-    <mat-card class="action-card">
-      <mat-card-header>
-        <mat-icon mat-card-avatar class="action-icon">cast_connected</mat-icon>
-        <mat-card-title>Test Jellyfin connection</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="action-description">
-          Checks whether the backend can reach the configured Jellyfin server and authenticate successfully.
-        </p>
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-stroked-button (click)="testJellyfin()" [disabled]="clearing() !== null">
-          @if (clearing() === 'jellyfin-test') {
-            Testing…
-          } @else {
-            <ng-container>
-              <mat-icon>play_arrow</mat-icon>
-              Execute action
-            </ng-container>
-          }
-        </button>
-      </mat-card-actions>
-    </mat-card>
-  </div>
+    </div>
 </main>

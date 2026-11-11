@@ -29,7 +29,8 @@ const MEDIA_RULES: Record<MediaType, { label: string; kindRule: string; yearRule
     movie: {
         label: 'movies',
         kindRule: 'Only feature films. Never recommend series, miniseries, episodes or TV specials.',
-        yearRule: 'Use the original English TMDB movie title and the release year, so the title can be looked up on TMDB.',
+        yearRule:
+            'Use the original English TMDB movie title and the release year, so the title can be looked up on TMDB.',
     },
     tv: {
         label: 'TV shows',

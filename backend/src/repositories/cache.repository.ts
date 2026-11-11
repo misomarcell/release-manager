@@ -1,5 +1,6 @@
 import { query } from '../db/connection.js';
 import { config } from '../config.js';
+import { asString } from '../utils/coerce.js';
 import type { MovieMetadata, MediaType } from 'shared/tmdb.models';
 
 interface MetadataCacheRow {
@@ -97,15 +98,15 @@ function toMetadata(row: MetadataCacheRow): MovieMetadata | null {
     return {
         tmdbId: row.tmdb_id,
         mediaType: row.media_type,
-        title: row.title ?? '',
-        year: row.year ?? '',
-        poster: row.poster ?? '',
-        genre: row.genre ?? '',
-        runtime: row.runtime ?? '',
-        rating: row.rating ?? '',
-        rated: row.rated ?? '',
-        plot: row.plot ?? '',
-        releaseDate: row.release_date ?? '',
+        title: asString(row.title),
+        year: asString(row.year),
+        poster: asString(row.poster),
+        genre: asString(row.genre),
+        runtime: asString(row.runtime),
+        rating: asString(row.rating),
+        rated: asString(row.rated),
+        plot: asString(row.plot),
+        releaseDate: asString(row.release_date),
         trailerKey: row.trailer_key ?? undefined,
         imdbId: row.imdb_id ?? undefined,
     };

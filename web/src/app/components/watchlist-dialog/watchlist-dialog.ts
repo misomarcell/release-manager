@@ -10,11 +10,7 @@ import { PosterComponent } from '../poster/poster';
 import { WatchlistService } from '../../services/watchlist.service';
 import { extractHttpError } from '../../utils/http-error';
 import type { MediaType } from '@rm/shared/tmdb.models';
-import {
-    WATCHLIST_MAX_KEYWORDS,
-    WATCHLIST_MAX_KEYWORD_LENGTH,
-    type WatchlistItem,
-} from '@rm/shared/watchlist.models';
+import { WATCHLIST_MAX_KEYWORDS, WATCHLIST_MAX_KEYWORD_LENGTH, type WatchlistItem } from '@rm/shared/watchlist.models';
 
 export interface WatchlistDialogData {
     tmdbId: number;

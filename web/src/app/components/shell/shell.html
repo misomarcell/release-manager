@@ -6,7 +6,11 @@
             routerLinkActive="active"
             ariaCurrentWhenActive="page"
             #link="routerLinkActive"
-            [attr.aria-label]="item.showsUnread && watchlist.unreadCount() ? item.label + ', ' + watchlist.unreadCount() + ' new releases' : null"
+            [attr.aria-label]="
+                item.showsUnread && watchlist.unreadCount()
+                    ? item.label + ', ' + watchlist.unreadCount() + ' new releases'
+                    : null
+            "
         >
             <span class="pill pressable">
                 <mat-icon [class.filled]="link.isActive" aria-hidden="true">{{ item.icon }}</mat-icon>

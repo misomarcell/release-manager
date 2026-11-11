@@ -1,41 +1,41 @@
 export type MediaType = 'movie' | 'tv';
 
 export interface MetadataLookup {
-  imdbId: string;
-  title: string;
-  year: string;
-  tmdbId?: number;
-  mediaType?: MediaType;
+    imdbId: string;
+    title: string;
+    year: string;
+    tmdbId?: number;
+    mediaType?: MediaType;
 }
 
 export interface MovieMetadata {
-  tmdbId: number;
-  mediaType: MediaType;
-  title: string;
-  year: string;
-  poster: string;
-  genre: string;
-  rating: string;
-  plot: string;
-  runtime: string;
-  rated: string;
-  releaseDate: string;
-  trailerKey?: string;
-  imdbId?: string;
-  inJellyfinLibrary?: boolean;
+    tmdbId: number;
+    mediaType: MediaType;
+    title: string;
+    year: string;
+    poster: string;
+    genre: string;
+    rating: string;
+    plot: string;
+    runtime: string;
+    rated: string;
+    releaseDate: string;
+    trailerKey?: string;
+    imdbId?: string;
+    inJellyfinLibrary?: boolean;
 }
 
 export interface TitleSummary {
-  tmdbId: number;
-  mediaType: MediaType;
-  title: string;
-  year: string;
-  poster: string;
-  genre: string;
-  rating: string;
-  inJellyfinLibrary: boolean;
+    tmdbId: number;
+    mediaType: MediaType;
+    title: string;
+    year: string;
+    poster: string;
+    genre: string;
+    rating: string;
+    inJellyfinLibrary: boolean;
 }
 
 export interface TitleSearchResponse {
-  results: TitleSummary[];
+    results: TitleSummary[];
 }

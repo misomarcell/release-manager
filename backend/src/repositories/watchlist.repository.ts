@@ -59,9 +59,10 @@ const ITEM_SELECT = `
     ) r`;
 
 export async function getWatchlistItems(userId: number): Promise<WatchlistItem[]> {
-    const result = await query<WatchlistRow>(`${ITEM_SELECT} WHERE w.user_id = $1 ORDER BY w.created_at DESC, w.id DESC`, [
-        userId,
-    ]);
+    const result = await query<WatchlistRow>(
+        `${ITEM_SELECT} WHERE w.user_id = $1 ORDER BY w.created_at DESC, w.id DESC`,
+        [userId],
+    );
     return result.rows.map(toItem);
 }
 

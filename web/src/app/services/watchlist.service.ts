@@ -17,7 +17,9 @@ export class WatchlistService {
     error = signal(false);
     unreadCount = computed(() => this.items().reduce((sum, item) => sum + item.newReleases.length, 0));
 
-    private byMedia = computed(() => new Map(this.items().map((item) => [mediaKey(item.tmdbId, item.mediaType), item])));
+    private byMedia = computed(
+        () => new Map(this.items().map((item) => [mediaKey(item.tmdbId, item.mediaType), item])),
+    );
 
     find(tmdbId: number, mediaType: MediaType): WatchlistItem | null {
         return this.byMedia().get(mediaKey(tmdbId, mediaType)) ?? null;

@@ -78,19 +78,19 @@ To connect to the database, register a new server in pgAdmin:
 
 ## Environment Variables
 
-| Variable            | Description                  | Default                                         |
-| ------------------- | ---------------------------- | ----------------------------------------------- |
-| `NCORE_BASE_URL`    | nCore base URL               | `https://ncore.pro`                             |
-| `NCORE_USERNAME`    | nCore cookie username        | —                                               |
-| `NCORE_COOKIE_PASS` | nCore cookie password        | —                                               |
-| `TMDB_ACCESS_TOKEN` | TMDB API read access token   | —                                               |
-| `DATABASE_URL`      | PostgreSQL connection string | `postgres://movieapp:movieapp@db:5432/movieapp` |
-| `SESSION_SECRET`    | Session signing secret       | `change-me-to-a-random-string`                  |
-| `RP_ID`             | WebAuthn Relying Party ID    | `localhost`                                     |
-| `RP_ORIGIN`         | WebAuthn origin URL          | `http://localhost:4000`                         |
-| `QBITTORRENT_CRON`  | qBittorrent torrent sync cron schedule | `0 6 * * *`                            |
-| `JELLYFIN_CRON`     | Jellyfin library sync cron schedule | `0 6 * * *`                                |
-| `WATCHLIST_CRON`    | Watchlist release check cron schedule | `0 9 * * *`                              |
+| Variable            | Description                            | Default                                         |
+| ------------------- | -------------------------------------- | ----------------------------------------------- |
+| `NCORE_BASE_URL`    | nCore base URL                         | `https://ncore.pro`                             |
+| `NCORE_USERNAME`    | nCore cookie username                  | —                                               |
+| `NCORE_COOKIE_PASS` | nCore cookie password                  | —                                               |
+| `TMDB_ACCESS_TOKEN` | TMDB API read access token             | —                                               |
+| `DATABASE_URL`      | PostgreSQL connection string           | `postgres://movieapp:movieapp@db:5432/movieapp` |
+| `SESSION_SECRET`    | Session signing secret                 | `change-me-to-a-random-string`                  |
+| `RP_ID`             | WebAuthn Relying Party ID              | `localhost`                                     |
+| `RP_ORIGIN`         | WebAuthn origin URL                    | `http://localhost:4000`                         |
+| `QBITTORRENT_CRON`  | qBittorrent torrent sync cron schedule | `0 6 * * *`                                     |
+| `JELLYFIN_CRON`     | Jellyfin library sync cron schedule    | `0 6 * * *`                                     |
+| `WATCHLIST_CRON`    | Watchlist release check cron schedule  | `0 9 * * *`                                     |
 
 ## Authentication
 

@@ -22,6 +22,11 @@ import type { NcoreCategoryKey, NcoreResult } from '@rm/shared/ncore.models';
 
 const PAGE_SIZE = 100;
 const VALID_CATEGORIES: NcoreCategoryKey[] = ['all', 'movies', 'tv'];
+const HEADINGS: Record<NcoreCategoryKey, string> = {
+    all: 'Top releases',
+    movies: 'Top movies',
+    tv: 'Top TV shows',
+};
 const RELEASE_SEARCH_FILTERS: SearchFilterDefinition[] = [
     {
         key: 'category',
@@ -96,8 +101,7 @@ export class ReleasesComponent {
 
     private searchResource = resource({
         params: () => ({ query: this.q(), category: this.category(), uhd: this.uhd(), page: this.page() }),
-        loader: ({ params }) =>
-            this.search.search(params.category, params.query, params.page, PAGE_SIZE, !params.query && params.uhd),
+        loader: ({ params }) => this.search.search({ ...params, perPage: PAGE_SIZE, uhd: !params.query && params.uhd }),
     });
 
     protected loading = this.searchResource.isLoading;
@@ -113,8 +117,7 @@ export class ReleasesComponent {
     protected heading = computed(() => {
         const query = this.q();
         if (query) return `Results for “${query}”`;
-        const category = this.category();
-        return category === 'movies' ? 'Top movies' : category === 'tv' ? 'Top TV shows' : 'Top releases';
+        return HEADINGS[this.category()];
     });
 
     protected groups = computed(() => {

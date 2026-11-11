@@ -132,23 +132,23 @@ The interface follows the device colour scheme (light and dark) and is English o
 
 All colour comes from theme roles. Components never contain hexes.
 
-| Role | Token | Dark | Light | Used for |
-| --- | --- | --- | --- | --- |
-| Ground | `--mat-sys-surface` | `#0e1514` | `#edf3f0` | Page background |
-| Pane | `--mat-sys-surface-container-low` | `#141b1a` | `#f7fbf9` | Desktop detail pane, sheets |
-| Tile | `--mat-sys-surface-container` | `#1a2120` | `#ffffff` | Rows, cells, action bar |
-| Tile high | `--mat-sys-surface-container-high` | `#242b2a` | `#f3f8f6` | Nested fills, rail icon shape, tags, search field (dark) |
-| Bar | `--rm-bar` | `#161d1c` | `#e4ebe8` | Bottom navigation, rail |
-| On surface | `--mat-sys-on-surface` | `#dde4e2` | `#161d1c` | Titles, primary text |
-| On surface variant | `--mat-sys-on-surface-variant` | `#b4bfbc` | `#414b49` | Secondary text |
-| Outline / variant | `--mat-sys-outline(-variant)` | `#889391` / `#3a4442` | `#6f7977` / `#c3cdca` | Borders, dividers |
-| Primary / on | `--mat-sys-primary` | `#82d5c8` / `#003731` | `#006a60` / `#ffffff` | Filled button, links, focus ring |
-| Primary container / on | `--mat-sys-primary-container` | `#00504a` / `#a4f4e7` | `#a4f4e7` / `#00201c` | "In library", active Like and Following |
-| Secondary container / on | `--mat-sys-secondary-container` | `#30514b` / `#d2ede6` | `#cfe9e2` / `#06201c` | Selected row, active nav, selected chip, resolution tag |
-| Tertiary / on | `--mat-sys-tertiary` | `#f2c04e` / `#402d00` | `#755800` / `#ffffff` | "New" count, rating star |
-| Tertiary container / on | `--mat-sys-tertiary-container` | `#574000` / `#ffe0a0` | `#ffe0a0` / `#251a00` | HDR and DV tags, "Why this pick" |
-| Error | `--mat-sys-error` | `#ffb4ab` | `#ba1a1a` | Leechers, destructive actions |
-| Positive | `--rm-positive` | `#8bd89a` | `#1c6c35` | Seeders, FL badge |
+| Role                     | Token                              | Dark                  | Light                 | Used for                                                 |
+| ------------------------ | ---------------------------------- | --------------------- | --------------------- | -------------------------------------------------------- |
+| Ground                   | `--mat-sys-surface`                | `#0e1514`             | `#edf3f0`             | Page background                                          |
+| Pane                     | `--mat-sys-surface-container-low`  | `#141b1a`             | `#f7fbf9`             | Desktop detail pane, sheets                              |
+| Tile                     | `--mat-sys-surface-container`      | `#1a2120`             | `#ffffff`             | Rows, cells, action bar                                  |
+| Tile high                | `--mat-sys-surface-container-high` | `#242b2a`             | `#f3f8f6`             | Nested fills, rail icon shape, tags, search field (dark) |
+| Bar                      | `--rm-bar`                         | `#161d1c`             | `#e4ebe8`             | Bottom navigation, rail                                  |
+| On surface               | `--mat-sys-on-surface`             | `#dde4e2`             | `#161d1c`             | Titles, primary text                                     |
+| On surface variant       | `--mat-sys-on-surface-variant`     | `#b4bfbc`             | `#414b49`             | Secondary text                                           |
+| Outline / variant        | `--mat-sys-outline(-variant)`      | `#889391` / `#3a4442` | `#6f7977` / `#c3cdca` | Borders, dividers                                        |
+| Primary / on             | `--mat-sys-primary`                | `#82d5c8` / `#003731` | `#006a60` / `#ffffff` | Filled button, links, focus ring                         |
+| Primary container / on   | `--mat-sys-primary-container`      | `#00504a` / `#a4f4e7` | `#a4f4e7` / `#00201c` | "In library", active Like and Following                  |
+| Secondary container / on | `--mat-sys-secondary-container`    | `#30514b` / `#d2ede6` | `#cfe9e2` / `#06201c` | Selected row, active nav, selected chip, resolution tag  |
+| Tertiary / on            | `--mat-sys-tertiary`               | `#f2c04e` / `#402d00` | `#755800` / `#ffffff` | "New" count, rating star                                 |
+| Tertiary container / on  | `--mat-sys-tertiary-container`     | `#574000` / `#ffe0a0` | `#ffe0a0` / `#251a00` | HDR and DV tags, "Why this pick"                         |
+| Error                    | `--mat-sys-error`                  | `#ffb4ab`             | `#ba1a1a`             | Leechers, destructive actions                            |
+| Positive                 | `--rm-positive`                    | `#8bd89a`             | `#1c6c35`             | Seeders, FL badge                                        |
 
 ### Named Rules
 

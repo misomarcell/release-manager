@@ -77,9 +77,13 @@ export class WatchlistComponent implements OnInit {
         try {
             await this.watchlist.checkNow();
             const count = this.watchlist.unreadCount();
-            this.snackBar.open(count ? `${count} new ${count === 1 ? 'release' : 'releases'}` : 'No new releases', 'OK', {
-                duration: 3000,
-            });
+            this.snackBar.open(
+                count ? `${count} new ${count === 1 ? 'release' : 'releases'}` : 'No new releases',
+                'OK',
+                {
+                    duration: 3000,
+                },
+            );
         } catch (e: unknown) {
             this.snackBar.open(extractHttpError(e, 'Failed to check for new releases'), 'OK', { duration: 5000 });
         } finally {
