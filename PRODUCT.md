@@ -40,11 +40,14 @@ One screen that joins four systems the owner already runs or uses: nCore (source
 
 - Angular SSR with Angular Material 3; standalone, mobile-first components.
 - Installed as a PWA (web manifest and service worker are present).
-- Content is a mix of languages: UI copy is English, release names and much of the metadata are Hungarian or scene-style strings (long, dotted, unbreakable). Hungarian characters must render correctly everywhere.
+- UI copy is English. Release names are scene-style strings (long, dotted, unbreakable), and titles or metadata coming from nCore and TMDB can contain Hungarian characters, which must render correctly.
 - Release names, NFO text, user agents and paths are long machine strings that must stay readable on a narrow screen.
 - Roles: regular user and admin. Admin-only pages are Manage Users, Administration and Logs.
 - AI recommendations are optional and absent when no OpenAI key is configured.
-- **Open:** `index.html` declares `lang="hu"` while the UI copy is English. Which language the interface should be in is not decided.
+- **Planned: more trackers.** nCore is the only source today, but the product is meant to work with other trackers. New design and copy must not assume a single source: say "trackers", and let a release name its tracker.
+- **Planned: search all titles.** Search today covers releases and the library only. A search across every title (via TMDB) is wanted so that a title can be followed on the watchlist before any release exists. The scoped release and library searches stay.
+- There is no ruleset yet for which release is "best". Do not rank or label a release as best.
+- The interface is English only. `index.html` still declares `lang="hu"`, which is a leftover to correct.
 
 ## Brand Commitments
 

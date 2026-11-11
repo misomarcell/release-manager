@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/redesign/index.html"
+        ],
+        "createdAt": "2026-11-11T17:29:05.395Z",
+        "reason": "agent: finding is the Dark/Light segmented control, whose buttons fill the bordered pill by design; text is centred in 40px with 14-18px side padding"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/redesign/index.html"
+        ],
+        "createdAt": "2026-11-11T17:46:44.804Z",
+        "reason": "user requested: a typeface comparison menu in the redesign demo, so the mock loads fonts outside the current DESIGN.md on purpose"
+      }
+    ]
+  }
+}
