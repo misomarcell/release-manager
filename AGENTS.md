@@ -31,6 +31,7 @@
 - Shared global classes in `styles.scss`: `.seg-list` + `.tile` (segmented groups), `.kv`, `.tag` (`.res`, `.hdr`), `.state` (`.own`, `.following`, `.new`), `.chip` (`.on`), `.list-head`, `.section-head`, `.seed`, `.leech`, `.fl`, `.pressable`, `.skeleton`, `.message`, `.hint`, `.phone-only`, `.desktop-only`.
 - Shell (`components/shell`): bottom navigation on phones, navigation rail from 960px; admin pages and sign out are behind `app-account-menu`.
 - On phones the document itself scrolls (sticky bottom navigation, no inner scroll containers besides the open title page) so mobile browsers can collapse their toolbars; from 960px the shell is a fixed `100dvh` frame and the list and detail panes scroll on their own.
+- Zoom is locked on purpose: `touch-action: pan-x pan-y` on `html` (no pinch or double-tap zoom) and `maximum-scale=1` in the viewport meta; keep text inputs at 16px or more so iOS does not zoom on focus.
 - Every list page is `app-list-detail` (list column + title page; a full-screen layer on phones, a side pane on desktop) filled with `app-title-row` rows and one `app-title-detail`. Page-specific content is projected into the detail; the single filled button goes into its `[primary]` slot.
 - `app-filter-search` is the 56px search bar with visible filter chips; `app-page-title` is the title bar for pages without search.
 - Dialogs that act on a title (download, watchlist, NFO) open with `sheetConfig()` from `utils/sheet.ts`: a bottom sheet on phones, a centred dialog otherwise.
