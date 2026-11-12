@@ -1,0 +1,39 @@
+:host {
+    display: grid;
+    gap: 2px;
+
+    &:empty {
+        display: none;
+    }
+}
+
+.notice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 10px 10px 10px 14px;
+    font-size: 13px;
+
+    > mat-icon {
+        flex: none;
+        color: var(--mat-sys-error);
+    }
+}
+
+p {
+    flex: 1 1 200px;
+    display: grid;
+    min-width: 0;
+
+    span {
+        color: var(--mat-sys-on-surface-variant);
+    }
+}
+
+button {
+    --mat-button-tonal-container-height: 34px;
+    flex: none;
+    margin-left: auto;
+    font-size: 13px;
+}

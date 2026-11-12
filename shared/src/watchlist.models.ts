@@ -1,9 +1,11 @@
 import type { MediaType } from './tmdb.models.js';
+import type { TrackerFailure, TrackerId } from './tracker.models.js';
 
 export const WATCHLIST_MAX_KEYWORDS = 10;
 export const WATCHLIST_MAX_KEYWORD_LENGTH = 40;
 
 export interface WatchlistRelease {
+    tracker: TrackerId;
     torrentId: string;
     releaseName: string;
     detailsUrl: string;
@@ -38,4 +40,8 @@ export interface WatchlistUpdateRequest {
 
 export interface WatchlistResponse {
     items: WatchlistItem[];
+}
+
+export interface WatchlistCheckResponse extends WatchlistResponse {
+    failures: TrackerFailure[];
 }

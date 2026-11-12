@@ -1,0 +1,13 @@
+@for (failure of failures(); track failure.heading) {
+    <div class="tile notice" role="status">
+        <mat-icon aria-hidden="true">cloud_off</mat-icon>
+        <p>
+            <b>{{ failure.heading }}</b>
+            <span>{{ failure.detail }}</span>
+        </p>
+        <button matButton="tonal" type="button" (click)="reload()">
+            <mat-icon>refresh</mat-icon>
+            Reload
+        </button>
+    </div>
+}

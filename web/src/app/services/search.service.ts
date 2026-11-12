@@ -1,27 +1,40 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
 import { ApiService } from './api.service';
-import type { NcoreCategoryKey, NcoreSearchResponse } from '@rm/shared/ncore.models';
 import type { DownloadRequest, DownloadResponse } from '@rm/shared/download.models';
 import type { MediaType, MovieMetadata, TitleSearchResponse } from '@rm/shared/tmdb.models';
+import type {
+    ReleaseCategory,
+    ReleaseSearchResponse,
+    TitleReleasesResponse,
+    TrackerId,
+} from '@rm/shared/tracker.models';
 
 interface ReleaseSearchOptions {
-    category: NcoreCategoryKey;
+    category: ReleaseCategory;
     query: string;
     page: number;
-    perPage: number;
     uhd: boolean;
+    trackers: TrackerId[];
+}
+
+export interface TitleReleasesOptions {
+    imdbId: string;
+    title: string;
+    year: string;
+    mediaType: MediaType;
+    trackers: TrackerId[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class SearchService {
     private api = inject(ApiService);
 
-    async search(options: ReleaseSearchOptions): Promise<NcoreSearchResponse> {
+    async search(options: ReleaseSearchOptions): Promise<ReleaseSearchResponse> {
         let params = new HttpParams()
             .set('category', options.category)
             .set('page', options.page.toString())
-            .set('perPage', options.perPage.toString());
+            .set('trackers', options.trackers.join(','));
 
         const query = options.query.trim();
         if (query) {
@@ -32,11 +45,21 @@ export class SearchService {
             params = params.set('uhd', 'true');
         }
 
-        return this.api.get<NcoreSearchResponse>('/api/search', params);
+        return this.api.get<ReleaseSearchResponse>('/api/search', params);
     }
 
-    async fetchNfo(torrentId: string): Promise<string> {
-        return this.api.getText(`/api/search/nfo/${torrentId}`);
+    async titleReleases(options: TitleReleasesOptions): Promise<TitleReleasesResponse> {
+        const params = new HttpParams()
+            .set('imdbId', options.imdbId)
+            .set('title', options.title)
+            .set('year', options.year)
+            .set('type', options.mediaType)
+            .set('trackers', options.trackers.join(','));
+        return this.api.get<TitleReleasesResponse>('/api/search/releases', params);
+    }
+
+    async fetchNfo(tracker: TrackerId, torrentId: string): Promise<string> {
+        return this.api.getText(`/api/search/nfo/${tracker}/${torrentId}`);
     }
 
     async download(request: DownloadRequest): Promise<DownloadResponse> {

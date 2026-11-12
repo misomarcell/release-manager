@@ -1,4 +1,5 @@
-import type { TvInfo } from 'shared/ncore.models';
+import type { MediaType, MetadataLookup } from 'shared/tmdb.models';
+import type { TvInfo } from 'shared/tracker.models';
 
 const RELEASE_STOP_TOKENS = new Set<string>([
     'AMZN',
@@ -122,7 +123,7 @@ function toTitleCase(value: string): string {
     return value.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export function parseReleaseName(releaseName: string): { title: string; year: string } {
+function parseReleaseName(releaseName: string): { title: string; year: string } {
     if (!releaseName) return { title: '', year: '' };
 
     const stripped = releaseName.replace(/-[^-.\s]+$/, '');
@@ -165,4 +166,23 @@ export function parseReleaseName(releaseName: string): { title: string; year: st
 export function sanitizeImdbId(value: string): string {
     const n = value.trim();
     return /^tt\d{5,10}$/i.test(n) ? n.toLowerCase() : '';
+}
+
+// Without an IMDb id the title alone is ambiguous, so the tracker's media type narrows the lookup.
+export function buildMetadataLookup(releaseName: string, imdbId: string, mediaType: MediaType): MetadataLookup {
+    const parsed = parseReleaseName(releaseName);
+    const lookup: MetadataLookup = { imdbId: sanitizeImdbId(imdbId), title: parsed.title, year: parsed.year };
+    return lookup.imdbId ? lookup : { ...lookup, mediaType };
+}
+
+export function isSameTitle(lookup: MetadataLookup, title: string, year: string): boolean {
+    if (normalizeTitle(lookup.title) !== normalizeTitle(title)) return false;
+    return !lookup.year || !year || lookup.year === year;
+}
+
+function normalizeTitle(value: string): string {
+    return value
+        .normalize('NFD')
+        .replace(/[^\p{L}\p{N}]/gu, '')
+        .toLowerCase();
 }

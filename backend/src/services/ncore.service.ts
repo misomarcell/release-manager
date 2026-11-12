@@ -1,10 +1,18 @@
 import { config } from '../config.js';
 import { asRecord, asString, asNumber, asBoolean } from '../utils/coerce.js';
-import { parseReleaseName, sanitizeImdbId, parseTvInfo } from '../utils/release-parser.js';
-import type { NcoreCategoryKey, NcoreResult } from 'shared/ncore.models';
-import type { MetadataLookup } from 'shared/tmdb.models';
+import { buildMetadataLookup, isSameTitle, parseTvInfo } from '../utils/release-parser.js';
+import {
+    EMPTY_PAGE,
+    type TorrentSource,
+    type TrackerBrowseQuery,
+    type TrackerPage,
+    type TrackerProvider,
+    type TrackerSearchQuery,
+    type TrackerTitleQuery,
+} from './tracker-provider.js';
+import type { ReleaseCategory, TrackerRelease } from 'shared/tracker.models';
 
-const SUPPORTED_CATEGORIES: Record<NcoreCategoryKey, string> = {
+const SUPPORTED_CATEGORIES: Record<ReleaseCategory, string> = {
     all: 'hd_hun,hd,hdser_hun,hdser',
     movies: 'hd_hun,hd',
     tv: 'hdser_hun,hdser',
@@ -14,8 +22,9 @@ const SEARCH_ACCEPT = 'application/json,text/plain,*/*';
 const HTML_ACCEPT = 'text/html,text/plain,*/*';
 const TORRENT_ID_PATTERN = /^\d+$/;
 const REQUEST_TIMEOUT_MS = 20_000;
+const TITLE_MAX_PAGES = 5;
 
-export class NcoreNoResultsError extends Error {
+class NcoreNoResultsError extends Error {
     constructor() {
         super('No results found');
         this.name = 'NcoreNoResultsError';
@@ -28,62 +37,67 @@ interface NcoreConfig {
     baseUrl: string;
 }
 
-interface NormalizedSearchParams {
-    categoryKey: NcoreCategoryKey;
-    category: string;
-    page: number;
-    perPage: number;
-    searchQuery: string;
-    uhdOnly: boolean;
-    searchIn: NcoreSearchField;
-    sortBy: NcoreSortField;
-}
-
 type NcoreSearchField = 'name' | 'imdb';
 type NcoreSortField = 'seeders' | 'fid';
 
 interface NcoreSearchParams {
-    category?: string;
-    search?: string;
-    page?: number;
-    perPage?: number;
+    category: ReleaseCategory;
+    search: string;
+    page: number;
     uhd?: boolean;
     searchIn?: NcoreSearchField;
     sortBy?: NcoreSortField;
 }
 
-interface NcoreRawResponse {
-    category: NcoreCategoryKey;
-    results: NcoreResult[];
-    totalResults: number;
-    page: number;
-    perPage: number;
-}
+class NcoreService implements TrackerProvider {
+    readonly id = 'ncore';
 
-class NcoreService {
-    async search(params: NcoreSearchParams): Promise<NcoreRawResponse> {
-        const ncore = this.getRequiredConfig('Missing nCore credentials. Set NCORE_USERNAME and NCORE_COOKIE_PASS.');
-        const context = this.normalizeSearchParams(params);
-        const searchUrl = this.buildSearchUrl(context, ncore.baseUrl);
+    search(query: TrackerSearchQuery): Promise<TrackerPage> {
+        return this.fetchPage(query);
+    }
 
-        const rawBody = await this.requestNcoreBody(
-            searchUrl,
-            {
-                Cookie: this.getCookieHeader(ncore),
-                Accept: SEARCH_ACCEPT,
-            },
-            'nCore request failed',
-        );
+    browseTop(query: TrackerBrowseQuery): Promise<TrackerPage> {
+        return this.fetchPage({ ...query, search: '' });
+    }
 
-        const body = this.parseSearchJson(rawBody);
+    // By IMDb id when there is one; otherwise a name search narrowed to the same parsed title and year.
+    async findTitle(title: TrackerTitleQuery): Promise<TrackerRelease[]> {
+        const category = title.mediaType === 'tv' ? 'tv' : 'movies';
+        if (title.imdbId) return this.fetchAllPages({ category, search: title.imdbId, searchIn: 'imdb' });
+        if (!title.title) return [];
 
-        return {
-            category: context.categoryKey,
-            results: this.mapTorrentResults(body, ncore.baseUrl, context.sortBy === 'seeders'),
-            totalResults: this.getTotalResults(body),
-            page: context.page,
-            perPage: context.perPage,
-        };
+        const year = title.mediaType === 'tv' ? '' : title.year;
+        const releases = await this.fetchAllPages({ category, search: title.title, searchIn: 'name' });
+        return releases.filter((release) => isSameTitle(release.metadataLookup, title.title, year));
+    }
+
+    private async fetchAllPages(params: Omit<NcoreSearchParams, 'page' | 'sortBy'>): Promise<TrackerRelease[]> {
+        const collected = new Map<string, TrackerRelease>();
+
+        for (let page = 1; page <= TITLE_MAX_PAGES; page++) {
+            const response = await this.fetchPage({ ...params, sortBy: 'fid', page });
+
+            const sizeBefore = collected.size;
+            for (const result of response.results) collected.set(result.torrentId, result);
+            if (collected.size === sizeBefore || collected.size >= response.totalResults) break;
+        }
+
+        return [...collected.values()];
+    }
+
+    async getTorrent(downloadRef: string): Promise<TorrentSource> {
+        const ncore = this.getRequiredConfig('Missing nCore credentials.');
+        const url = this.getDownloadUrl(downloadRef, ncore.baseUrl);
+
+        console.log('[nCore]', `Downloading torrent from ${url.toString()}`);
+
+        const response = await fetch(url, {
+            headers: { Cookie: this.getCookieHeader(ncore) },
+            signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        });
+
+        if (!response.ok) throw new Error(`Failed to download torrent file: ${response.status}`);
+        return { kind: 'file', data: await response.arrayBuffer() };
     }
 
     async fetchNfo(torrentId: string): Promise<string> {
@@ -107,19 +121,24 @@ class NcoreService {
         );
     }
 
-    async downloadTorrentFile(downloadUrl: string): Promise<ArrayBuffer> {
-        const ncore = this.getRequiredConfig('Missing nCore credentials.');
-        const url = this.getDownloadUrl(downloadUrl, ncore.baseUrl);
+    private async fetchPage(params: NcoreSearchParams): Promise<TrackerPage> {
+        const ncore = this.getRequiredConfig('Missing nCore credentials. Set NCORE_USERNAME and NCORE_COOKIE_PASS.');
+        const searchUrl = this.buildSearchUrl(params, ncore.baseUrl);
+        const headers = { Cookie: this.getCookieHeader(ncore), Accept: SEARCH_ACCEPT };
 
-        console.log('[nCore]', `Downloading torrent from ${url.toString()}`);
+        let rawBody: string;
+        try {
+            rawBody = await this.requestNcoreBody(searchUrl, headers, 'nCore request failed');
+        } catch (error: unknown) {
+            if (error instanceof NcoreNoResultsError) return EMPTY_PAGE;
+            throw error;
+        }
 
-        const response = await fetch(url, {
-            headers: { Cookie: this.getCookieHeader(ncore) },
-            signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-        });
-
-        if (!response.ok) throw new Error(`Failed to download torrent file: ${response.status}`);
-        return response.arrayBuffer();
+        const body = this.parseSearchJson(rawBody);
+        return {
+            results: this.records(body['results']).map((item) => this.toRelease(item, ncore.baseUrl)),
+            totalResults: this.getTotalResults(body),
+        };
     }
 
     private getRequiredConfig(message: string): NcoreConfig {
@@ -135,49 +154,30 @@ class NcoreService {
         return `nick=${encodeURIComponent(ncore.username)};pass=${encodeURIComponent(ncore.cookiePass)}`;
     }
 
-    private normalizeSearchParams(params: NcoreSearchParams): NormalizedSearchParams {
-        const categoryKey = this.getCategoryKey(params.category);
-
-        return {
-            categoryKey,
-            category: SUPPORTED_CATEGORIES[categoryKey],
-            page: Math.max(1, params.page ?? 1),
-            perPage: Math.min(100, Math.max(1, params.perPage ?? 100)),
-            searchQuery: params.search?.trim() || '',
-            uhdOnly: params.uhd === true,
-            searchIn: params.searchIn ?? 'name',
-            sortBy: params.sortBy ?? 'seeders',
-        };
-    }
-
-    private getCategoryKey(value: unknown): NcoreCategoryKey {
-        if (typeof value === 'string' && value in SUPPORTED_CATEGORIES) return value as NcoreCategoryKey;
-        return 'all';
-    }
-
-    private buildSearchUrl(context: NormalizedSearchParams, baseUrl: string): URL {
+    private buildSearchUrl(params: NcoreSearchParams, baseUrl: string): URL {
+        const searchQuery = params.search.trim();
         const searchUrl = new URL('/torrents.php', baseUrl);
-        searchUrl.searchParams.set('kivalasztott_tipus', context.category);
+        searchUrl.searchParams.set('kivalasztott_tipus', SUPPORTED_CATEGORIES[params.category]);
         searchUrl.searchParams.set('tipus', 'kivalasztottak_kozott');
-        searchUrl.searchParams.set('miszerint', context.sortBy);
+        searchUrl.searchParams.set('miszerint', params.sortBy ?? 'seeders');
         searchUrl.searchParams.set('hogyan', 'DESC');
         searchUrl.searchParams.set('tags', '');
         searchUrl.searchParams.set('jsons', 'true');
 
-        if (context.searchQuery) {
-            searchUrl.searchParams.set('mire', context.searchQuery);
-            if (context.searchIn !== 'name') {
-                searchUrl.searchParams.set('miben', context.searchIn);
+        if (searchQuery) {
+            searchUrl.searchParams.set('mire', searchQuery);
+            if (params.searchIn === 'imdb') {
+                searchUrl.searchParams.set('miben', params.searchIn);
             }
-        } else if (context.uhdOnly) {
+        } else if (params.uhd) {
             searchUrl.searchParams.set('mire', '2160p');
         } else {
             searchUrl.searchParams.set('query', '*');
         }
 
         // nCore uses 'oldal' for page number.
-        if (context.page > 1) {
-            searchUrl.searchParams.set('oldal', String(context.page));
+        if (params.page > 1) {
+            searchUrl.searchParams.set('oldal', String(params.page));
         }
 
         return searchUrl;
@@ -210,44 +210,31 @@ class NcoreService {
         }
     }
 
-    private mapTorrentResults(body: Record<string, unknown>, baseUrl: string, sortBySeeders: boolean): NcoreResult[] {
-        const results = this.records(body['results']).map((item) => this.toNcoreResult(item, baseUrl));
-        return sortBySeeders ? results.sort((a, b) => b.seeders - a.seeders) : results;
-    }
-
-    private toNcoreResult(item: Record<string, unknown>, baseUrl: string): NcoreResult {
+    private toRelease(item: Record<string, unknown>, baseUrl: string): TrackerRelease {
         const releaseName = asString(item['release_name']);
         const imdbId = asString(item['imdb_id']);
+        const mediaType = asString(item['category']).startsWith('hdser') ? 'tv' : 'movie';
 
         return {
-            tracker: 'ncore',
-            torrent_id: asString(item['torrent_id']),
-            category: asString(item['category']),
-            release_name: releaseName,
-            details_url: this.withBaseUrl(asString(item['details_url']), baseUrl),
-            download_url: this.withBaseUrl(asString(item['download_url']), baseUrl),
+            tracker: this.id,
+            torrentId: asString(item['torrent_id']),
+            downloadRef: this.withBaseUrl(asString(item['download_url']), baseUrl),
+            mediaType,
+            releaseName,
+            detailsUrl: this.withBaseUrl(asString(item['details_url']), baseUrl),
             freeleech: asBoolean(item['freeleech']),
-            imdb_id: imdbId,
-            imdb_rating: asString(item['imdb_rating']),
+            imdbId,
             size: asNumber(item['size']),
-            type: asString(item['type']),
-            leechers: asNumber(item['leechers']),
             seeders: asNumber(item['seeders']),
-            metadata_lookup: this.buildMetadataLookup(releaseName, imdbId),
+            leechers: asNumber(item['leechers']),
+            metadataLookup: buildMetadataLookup(releaseName, imdbId, mediaType),
             tvInfo: parseTvInfo(releaseName),
-            metadata: null,
-            fromCache: false,
         };
     }
 
     private getTotalResults(body: Record<string, unknown>): number {
         const total = Number.parseInt(asString(body['total_results']), 10);
         return Number.isFinite(total) ? total : 0;
-    }
-
-    private buildMetadataLookup(releaseName: string, imdbId: string): MetadataLookup {
-        const parsed = parseReleaseName(releaseName);
-        return { imdbId: sanitizeImdbId(imdbId), title: parsed.title, year: parsed.year };
     }
 
     private withBaseUrl(value: string, baseUrl: string): string {

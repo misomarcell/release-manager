@@ -146,15 +146,36 @@ export const SCHEMA_SQL = `
     CREATE UNIQUE INDEX IF NOT EXISTS watchlist_items_user_tmdb_media_idx
       ON watchlist_items (user_id, tmdb_id, media_type);
 
+    -- TEMPORARY MIGRATION: remove after the production DB has been updated for multi-tracker watchlists.
+    -- Known releases from before trackers were stored are dropped; followed titles are kept and re-baselined.
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema() AND table_name = 'watchlist_releases' AND column_name = 'tracker'
+      ) THEN
+        DROP TABLE IF EXISTS watchlist_releases;
+        UPDATE watchlist_items SET last_checked_at = NULL;
+      END IF;
+    END $$;
+
     CREATE TABLE IF NOT EXISTS watchlist_releases (
       item_id      INTEGER NOT NULL REFERENCES watchlist_items(id) ON DELETE CASCADE,
-      torrent_id   VARCHAR(32) NOT NULL,
+      tracker      VARCHAR(32) NOT NULL,
+      torrent_id   VARCHAR(64) NOT NULL,
       release_name TEXT NOT NULL,
       details_url  TEXT NOT NULL DEFAULT '',
       size         BIGINT NOT NULL DEFAULT 0,
       seen         BOOLEAN NOT NULL DEFAULT TRUE,
       found_at     TIMESTAMPTZ DEFAULT NOW(),
-      PRIMARY KEY (item_id, torrent_id)
+      PRIMARY KEY (item_id, tracker, torrent_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS watchlist_tracker_checks (
+      item_id    INTEGER NOT NULL REFERENCES watchlist_items(id) ON DELETE CASCADE,
+      tracker    VARCHAR(32) NOT NULL,
+      checked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (item_id, tracker)
     );
 
     CREATE INDEX IF NOT EXISTS watchlist_releases_unseen_idx ON watchlist_releases (item_id) WHERE NOT seen;

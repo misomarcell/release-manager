@@ -29,6 +29,8 @@
         }
     </mat-menu>
 
+    <app-failure-notice class="failures" [failures]="failures()" />
+
     @if (loading()) {
         <app-row-skeletons />
     } @else if (error(); as err) {
@@ -85,7 +87,7 @@
             aria-label="Page selector"
         />
     } @else {
-        <p class="message">No results found.</p>
+        <p class="message">{{ emptyMessage() }}</p>
     }
 
     @if (current) {
@@ -104,17 +106,34 @@
             [library]="libraryStatus()"
         >
             <div class="section-head">
-                <h3>Releases on this page</h3>
-                @if (titleQuery(); as query) {
-                    <a mat-button routerLink="/releases" [queryParams]="{ q: query }">
-                        <mat-icon>search</mat-icon>
-                        Search this title
-                    </a>
-                } @else {
-                    <span>sorted by seeders</span>
-                }
+                <h3>Releases</h3>
+                <button class="scope sort pressable" type="button" [matMenuTriggerFor]="sortMenu">
+                    {{ currentSort().label }}
+                    <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+                </button>
             </div>
-            <app-release-list [releases]="current.releases" [title]="current.title" />
+            <mat-menu #sortMenu="matMenu" xPosition="before">
+                @for (option of sorts; track option.id) {
+                    <a
+                        mat-menu-item
+                        [routerLink]="[]"
+                        [queryParams]="{ sort: option.param }"
+                        queryParamsHandling="merge"
+                        [replaceUrl]="true"
+                    >
+                        {{ option.label }}
+                    </a>
+                }
+            </mat-menu>
+            <app-release-list [releases]="shownReleases()" [title]="current.title" />
+            @if (lookupBusy()) {
+                <div class="pending" role="status">
+                    <div class="skeleton"></div>
+                    <div class="skeleton"></div>
+                    <p class="hint">Loading all releases…</p>
+                </div>
+            }
+            <app-failure-notice [failures]="lookupFailures()" />
         </app-title-detail>
     }
 </app-list-detail>

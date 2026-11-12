@@ -1,30 +1,48 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
-import { ncoreService, NcoreNoResultsError } from '../services/ncore.service.js';
-import { getMetadata, getCacheKey } from '../services/metadata.service.js';
+import { getMetadata } from '../services/metadata.service.js';
 import { tmdbService } from '../services/tmdb.service.js';
+import { trackerService } from '../services/tracker.service.js';
 import { isInLibrary } from '../repositories/jellyfin.repository.js';
 import { qbittorrentService } from '../services/qbittorrent.service.js';
-import { mapConcurrent } from '../utils/concurrent.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { DOWNLOAD_CATEGORIES } from 'shared/constants';
-import type { NcoreResult, NcoreSearchResponse } from 'shared/ncore.models';
-import type { DownloadResponse } from 'shared/download.models';
-import type { MetadataLookup, TitleSearchResponse } from 'shared/tmdb.models';
+import { isTrackerId, type TitleReleasesResponse, type TrackerId } from 'shared/tracker.models';
+import type { DownloadRequest, DownloadResponse } from 'shared/download.models';
+import type { TitleSearchResponse } from 'shared/tmdb.models';
 import { logger } from '../utils/logger.js';
+import { sanitizeImdbId } from '../utils/release-parser.js';
 import { MediaTypeSchema, parseBody, parseParams, parseQuery } from '../middleware/validate.js';
+
+const TrackerSchema = z.custom<TrackerId>(isTrackerId, 'Unknown tracker');
+
+const TrackerListSchema = z
+    .string()
+    .max(200)
+    .default('')
+    .transform((value) => value.split(',').filter(isTrackerId));
 
 const SearchQuerySchema = z.object({
     category: z.enum(['all', 'movies', 'tv']).default('all'),
     search: z.string().max(200).default(''),
     page: z.coerce.number().int().min(1).default(1),
-    perPage: z.coerce.number().int().min(1).max(200).default(100),
     uhd: z
         .string()
         .optional()
         .transform((v) => v === 'true'),
+    trackers: TrackerListSchema,
 });
+
+const TitleReleasesQuerySchema = z
+    .object({
+        imdbId: z.string().max(20).default('').transform(sanitizeImdbId),
+        title: z.string().trim().max(200).default(''),
+        year: z.string().max(4).default(''),
+        type: MediaTypeSchema,
+        trackers: TrackerListSchema,
+    })
+    .refine((query) => query.imdbId || query.title, 'An IMDb ID or a title is required');
 
 const MetadataParamsSchema = z.object({
     tmdbId: z.coerce.number().int().positive('TMDB ID must be a positive integer'),
@@ -40,17 +58,19 @@ const TitleSearchQuerySchema = z.object({
 });
 
 const NfoParamsSchema = z.object({
-    id: z.string().regex(/^\d+$/, 'Invalid NFO ID'),
+    tracker: TrackerSchema,
+    id: z.string().regex(/^\w{1,64}$/, 'Invalid NFO ID'),
 });
 
 const DownloadBodySchema = z.object({
-    downloadUrl: z.url('Invalid download URL'),
+    tracker: TrackerSchema,
+    downloadRef: z.string().min(1, 'Download reference is required').max(2000),
     savePath: z
         .string()
         .min(1, 'Save path is required')
         .refine((p) => !p.includes('..'), 'Path traversal not allowed'),
     category: z.enum(DOWNLOAD_CATEGORIES),
-});
+}) satisfies z.ZodType<DownloadRequest>;
 
 const router: Router = Router();
 
@@ -59,54 +79,23 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     if (!query) return;
 
     try {
-        const ncoreResult = await ncoreService.search(query);
-
-        // Deduplicate by metadata lookup key
-        const uniqueLookups = new Map<string, MetadataLookup>();
-        for (const result of ncoreResult.results) {
-            const key = getCacheKey(result.metadata_lookup);
-            if (!uniqueLookups.has(key)) {
-                uniqueLookups.set(key, result.metadata_lookup);
-            }
-        }
-
-        // Fetch metadata once per unique key (6 concurrent)
-        const metadataMap = new Map<string, { metadata: NcoreResult['metadata']; fromCache: boolean }>();
-        await mapConcurrent([...uniqueLookups.entries()], 6, async ([key, lookup]) => {
-            const result = await getMetadata(lookup);
-            metadataMap.set(key, { metadata: result.metadata, fromCache: result.fromCache });
-        });
-
-        // Apply metadata to all results
-        const enriched: NcoreResult[] = ncoreResult.results.map((result) => {
-            const key = getCacheKey(result.metadata_lookup);
-            const meta = metadataMap.get(key);
-            return {
-                ...result,
-                metadata: meta?.metadata ?? null,
-                fromCache: meta?.fromCache ?? false,
-            };
-        });
-
-        const response: NcoreSearchResponse = {
-            category: ncoreResult.category,
-            results: enriched,
-            totalResults: ncoreResult.totalResults,
-            page: ncoreResult.page,
-            perPage: ncoreResult.perPage,
-        };
-
-        res.json(response);
+        res.json(await trackerService.search(query));
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Search failed';
-        if (error instanceof NcoreNoResultsError) {
-            res.status(404).json({ error: message });
-            return;
-        }
-
-        logger.error('nCore search failed', { error: message });
+        logger.error('Release search failed', { error: message });
         res.status(502).json({ error: message });
     }
+});
+
+router.get('/releases', requireAuth, async (req: Request, res: Response) => {
+    const query = parseQuery(TitleReleasesQuerySchema, req.query, res);
+    if (!query) return;
+
+    const { releases, failures } = await trackerService.findTitle(
+        { imdbId: query.imdbId, title: query.title, year: query.year, mediaType: query.type },
+        query.trackers,
+    );
+    res.json({ releases, failures } satisfies TitleReleasesResponse);
 });
 
 router.get('/metadata/:tmdbId', requireAuth, async (req: Request, res: Response) => {
@@ -148,12 +137,16 @@ router.get('/titles', requireAuth, async (req: Request, res: Response) => {
     res.json(response);
 });
 
-router.get('/nfo/:id', requireAuth, async (req: Request, res: Response) => {
+router.get('/nfo/:tracker/:id', requireAuth, async (req: Request, res: Response) => {
     const params = parseParams(NfoParamsSchema, req.params, res);
     if (!params) return;
 
     try {
-        const html = await ncoreService.fetchNfo(params.id);
+        const html = await trackerService.fetchNfo(params.tracker, params.id);
+        if (html === null) {
+            res.status(404).json({ error: 'This tracker has no NFO files' });
+            return;
+        }
         res.type('html').send(html);
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'NFO fetch failed';
@@ -166,8 +159,12 @@ router.post('/download', requireAuth, requireAdmin, async (req: Request, res: Re
     if (!body) return;
 
     try {
-        const torrentData = await ncoreService.downloadTorrentFile(body.downloadUrl);
-        await qbittorrentService.addTorrent(torrentData, body.savePath, body.category);
+        const torrent = await trackerService.getTorrent(body.tracker, body.downloadRef);
+        if (torrent.kind === 'magnet') {
+            await qbittorrentService.addMagnet(torrent.uri, body.savePath, body.category);
+        } else {
+            await qbittorrentService.addTorrent(torrent.data, body.savePath, body.category);
+        }
         const response: DownloadResponse = { success: true, message: 'Torrent sent to qBittorrent' };
         res.json(response);
     } catch (error: unknown) {

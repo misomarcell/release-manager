@@ -87,13 +87,14 @@
                     </div>
                     @if (current.newReleases.length > 0) {
                         <div class="seg-list">
-                            @for (release of current.newReleases; track release.torrentId) {
+                            @for (release of current.newReleases; track release.tracker + release.torrentId) {
                                 <div class="tile release">
                                     <a class="mono" [href]="release.detailsUrl" target="_blank" rel="noopener">
                                         {{ release.releaseName }}
                                     </a>
                                     <p class="hint num">
-                                        {{ formatBytes(release.size) }} · Found {{ release.foundAt | date: dateFormat }}
+                                        {{ trackerName(release.tracker) }} · {{ formatBytes(release.size) }} · Found
+                                        {{ release.foundAt | date: dateFormat }}
                                     </p>
                                 </div>
                             }

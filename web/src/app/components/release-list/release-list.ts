@@ -11,9 +11,8 @@ import { formatBytes } from '../../utils/format-bytes';
 import { extractHttpError } from '../../utils/http-error';
 import { sheetConfig } from '../../utils/sheet';
 import { describeRelease } from '../../utils/release-view';
-import type { NcoreResult } from '@rm/shared/ncore.models';
+import { trackerHasNfo, type TrackerRelease } from '@rm/shared/tracker.models';
 
-const TV_CATEGORIES = new Set(['hdser_hun', 'hdser']);
 const MOVIES_BASE = '/media/Movies';
 const TV_BASE = '/media/TV_Shows';
 
@@ -29,23 +28,30 @@ export class ReleaseListComponent {
     private search = inject(SearchService);
     protected auth = inject(AuthService);
 
-    releases = input.required<NcoreResult[]>();
+    releases = input.required<TrackerRelease[]>();
     title = input.required<string>();
 
-    protected rows = computed(() => this.releases().map((release) => ({ release, ...describeRelease(release) })));
+    protected rows = computed(() =>
+        this.releases().map((release) => ({
+            release,
+            key: `${release.tracker}:${release.torrentId}`,
+            hasNfo: trackerHasNfo(release.tracker),
+            ...describeRelease(release),
+        })),
+    );
     protected formatBytes = formatBytes;
 
-    protected async showNfo(torrentId: string): Promise<void> {
+    protected async showNfo(release: TrackerRelease): Promise<void> {
         try {
-            const html = await this.search.fetchNfo(torrentId);
+            const html = await this.search.fetchNfo(release.tracker, release.torrentId);
             this.dialog.open(NfoDialogComponent, sheetConfig({ html }, 800));
         } catch (e: unknown) {
             this.snackBar.open(extractHttpError(e, 'Failed to load NFO'), 'OK', { duration: 5000 });
         }
     }
 
-    protected download(release: NcoreResult): void {
-        const isTV = TV_CATEGORIES.has(release.category);
+    protected download(release: TrackerRelease): void {
+        const isTV = release.mediaType === 'tv';
         const data: DownloadDialogData = {
             release,
             isTV,
@@ -64,7 +70,7 @@ export class ReleaseListComponent {
             });
     }
 
-    private tvPath(release: NcoreResult): string {
+    private tvPath(release: TrackerRelease): string {
         const tv = release.tvInfo;
         const season =
             tv?.type === 'episode' && tv.season != null ? `/Season ${String(tv.season).padStart(2, '0')}` : '';

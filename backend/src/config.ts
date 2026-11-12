@@ -11,6 +11,9 @@ export const config = {
         username: process.env['NCORE_USERNAME']?.trim() || '',
         cookiePass: process.env['NCORE_COOKIE_PASS']?.trim() || '',
     },
+    apibay: {
+        baseUrl: process.env['APIBAY_BASE_URL']?.trim() || 'https://apibay.org',
+    },
     tmdb: {
         accessToken: process.env['TMDB_ACCESS_TOKEN']?.trim() || '',
     },

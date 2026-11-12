@@ -15,6 +15,7 @@ import { injectIsDesktop } from '../../utils/breakpoint';
 import { formatBytes } from '../../utils/format-bytes';
 import { extractHttpError } from '../../utils/http-error';
 import { parseQuery } from '../../utils/query-params';
+import { trackerName } from '@rm/shared/tracker.models';
 import type { WatchlistItem } from '@rm/shared/watchlist.models';
 
 const DATE_FORMAT = 'yyyy-MM-dd HH:mm';
@@ -49,6 +50,7 @@ export class WatchlistComponent implements OnInit {
     protected busy = signal(false);
     protected dateFormat = DATE_FORMAT;
     protected formatBytes = formatBytes;
+    protected trackerName = trackerName;
     protected items = computed(() =>
         [...this.watchlist.items()].sort((a, b) => Number(b.newReleases.length > 0) - Number(a.newReleases.length > 0)),
     );
@@ -75,15 +77,13 @@ export class WatchlistComponent implements OnInit {
         if (this.checking()) return;
         this.checking.set(true);
         try {
-            await this.watchlist.checkNow();
+            const failures = await this.watchlist.checkNow();
             const count = this.watchlist.unreadCount();
-            this.snackBar.open(
-                count ? `${count} new ${count === 1 ? 'release' : 'releases'}` : 'No new releases',
-                'OK',
-                {
-                    duration: 3000,
-                },
-            );
+            const found = count ? `${count} new ${count === 1 ? 'release' : 'releases'}` : 'No new releases';
+            const failed = failures.map((failure) => trackerName(failure.tracker)).join(', ');
+            this.snackBar.open(failed ? `${found} · ${failed} could not be checked` : found, 'OK', {
+                duration: failed ? 6000 : 3000,
+            });
         } catch (e: unknown) {
             this.snackBar.open(extractHttpError(e, 'Failed to check for new releases'), 'OK', { duration: 5000 });
         } finally {
