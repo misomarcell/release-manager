@@ -26,5 +26,6 @@ export class ListDetailComponent {
 
     scrollListToTop(): void {
         this.list().nativeElement.scrollTo({ top: 0 });
+        window.scrollTo({ top: 0 });
     }
 }

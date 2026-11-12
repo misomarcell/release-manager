@@ -1,8 +1,8 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { timer } from 'rxjs';
+import { distinctUntilChanged, filter, map, skip, timer } from 'rxjs';
 import { AccountMenuComponent } from '../account-menu/account-menu';
 import { WatchlistService } from '../../services/watchlist.service';
 
@@ -32,6 +32,18 @@ export class ShellComponent implements OnInit {
     private destroyRef = inject(DestroyRef);
     protected watchlist = inject(WatchlistService);
     protected navItems = NAV_ITEMS;
+
+    constructor() {
+        inject(Router)
+            .events.pipe(
+                filter((event) => event instanceof NavigationEnd),
+                map((event) => event.urlAfterRedirects.split('?')[0]),
+                distinctUntilChanged(),
+                skip(1),
+                takeUntilDestroyed(),
+            )
+            .subscribe(() => window.scrollTo({ top: 0 }));
+    }
 
     ngOnInit(): void {
         timer(0, WATCHLIST_REFRESH_MS)
