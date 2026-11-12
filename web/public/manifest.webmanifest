@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "Release Manager",
   "short_name": "Releases",
   "description": "Browse and download movie & TV show releases",

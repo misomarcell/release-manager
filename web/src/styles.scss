@@ -510,3 +510,9 @@ mat-icon.filled {
         animation: none;
     }
 }
+
+@media (max-width: 959.98px) {
+    html:has(app-list-detail.open) {
+        overflow: hidden;
+    }
+}
