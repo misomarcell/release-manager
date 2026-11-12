@@ -149,11 +149,6 @@ function scheduleSync({ service, label, enabled, cronSchedule, sync }: Scheduled
 }
 
 function scheduleWatchlistCheck(): void {
-    if (!config.ncore.username || !config.ncore.cookiePass) {
-        logger.info('nCore not configured - watchlist check disabled');
-        return;
-    }
-
     cron.schedule(config.watchlist.cronSchedule, () => {
         watchlistService.checkAll().catch((err: unknown) =>
             logger.error('Watchlist scheduled check failed', {

@@ -16,6 +16,7 @@ import {
     WATCHLIST_MAX_KEYWORDS,
     WATCHLIST_MAX_KEYWORD_LENGTH,
     type WatchlistAddRequest,
+    type WatchlistCheckResponse,
     type WatchlistResponse,
     type WatchlistUpdateRequest,
 } from 'shared/watchlist.models';
@@ -73,7 +74,7 @@ router.post('/check', async (req: Request, res: Response) => {
     const { userId } = (req as AuthenticatedRequest).user;
 
     try {
-        res.json({ items: await watchlistService.checkUser(userId) } satisfies WatchlistResponse);
+        res.json((await watchlistService.checkUser(userId)) satisfies WatchlistCheckResponse);
     } catch (err) {
         sendError(res, 'Watchlist: check error', 'Failed to check watchlist', err);
     }

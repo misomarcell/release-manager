@@ -1,5 +1,6 @@
-import { query } from '../db/connection.js';
+import { query, withTransaction } from '../db/connection.js';
 import type { MediaType } from 'shared/tmdb.models';
+import type { TrackerId } from 'shared/tracker.models';
 import type { WatchlistItem, WatchlistRelease } from 'shared/watchlist.models';
 
 interface WatchlistRow {
@@ -28,7 +29,13 @@ interface NewWatchlistItem {
     keywords: string[];
 }
 
+interface KnownReleases {
+    keys: Set<string>;
+    baselined: Set<TrackerId>;
+}
+
 interface FoundRelease {
+    tracker: TrackerId;
     torrentId: string;
     releaseName: string;
     detailsUrl: string;
@@ -45,12 +52,13 @@ const ITEM_SELECT = `
              COALESCE(
                jsonb_agg(
                  jsonb_build_object(
+                   'tracker', tracker,
                    'torrentId', torrent_id,
                    'releaseName', release_name,
                    'detailsUrl', details_url,
                    'size', size,
                    'foundAt', found_at
-                 ) ORDER BY found_at DESC, torrent_id DESC
+                 ) ORDER BY found_at DESC, tracker, torrent_id DESC
                ) FILTER (WHERE NOT seen),
                '[]'::jsonb
              ) AS new_releases
@@ -113,30 +121,52 @@ export async function markWatchlistItemRead(userId: number, id: number): Promise
     return (result.rowCount ?? 0) > 0;
 }
 
-export async function getKnownTorrentIds(itemId: number): Promise<Set<string>> {
-    const result = await query<{ torrent_id: string }>(`SELECT torrent_id FROM watchlist_releases WHERE item_id = $1`, [
-        itemId,
+export async function getKnownReleases(itemId: number): Promise<KnownReleases> {
+    const [releases, checks] = await Promise.all([
+        query<{ tracker: TrackerId; torrent_id: string }>(
+            `SELECT tracker, torrent_id FROM watchlist_releases WHERE item_id = $1`,
+            [itemId],
+        ),
+        query<{ tracker: TrackerId }>(`SELECT tracker FROM watchlist_tracker_checks WHERE item_id = $1`, [itemId]),
     ]);
-    return new Set(result.rows.map((row) => row.torrent_id));
+    return {
+        keys: new Set(releases.rows.map((row) => releaseKey(row.tracker, row.torrent_id))),
+        baselined: new Set(checks.rows.map((row) => row.tracker)),
+    };
 }
 
-export async function saveCheckResult(itemId: number, releases: FoundRelease[]): Promise<void> {
-    if (releases.length > 0) {
-        await query(
-            `INSERT INTO watchlist_releases (item_id, torrent_id, release_name, details_url, size, seen)
-       SELECT $1::int, * FROM unnest($2::text[], $3::text[], $4::text[], $5::bigint[], $6::boolean[])
-       ON CONFLICT (item_id, torrent_id) DO NOTHING`,
-            [
-                itemId,
-                releases.map((r) => r.torrentId),
-                releases.map((r) => r.releaseName),
-                releases.map((r) => r.detailsUrl),
-                releases.map((r) => Math.round(r.size)),
-                releases.map((r) => r.seen),
-            ],
+export function releaseKey(tracker: TrackerId, torrentId: string): string {
+    return `${tracker}:${torrentId}`;
+}
+
+export async function saveCheckResult(itemId: number, checked: TrackerId[], releases: FoundRelease[]): Promise<void> {
+    if (checked.length === 0) return;
+
+    await withTransaction(async (client) => {
+        if (releases.length > 0) {
+            await client.query(
+                `INSERT INTO watchlist_releases (item_id, tracker, torrent_id, release_name, details_url, size, seen)
+                 SELECT $1::int, * FROM unnest($2::text[], $3::text[], $4::text[], $5::text[], $6::bigint[], $7::boolean[])
+                 ON CONFLICT (item_id, tracker, torrent_id) DO NOTHING`,
+                [
+                    itemId,
+                    releases.map((r) => r.tracker),
+                    releases.map((r) => r.torrentId),
+                    releases.map((r) => r.releaseName),
+                    releases.map((r) => r.detailsUrl),
+                    releases.map((r) => Math.round(r.size)),
+                    releases.map((r) => r.seen),
+                ],
+            );
+        }
+        await client.query(
+            `INSERT INTO watchlist_tracker_checks (item_id, tracker)
+             SELECT $1::int, * FROM unnest($2::text[])
+             ON CONFLICT (item_id, tracker) DO UPDATE SET checked_at = NOW()`,
+            [itemId, checked],
         );
-    }
-    await query(`UPDATE watchlist_items SET last_checked_at = NOW() WHERE id = $1`, [itemId]);
+        await client.query(`UPDATE watchlist_items SET last_checked_at = NOW() WHERE id = $1`, [itemId]);
+    });
 }
 
 function toItem(row: WatchlistRow): WatchlistItem {

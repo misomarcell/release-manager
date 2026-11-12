@@ -18,6 +18,29 @@
     white-space: nowrap;
 }
 
+.failures {
+    margin-bottom: 8px;
+}
+
+.pending {
+    display: grid;
+    gap: 2px;
+
+    .skeleton {
+        height: 44px;
+    }
+
+    .hint {
+        margin-top: 6px;
+        text-align: center;
+    }
+}
+
+.sort {
+    padding-left: 0;
+    border-left: 0;
+}
+
 .section-head {
     align-items: center;
     min-height: 40px;

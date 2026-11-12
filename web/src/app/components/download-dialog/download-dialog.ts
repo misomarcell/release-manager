@@ -11,10 +11,10 @@ import { extractHttpError } from '../../utils/http-error';
 import { formatBytes } from '../../utils/format-bytes';
 import { describeRelease } from '../../utils/release-view';
 import { DOWNLOAD_CATEGORIES, type DownloadCategory } from '@rm/shared/constants';
-import type { NcoreResult, TvInfo } from '@rm/shared/ncore.models';
+import type { TrackerRelease, TvInfo } from '@rm/shared/tracker.models';
 
 export interface DownloadDialogData {
-    release: NcoreResult;
+    release: TrackerRelease;
     isTV: boolean;
     suggestedPath: string;
     category: DownloadCategory;
@@ -64,7 +64,8 @@ export class DownloadDialogComponent {
         this.error.set('');
         try {
             const result = await this.search.download({
-                downloadUrl: this.data.release.download_url,
+                tracker: this.data.release.tracker,
+                downloadRef: this.data.release.downloadRef,
                 savePath: this.savePath,
                 category: this.category(),
             });

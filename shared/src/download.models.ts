@@ -1,7 +1,9 @@
 import type { DownloadCategory } from './constants.js';
+import type { TrackerId } from './tracker.models.js';
 
 export interface DownloadRequest {
-    downloadUrl: string;
+    tracker: TrackerId;
+    downloadRef: string;
     savePath: string;
     category: DownloadCategory;
 }

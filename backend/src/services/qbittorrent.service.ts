@@ -31,14 +31,22 @@ class QbittorrentService {
     async addTorrent(torrentData: ArrayBuffer, savePath: string, category: DownloadCategory): Promise<void> {
         const formData = new FormData();
         formData.append('torrents', new Blob([torrentData], { type: 'application/x-bittorrent' }), 'release.torrent');
+
+        logger.info('[qBittorrent] Adding new torrent', { savePath, category, size: torrentData.byteLength });
+        await this.add(formData, savePath, category);
+    }
+
+    async addMagnet(magnetUri: string, savePath: string, category: DownloadCategory): Promise<void> {
+        const formData = new FormData();
+        formData.append('urls', magnetUri);
+
+        logger.info('[qBittorrent] Adding new magnet link', { savePath, category });
+        await this.add(formData, savePath, category);
+    }
+
+    private async add(formData: FormData, savePath: string, category: DownloadCategory): Promise<void> {
         formData.append('savepath', savePath);
         formData.append('category', category);
-
-        logger.info('[qBittorrent] Adding new torrent', {
-            savePath,
-            category,
-            size: torrentData.byteLength,
-        });
 
         const response = await this.qbtFetch('/api/v2/torrents/add', {
             method: 'POST',
@@ -48,7 +56,7 @@ class QbittorrentService {
         const responseText = await response.text();
         logger.info('[qBittorrent] Torrent add response', { status: response.status, responseText });
 
-        if (!response.ok) {
+        if (!response.ok || responseText.trim() === 'Fails.') {
             throw new Error(`qBittorrent add failed: ${response.status} ${responseText}`);
         }
     }

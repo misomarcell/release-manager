@@ -1,28 +1,35 @@
 import { Component, computed, inject, input, resource, viewChild } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { FilterSearchComponent, FilterSearchSubmit, SearchFilterDefinition } from '../filter-search/filter-search';
+import { FailureNoticeComponent } from '../failure-notice/failure-notice';
 import { ListDetailComponent } from '../list-detail/list-detail';
 import { ReleaseListComponent } from '../release-list/release-list';
 import { RowSkeletonsComponent } from '../row-skeletons/row-skeletons';
 import { TitleDetailComponent, type StatusCell } from '../title-detail/title-detail';
 import { TitleRowComponent } from '../title-row/title-row';
-import { SearchService } from '../../services/search.service';
+import { SearchService, type TitleReleasesOptions } from '../../services/search.service';
 import { WatchlistService } from '../../services/watchlist.service';
 import { injectIsDesktop } from '../../utils/breakpoint';
+import { trackerFailureNotices } from '../../utils/failure-notice';
 import { extractHttpError } from '../../utils/http-error';
 import { parsePage, parseQuery } from '../../utils/query-params';
 import { releaseResolutions } from '../../utils/release-view';
-import { cleanSearchTerm } from '../../utils/search-term';
-import { TRACKERS, type TrackerId } from '@rm/shared/tracker.models';
-import type { NcoreCategoryKey, NcoreResult } from '@rm/shared/ncore.models';
+import {
+    TRACKERS,
+    sortReleases,
+    trackerName,
+    type ReleaseCategory,
+    type ReleaseSort,
+    type TitleReleases,
+    type TrackerId,
+} from '@rm/shared/tracker.models';
 
 const PAGE_SIZE = 100;
-const VALID_CATEGORIES: NcoreCategoryKey[] = ['all', 'movies', 'tv'];
-const HEADINGS: Record<NcoreCategoryKey, string> = {
+const VALID_CATEGORIES: ReleaseCategory[] = ['all', 'movies', 'tv'];
+const HEADINGS: Record<ReleaseCategory, string> = {
     all: 'Top releases',
     movies: 'Top movies',
     tv: 'Top TV shows',
@@ -48,12 +55,12 @@ const RELEASE_SEARCH_FILTERS: SearchFilterDefinition[] = [
     },
 ];
 
-interface TitleGroup {
-    key: string;
-    title: string;
-    metadata: NcoreResult['metadata'];
-    imdbId: string;
-    releases: NcoreResult[];
+const RELEASE_SORTS: { id: ReleaseSort; label: string; param: string | null }[] = [
+    { id: 'seeders', label: 'Most seeders', param: null },
+    { id: 'size', label: 'Largest size', param: 'size' },
+];
+
+interface TitleGroup extends TitleReleases {
     resolutions: string[];
     topSeeders: number;
 }
@@ -62,10 +69,10 @@ interface TitleGroup {
     selector: 'app-releases',
     imports: [
         RouterLink,
-        MatButtonModule,
         MatIconModule,
         MatMenuModule,
         MatPaginatorModule,
+        FailureNoticeComponent,
         FilterSearchComponent,
         ListDetailComponent,
         ReleaseListComponent,
@@ -85,33 +92,50 @@ export class ReleasesComponent {
     protected watchlist = inject(WatchlistService);
 
     q = input('', { transform: parseQuery });
-    category = input<NcoreCategoryKey, unknown>('all', { transform: parseCategory });
+    category = input<ReleaseCategory, unknown>('all', { transform: parseCategory });
     uhd = input(false, { transform: (value: string | undefined) => value === 'true' });
     tracker = input<TrackerId | null, unknown>(null, { transform: parseTracker });
     page = input(1, { transform: parsePage });
+    sort = input<ReleaseSort, unknown>('seeders', { transform: parseSort });
     open = input('', { transform: parseQuery });
 
     protected releaseFilters = RELEASE_SEARCH_FILTERS;
     protected trackers = TRACKERS;
     protected pageSize = PAGE_SIZE;
-    protected searchFilterValues = computed(() => ({ category: this.category(), uhdOnly: this.uhd() }));
-    protected trackerLabel = computed(
-        () => TRACKERS.find((tracker) => tracker.id === this.tracker())?.name ?? 'All trackers',
+    protected sorts = RELEASE_SORTS;
+    protected currentSort = computed(
+        () => RELEASE_SORTS.find((option) => option.id === this.sort()) ?? RELEASE_SORTS[0],
     );
-
-    private searchResource = resource({
-        params: () => ({ query: this.q(), category: this.category(), uhd: this.uhd(), page: this.page() }),
-        loader: ({ params }) => this.search.search({ ...params, perPage: PAGE_SIZE, uhd: !params.query && params.uhd }),
+    protected searchFilterValues = computed(() => ({ category: this.category(), uhdOnly: this.uhd() }));
+    protected trackerLabel = computed(() => {
+        const tracker = this.tracker();
+        return tracker ? trackerName(tracker) : 'All trackers';
     });
+
+    private searchParams = computed(() => {
+        const tracker = this.tracker();
+        const query = this.q();
+        return {
+            query,
+            category: this.category(),
+            uhd: !query && this.uhd(),
+            page: this.page(),
+            trackers: tracker ? [tracker] : [],
+        };
+    });
+    private searchResource = resource({
+        params: () => this.searchParams(),
+        loader: ({ params }) => this.search.search(params),
+    });
+    private response = computed(() => (this.searchResource.hasValue() ? this.searchResource.value() : null));
 
     protected loading = this.searchResource.isLoading;
     protected error = computed(() => {
         const error = this.searchResource.error();
         return error ? extractHttpError(error, 'Search failed') : null;
     });
-    protected totalResults = computed(() =>
-        this.searchResource.hasValue() ? this.searchResource.value().totalResults : 0,
-    );
+    protected failures = computed(() => trackerFailureNotices(this.response()?.failures ?? []));
+    protected totalResults = computed(() => this.response()?.totalResults ?? 0);
     protected pageCount = computed(() => Math.max(1, Math.ceil(this.totalResults() / PAGE_SIZE)));
 
     protected heading = computed(() => {
@@ -119,43 +143,67 @@ export class ReleasesComponent {
         if (query) return `Results for “${query}”`;
         return HEADINGS[this.category()];
     });
-
-    protected groups = computed(() => {
-        const tracker = this.tracker();
-        const results = this.searchResource.hasValue() ? this.searchResource.value().results : [];
-        const byKey = new Map<string, NcoreResult[]>();
-        for (const result of results) {
-            if (tracker && result.tracker !== tracker) continue;
-            const key = result.imdb_id || `${result.metadata_lookup.title}::${result.metadata_lookup.year}`;
-            byKey.set(key, [...(byKey.get(key) ?? []), result]);
-        }
-        return [...byKey].map(([key, releases]): TitleGroup => {
-            const metadata = releases.find((release) => release.metadata)?.metadata ?? null;
-            return {
-                key,
-                title: metadata?.title || releases[0].metadata_lookup.title,
-                metadata,
-                imdbId: releases[0].imdb_id,
-                releases,
-                resolutions: releaseResolutions(releases),
-                topSeeders: Math.max(...releases.map((release) => release.seeders)),
-            };
-        });
+    protected emptyMessage = computed(() => {
+        const hasTopList = this.q() || this.response()?.trackers.length;
+        return hasTopList
+            ? 'No results found.'
+            : `${this.trackerLabel()} has no top list. Search for a title to see its releases.`;
     });
+
+    protected groups = computed(() =>
+        (this.response()?.titles ?? []).map((title): TitleGroup => ({
+            ...title,
+            resolutions: releaseResolutions(title.releases),
+            topSeeders: Math.max(...title.releases.map((release) => release.seeders)),
+        })),
+    );
 
     protected selected = computed(() => {
         const groups = this.groups();
         return groups.find((group) => group.key === this.open()) ?? (this.isDesktop() ? groups[0] : undefined);
     });
 
+    // The list only holds the releases of its own page, so an opened title is looked up on every tracker.
+    private lookupParams = computed<TitleReleasesOptions | undefined>(() => {
+        const title = this.selected();
+        if (!title || (!title.imdbId && !title.title)) return undefined;
+
+        const tracker = this.tracker();
+        const { imdbId, title: name, year, mediaType } = title;
+        return { imdbId, title: name, year, mediaType, trackers: tracker ? [tracker] : [] };
+    });
+    private lookupResource = resource({
+        params: () => this.lookupParams(),
+        loader: ({ params }) => this.search.titleReleases(params),
+    });
+
+    protected lookupBusy = this.lookupResource.isLoading;
+    protected lookupFailures = computed(() => {
+        const error = this.lookupResource.error();
+        if (error) {
+            return [{ heading: 'Loading all releases failed', detail: extractHttpError(error, 'Lookup failed') }];
+        }
+        return trackerFailureNotices(this.lookupResource.hasValue() ? this.lookupResource.value().failures : []);
+    });
+
+    protected shownReleases = computed(() => {
+        const listed = this.selected()?.releases ?? [];
+        const found = this.lookupResource.hasValue() ? this.lookupResource.value().releases : [];
+        const unique = new Map([...listed, ...found].map((release) => [release.tracker + release.torrentId, release]));
+        return sortReleases([...unique.values()], this.sort());
+    });
+
     protected trackerStatus = computed<StatusCell | null>(() => {
-        const group = this.selected();
-        if (!group) return null;
-        const count = group.releases.length;
-        const trackerCount = new Set(group.releases.map((release) => release.tracker)).size;
+        if (!this.selected()) return null;
+        const releases = this.shownReleases();
+        const count = releases.length;
+        const trackerCount = new Set(releases.map((release) => release.tracker)).size;
         return {
             value: `${count} ${count === 1 ? 'release' : 'releases'}`,
-            detail: [`on ${trackerCount} ${trackerCount === 1 ? 'tracker' : 'trackers'}`, group.resolutions.join(', ')]
+            detail: [
+                `on ${trackerCount} ${trackerCount === 1 ? 'tracker' : 'trackers'}`,
+                releaseResolutions(releases).join(', '),
+            ]
                 .filter(Boolean)
                 .join(' · '),
         };
@@ -165,12 +213,6 @@ export class ReleasesComponent {
         const metadata = this.selected()?.metadata;
         if (!metadata) return { value: 'Unknown title', detail: 'No metadata found for this release' };
         return metadata.inJellyfinLibrary ? { value: 'In library', tone: 'yes' } : { value: 'Not in the library' };
-    });
-
-    protected titleQuery = computed(() => {
-        const group = this.selected();
-        const query = group ? cleanSearchTerm(group.title) : '';
-        return query && query.toLocaleLowerCase() !== cleanSearchTerm(this.q()).toLocaleLowerCase() ? query : null;
     });
 
     protected isFollowing(group: TitleGroup): boolean {
@@ -186,6 +228,7 @@ export class ReleasesComponent {
                 category: category !== 'all' ? category : null,
                 uhd: params.filters['uhdOnly'] === true ? 'true' : null,
                 tracker: this.tracker(),
+                sort: this.currentSort().param,
             },
         });
     }
@@ -200,8 +243,12 @@ export class ReleasesComponent {
     }
 }
 
-function parseCategory(value: unknown): NcoreCategoryKey {
+function parseCategory(value: unknown): ReleaseCategory {
     return VALID_CATEGORIES.find((category) => category === value) ?? 'all';
+}
+
+function parseSort(value: unknown): ReleaseSort {
+    return value === 'size' ? 'size' : 'seeders';
 }
 
 function parseTracker(value: unknown): TrackerId | null {

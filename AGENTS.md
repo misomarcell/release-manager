@@ -7,7 +7,7 @@
   - `backend/`: Express API server with PostgreSQL
   - `shared/`: shared TypeScript models used by both app and backend
 - Frontend serves Angular SSR and proxies `/api/*` requests to the backend.
-- Backend handles nCore search, TMDB enrichment and title search, caching, Passkey authentication, qBittorrent integration, Jellyfin library sync, and the per-user release watchlist.
+- Backend handles tracker search (nCore and The Pirate Bay, as plugins behind one tracker service), TMDB enrichment and title search, caching, Passkey authentication, qBittorrent integration, Jellyfin library sync, and the per-user release watchlist.
 - PostgreSQL stores metadata cache, user credentials, sessions, and watchlist items with their known releases.
 
 ## Workflow
@@ -21,7 +21,7 @@
 - No need for explicit readonly keyword in Angular components, leave private fields as simply private.
 - Always separate Angular component files into `.ts`, `.html`, and `.scss` — never use inline templates or styles.
 - List pages (Releases, Library, Watchlist, Discover) keep search, filters, `page` and the opened title (`open`) in URL query params: read them as inputs via `withComponentInputBinding()` and change them with `router.navigate` / `routerLink` so the browser back button steps through pages, filters and the title page.
-- nCore is the only tracker today, but more are planned: UI copy says "trackers", and every release carries a `tracker` id (`shared/src/tracker.models.ts`).
+- Trackers are plugins (see "Trackers" below): UI copy says "trackers", every release carries a `tracker` id, and nothing outside a tracker's own service may depend on that tracker.
 
 ## Frontend Design System
 
@@ -34,22 +34,22 @@
 - Zoom is locked on purpose: `touch-action: pan-x pan-y` on `html` (no pinch or double-tap zoom) and `maximum-scale=1` in the viewport meta; keep text inputs at 16px or more so iOS does not zoom on focus.
 - Every list page is `app-list-detail` (list column + title page; a full-screen layer on phones, a side pane on desktop) filled with `app-title-row` rows and one `app-title-detail`. Page-specific content is projected into the detail; the single filled button goes into its `[primary]` slot.
 - `app-filter-search` is the 56px search bar with visible filter chips; `app-page-title` is the title bar for pages without search.
+- `app-failure-notice` is the generic notice for a service or API call that failed without breaking the page: give it `FailureNotice[]` (`utils/failure-notice.ts`, heading + detail) and it offers "Reload", which reloads the page. There is no per-call retry logic; map a new kind of failure to `FailureNotice` next to `trackerFailureNotices()`.
 - Dialogs that act on a title (download, watchlist, NFO) open with `sheetConfig()` from `utils/sheet.ts`: a bottom sheet on phones, a centred dialog otherwise.
 - Route changes run through `withViewTransitions`; `utils/view-transitions.ts` skips the transition when only filters or the page change.
 
 ## Shared Models
 
 - `shared/src/` contains shared TypeScript models and constants used by both frontend and backend.
-- `shared/src/ncore.models.ts` — nCore-specific types: `NcoreCategoryKey`, `TvType`, `TvInfo`, `NcoreResult` (includes `tracker`), `NcoreSearchResponse`.
-- `shared/src/tracker.models.ts` — `TRACKERS`, `TrackerId`, `trackerName()`.
+- `shared/src/tracker.models.ts` — `TRACKERS` (id, name, `nfo` capability), `TrackerId`, `trackerName()`, `trackerHasNfo()`, `ReleaseCategory`, `TvInfo`, `TrackerRelease`, `TitleReleases` (releases grouped under one title), `TrackerFailure`, `ReleaseSearchResponse`, `TitleReleasesResponse`.
 - `shared/src/release-tags.ts` — `parseReleaseTags()`: resolution, HDR, source and audio tags parsed from a release name.
 - `shared/src/tmdb.models.ts` — TMDB metadata types: `MetadataLookup`, `MovieMetadata` (includes `inJellyfinLibrary`), `TitleSummary`, `TitleSearchResponse`.
-- `shared/src/download.models.ts` — Download types: `DownloadRequest`, `DownloadResponse`.
+- `shared/src/download.models.ts` — Download types: `DownloadRequest` (`tracker` + `downloadRef`), `DownloadResponse`.
 - `shared/src/user.models.ts` — User types: `UserInfo`.
 - `shared/src/recommendations.models.ts` — Recommendation types: `Recommendation`, `FeedbackValue`, `RecommendationFeedbackRequest`.
 - `shared/src/constants.ts` — Shared constants: `TMDB_GENRE_MAP`, `DOWNLOAD_CATEGORIES`, `DownloadCategory`.
 - `shared/src/jellyfin.models.ts` — Jellyfin library types: `MediaStream`, `MediaInfo`, `SeasonInfo`, `LibraryItem` (includes per-season episode counts for TV), `LibraryResponse`.
-- `shared/src/watchlist.models.ts` — Watchlist types: `WatchlistItem`, `WatchlistRelease`, `WatchlistAddRequest`, `WatchlistUpdateRequest`, `WatchlistResponse`, keyword limits.
+- `shared/src/watchlist.models.ts` — Watchlist types: `WatchlistItem`, `WatchlistRelease`, `WatchlistAddRequest`, `WatchlistUpdateRequest`, `WatchlistResponse`, `WatchlistCheckResponse` (items + tracker failures), keyword limits.
 - `shared/src/log.models.ts` — Logging types: `LogLevel`, `LogEntry`, `LogsResponse`.
 - Both frontend and backend import from `shared` — never duplicate these types.
 
@@ -66,7 +66,7 @@ backend/src/
   middleware/auth.ts     # Session authentication middleware
   routes/
     auth.routes.ts      # Passkey registration/login endpoints
-    search.routes.ts    # nCore search + TMDB enrichment, title metadata, TMDB title search, download
+    search.routes.ts    # Release search, per-title release lookup, title metadata, TMDB title search, NFO, download
     version.routes.ts   # App version endpoint (latest GitHub commit)
     recommendations.routes.ts # AI-powered recommendations + feedback
     admin.routes.ts     # Admin actions incl. Jellyfin sync + qBittorrent test
@@ -74,8 +74,11 @@ backend/src/
   services/
     auth.service.ts     # WebAuthn/Passkey logic
     github.service.ts   # GitHub API integration (latest commit info)
-    ncore.service.ts    # nCore API: search (by name or IMDb id), NFO, torrent file download
-    watchlist.service.ts # Watchlist release check: nCore lookup, keyword filter, new release detection
+    tracker-provider.ts # Tracker plugin contract: `TrackerProvider`, query types, `TorrentSource`
+    tracker.service.ts  # Tracker registry + everything cross-tracker: combined search, title grouping, failures
+    ncore.service.ts    # nCore plugin: search, top list, title lookup, NFO, torrent file download
+    apibay.service.ts   # The Pirate Bay plugin (apibay.org): search, title lookup, magnet links, throttling
+    watchlist.service.ts # Watchlist release check: title lookup on every tracker, keyword filter, new release detection
     tmdb.service.ts     # TMDB API + PostgreSQL caching; enriches all results with inJellyfinLibrary
     qbittorrent.service.ts # qBittorrent Web API integration
     jellyfin.service.ts # Jellyfin API: library sync (incl. per-season episode counts) + connection test
@@ -87,12 +90,12 @@ backend/src/
     user.repository.ts  # User/credential/session database operations
     recommendations.repository.ts # Feedback and recommendation cache DB operations
     log.repository.ts           # Log query database operations
-    watchlist.repository.ts     # Watchlist items + known/unseen release DB operations
+    watchlist.repository.ts     # Watchlist items, known/unseen releases and baselines per tracker
     jellyfin.repository.ts      # Jellyfin library DB operations + in-memory lookup cache + owned titles for recs
   utils/
     coerce.ts           # Type coercion helpers
     concurrent.ts       # Concurrent promise mapper
-    release-parser.ts   # Release name + TV info parsing
+    release-parser.ts   # Release name + TV info parsing, metadata lookup building, title matching
     logger.ts           # Structured logger — writes to console + DB `logs` table
 ```
 
@@ -102,21 +105,38 @@ backend/src/
 - `requireUserVerification: false` in both registration and authentication to support desktop password managers.
 - Single-user app — no rate limiting or challenge expiry needed.
 
+## Trackers
+
+- `app -> tracker.service -> ncore.service | apibay.service | ...`. Routes and other services only talk to `trackerService`; they never import a tracker's own service.
+- A tracker is one service implementing `TrackerProvider` (`services/tracker-provider.ts`): `search`, `browseTop`, `findTitle` and `getTorrent` are required, `fetchNfo` is optional. A tracker without a top list returns an empty page from `browseTop`.
+- `REGISTRY` in `tracker.service.ts` is `{ primaryTracker, secondaryTrackers }`. The primary tracker (nCore) supplies the Releases top list and its releases are listed first; secondary trackers are only asked for text searches, title lookups and watchlist checks.
+- To add, remove or swap a tracker: add or delete its service file, its place in `REGISTRY` and its entry in `TRACKERS` (`shared/src/tracker.models.ts`, including the `nfo` flag the UI reads). `TRACKERS` is in display order and must list the primary tracker first.
+- A tracker service holds only that tracker's business logic (URLs, auth, categories, result mapping, rate limits). Anything that spans trackers (picking trackers, merging, ordering, TMDB enrichment, grouping releases into titles, failure collection) lives in `tracker.service.ts`.
+- Ordering is shared code: `sortReleases()` (tracker order, then most seeders or largest size; the Releases page keeps the choice in the `sort` query param) and `sortTitles()` (titles the primary tracker has first, then most seeded) in `shared/src/tracker.models.ts`.
+- A search with text asks every selected tracker and merges the results; releases are grouped into titles by TMDB id, so titles that exist on only one tracker still get a row.
+- A list only holds the releases of its own page, so opening a title on the Releases page calls `GET /api/search/releases` (`findTitle` on every selected tracker) and shows the full release list, with skeleton rows while it loads. `findTitle` goes by IMDb id; without one nCore falls back to a name search narrowed to the same parsed title and year, while The Pirate Bay returns nothing.
+- A failing tracker never fails the request: whatever a plugin throws becomes an entry in the response's `failures` (tracker + message), which `trackerFailureNotices()` turns into notices for `app-failure-notice`.
+- Plugins return results in any order; `tracker.service.ts` does all sorting.
+- The Pirate Bay torrents with 0 seeders are dropped.
+- The Pirate Bay only contributes releases that carry an IMDb id: its text search drops uploads without one and its title lookup is strictly by id, so its results can always be tied to a title.
+- apibay has no paging (one page, at most 100 results), no top list, no NFO and no `.torrent` files, and it rate limits quickly. `apibay.service.ts` therefore runs requests one at a time with a pause, caches results for 10 minutes and, after a 429, fails fast until the cooldown has passed.
+- `TrackerRelease.downloadRef` is an opaque value only its tracker understands (nCore: the download URL, The Pirate Bay: the info hash).
+
 ## Download Flow
 
 1. Frontend calculates a suggested save path and lets the user edit it.
-2. Frontend sends `{ downloadUrl, savePath, category }` to `POST /api/download`.
-3. Backend validates `category` against `DOWNLOAD_CATEGORIES` from shared models.
-4. `ncore.service.downloadTorrentFile(downloadUrl)` fetches the `.torrent` file using nCore cookies, with hostname validation against `config.ncore.baseUrl`.
-5. `qbittorrent.service.addTorrent(torrentBuffer, savePath, category)` uploads the torrent to qBittorrent.
+2. Frontend sends `{ tracker, downloadRef, savePath, category }` to `POST /api/search/download`.
+3. Backend validates `tracker` against `TRACKERS` and `category` against `DOWNLOAD_CATEGORIES` from shared models.
+4. `trackerService.getTorrent(tracker, downloadRef)` returns a `TorrentSource`: nCore fetches the `.torrent` file using its cookies (with hostname validation against `config.ncore.baseUrl`), The Pirate Bay builds a magnet link from the info hash.
+5. `qbittorrent.service` uploads it with `addTorrent(torrentBuffer, savePath, category)` or `addMagnet(magnetUri, savePath, category)`.
 6. nCore cookies are built via a private `getCookieHeader()` helper in `ncore.service.ts`.
 
 ## Watchlist
 
 - Any title with TMDB metadata can be followed from its title page or from a Discover search row (`WatchlistSheetService` → `app-watchlist-dialog`); items are stored per user in `watchlist_items`.
 - Discover's "Search all titles" (`GET /api/search/titles`, TMDB) lets a title be followed before any release exists.
-- `watchlist_releases` keeps every known nCore torrent id per item. The first successful check is the baseline (all `seen`); later checks insert unknown torrent ids as unseen.
-- Releases are looked up through the nCore JSON search by IMDb id (`miben=imdb`, newest first), falling back to a title search filtered by parsed title/year when no IMDb id is known.
+- `watchlist_releases` keeps every known torrent id per item and tracker. `watchlist_tracker_checks` records which trackers have been checked for an item: a tracker's first successful check is its baseline (all `seen`), later checks insert unknown torrent ids as unseen. A tracker that fails a check is simply baselined on its next successful one.
+- Releases are looked up on every tracker through `trackerService.findTitle()`: by IMDb id, with nCore falling back to a title search filtered by parsed title/year when no IMDb id is known.
 - Optional per-item keywords (`mat-chip-grid` in the dialog): a new release only counts when its name contains at least one keyword (case-insensitive). Non-matching releases are stored as already seen.
 - The unseen count is shown in amber on the Watchlist nav item, the watchlist row and the title page status; "Mark as read" resets it for an item.
 - Checks run on `WATCHLIST_CRON` and on demand via "Check now" (`POST /api/watchlist/check`).
@@ -139,6 +159,7 @@ backend/src/
 | `NCORE_BASE_URL`       | nCore base URL (default: `https://ncore.pro`)                            |
 | `NCORE_USERNAME`       | nCore account username                                                   |
 | `NCORE_COOKIE_PASS`    | nCore cookie passkey                                                     |
+| `APIBAY_BASE_URL`      | The Pirate Bay API base URL (default: `https://apibay.org`)              |
 | `TMDB_ACCESS_TOKEN`    | TMDB API read access token                                               |
 | `GITHUB_REPO`          | GitHub repo for version check (default: `misomarcell/release-manager`)   |
 | `GITHUB_TOKEN`         | GitHub personal access token                                             |

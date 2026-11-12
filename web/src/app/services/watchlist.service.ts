@@ -1,8 +1,10 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { ApiService } from './api.service';
 import type { MediaType } from '@rm/shared/tmdb.models';
+import type { TrackerFailure } from '@rm/shared/tracker.models';
 import type {
     WatchlistAddRequest,
+    WatchlistCheckResponse,
     WatchlistItem,
     WatchlistResponse,
     WatchlistUpdateRequest,
@@ -37,14 +39,17 @@ export class WatchlistService {
         }
     }
 
-    async checkNow(): Promise<void> {
-        const response = await this.api.post<WatchlistResponse>('/api/watchlist/check');
+    async checkNow(): Promise<TrackerFailure[]> {
+        const response = await this.api.post<WatchlistCheckResponse>('/api/watchlist/check');
         this.items.set(response.items);
+
+        return response.failures;
     }
 
     async add(request: WatchlistAddRequest): Promise<WatchlistItem> {
         const item = await this.api.post<WatchlistItem>('/api/watchlist', request);
         this.items.update((items) => [item, ...items.filter((existing) => existing.id !== item.id)]);
+
         return item;
     }
 
@@ -53,6 +58,7 @@ export class WatchlistService {
             keywords,
         } satisfies WatchlistUpdateRequest);
         this.replace(item);
+
         return item;
     }
 
