@@ -33,7 +33,7 @@ One screen that joins four systems the owner already runs or uses: nCore (source
   - **Library:** browse what is in Jellyfin, including per-season episode counts and media stream details.
   - **Watchlist:** follow a title, optionally with keywords; a daily check flags new nCore releases as unread badges until marked as read.
   - **Recommendations:** trending/top-rated from TMDB and AI-personalized picks, with like/dislike feedback.
-  - **Admin (owner only):** manage users, trigger syncs and connection tests, read logs.
+  - **Admin (owner only):** manage users, change schedules and service connections on the Settings page, trigger syncs, read logs.
 - List pages keep search, filters and page in the URL so the browser back button steps through them.
 
 ## Capabilities and Constraints
@@ -42,7 +42,7 @@ One screen that joins four systems the owner already runs or uses: nCore (source
 - Installed as a PWA (web manifest and service worker are present).
 - UI copy is English. Release names are scene-style strings (long, dotted, unbreakable), and titles or metadata coming from nCore and TMDB can contain Hungarian characters, which must render correctly.
 - Release names, NFO text, user agents and paths are long machine strings that must stay readable on a narrow screen.
-- Roles: regular user and admin. Admin-only pages are Manage Users, Administration and Logs.
+- Roles: regular user and admin. Admin-only pages are Manage Users, Settings, Administration and Logs.
 - AI recommendations are optional and absent when no OpenAI key is configured.
 - **Several trackers.** nCore is the primary tracker (it supplies the top list) and The Pirate Bay is a secondary one; more can be added as plugins. Design and copy must not assume a single source: say "trackers", and let a release name its tracker.
 - **Planned: search all titles.** Search today covers releases and the library only. A search across every title (via TMDB) is wanted so that a title can be followed on the watchlist before any release exists. The scoped release and library searches stay.

@@ -12,15 +12,15 @@ interface VersionInfo {
     commitDate: string;
 }
 
-let cached: { data: VersionInfo; fetchedAt: number } | null = null;
+let cached: { repo: string; data: VersionInfo; fetchedAt: number } | null = null;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export async function fetchLatestCommit(): Promise<VersionInfo> {
-    if (cached && Date.now() - cached.fetchedAt < CACHE_TTL) {
+    const { repo, token } = config.github;
+    if (cached?.repo === repo && Date.now() - cached.fetchedAt < CACHE_TTL) {
         return cached.data;
     }
 
-    const { repo, token } = config.github;
     if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) {
         throw new Error('Invalid GITHUB_REPO format');
     }
@@ -51,6 +51,6 @@ export async function fetchLatestCommit(): Promise<VersionInfo> {
         commitDate: commit.commit.committer.date,
     };
 
-    cached = { data, fetchedAt: Date.now() };
+    cached = { repo, data, fetchedAt: Date.now() };
     return data;
 }

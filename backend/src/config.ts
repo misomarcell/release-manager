@@ -6,6 +6,7 @@ dotenv.config({ path: resolve(import.meta.dirname, '../../.env') });
 export const config = {
     port: parseInt(process.env['PORT'] ?? '3000', 10),
     databaseUrl: process.env['DATABASE_URL'] ?? 'postgres://movieapp:movieapp@localhost:5432/movieapp',
+    settingsEncryptionKey: process.env['SETTINGS_ENCRYPTION_KEY']?.trim() || '',
     ncore: {
         baseUrl: process.env['NCORE_BASE_URL']?.trim() || 'https://ncore.pro',
         username: process.env['NCORE_USERNAME']?.trim() || '',

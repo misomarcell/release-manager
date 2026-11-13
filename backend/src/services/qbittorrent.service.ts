@@ -28,6 +28,14 @@ class QbittorrentService {
     private sessionCookie = '';
     private pendingLogin: Promise<void> | null = null;
 
+    isConfigured(): boolean {
+        return Boolean(config.qbittorrent.url);
+    }
+
+    resetSession(): void {
+        this.sessionCookie = '';
+    }
+
     async addTorrent(torrentData: ArrayBuffer, savePath: string, category: DownloadCategory): Promise<void> {
         const formData = new FormData();
         formData.append('torrents', new Blob([torrentData], { type: 'application/x-bittorrent' }), 'release.torrent');
@@ -258,7 +266,7 @@ class QbittorrentService {
     private getBaseUrl(): string {
         const { url } = config.qbittorrent;
         if (!url) {
-            throw new Error('qBittorrent is not configured. Set QBITTORRENT_URL.');
+            throw new Error('qBittorrent is not configured. Add its URL in Settings.');
         }
 
         return url.replace(/\/+$/, '');

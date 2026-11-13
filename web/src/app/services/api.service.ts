@@ -18,6 +18,10 @@ export class ApiService {
         return firstValueFrom(this.http.post<T>(url, body, { params, withCredentials: true }));
     }
 
+    put<T>(url: string, body: unknown): Promise<T> {
+        return firstValueFrom(this.http.put<T>(url, body, { withCredentials: true }));
+    }
+
     patch<T>(url: string, body: unknown): Promise<T> {
         return firstValueFrom(this.http.patch<T>(url, body, { withCredentials: true }));
     }

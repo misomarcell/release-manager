@@ -1,0 +1,107 @@
+<h2 mat-dialog-title>{{ data.job.name }}</h2>
+<mat-dialog-content>
+    <p class="hint">{{ data.job.description }}</p>
+
+    @if (customCron) {
+        <p class="tile custom">
+            This job runs on a cron expression that has no simple form here:
+            <span class="mono">{{ customCron }}</span
+            >. Saving replaces it.
+        </p>
+    }
+
+    <div>
+        <p class="hint label" id="schedule-repeat">Repeat</p>
+        <div class="chips" role="radiogroup" aria-labelledby="schedule-repeat">
+            @for (option of modes; track option.id) {
+                @let on = mode() === option.id;
+                <button
+                    class="chip pressable"
+                    type="button"
+                    role="radio"
+                    [class.on]="on"
+                    [attr.aria-checked]="on"
+                    (click)="mode.set(option.id)"
+                >
+                    @if (on) {
+                        <mat-icon aria-hidden="true">check</mat-icon>
+                    }
+                    {{ option.label }}
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (mode() === 'hours') {
+        <div>
+            <p class="hint label" id="schedule-every">Hours between runs</p>
+            <div class="steps" role="radiogroup" aria-labelledby="schedule-every">
+                @for (step of hourSteps; track step) {
+                    <button
+                        class="chip step pressable num"
+                        type="button"
+                        role="radio"
+                        [class.on]="every() === step"
+                        [attr.aria-checked]="every() === step"
+                        (click)="every.set(step)"
+                    >
+                        {{ step }}
+                    </button>
+                }
+            </div>
+        </div>
+    } @else {
+        @if (mode() === 'days') {
+            <div>
+                <p class="hint label" id="schedule-days">Days</p>
+                <div class="steps" role="group" aria-labelledby="schedule-days">
+                    @for (weekday of weekdays; track weekday.day) {
+                        <button
+                            class="chip step pressable"
+                            type="button"
+                            [class.on]="days().includes(weekday.day)"
+                            [attr.aria-pressed]="days().includes(weekday.day)"
+                            [attr.aria-label]="weekday.name"
+                            (click)="toggleDay(weekday.day)"
+                        >
+                            {{ weekday.short }}
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="time">
+            <mat-label>Time</mat-label>
+            <input matInput type="time" class="num" [ngModel]="time()" (ngModelChange)="time.set($event)" />
+        </mat-form-field>
+    }
+
+    <p class="tile summary" role="status">
+        <mat-icon aria-hidden="true">schedule</mat-icon>
+        <span>
+            <b>{{ summary() }}</b>
+            <span class="hint">Server time, {{ data.timeZone }}. Applies as soon as it is saved.</span>
+        </span>
+    </p>
+
+    @if (saving()) {
+        <mat-progress-bar mode="indeterminate" />
+    }
+    @if (error(); as err) {
+        <p class="error" role="alert">{{ err }}</p>
+    }
+</mat-dialog-content>
+<mat-dialog-actions>
+    @if (data.saved) {
+        <button mat-button class="reset" [disabled]="saving()" (click)="reset()">
+            <mat-icon>restart_alt</mat-icon>
+            Reset
+        </button>
+    }
+    <span class="spacer"></span>
+    <button mat-button mat-dialog-close [disabled]="saving()">Cancel</button>
+    <button mat-flat-button [disabled]="saving() || !schedule()" (click)="save()">
+        <mat-icon>save</mat-icon>
+        Save
+    </button>
+</mat-dialog-actions>

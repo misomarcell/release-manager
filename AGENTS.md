@@ -8,7 +8,7 @@
   - `shared/`: shared TypeScript models used by both app and backend
 - Frontend serves Angular SSR and proxies `/api/*` requests to the backend.
 - Backend handles tracker search (nCore and The Pirate Bay, as plugins behind one tracker service), TMDB enrichment and title search, caching, Passkey authentication, qBittorrent integration, Jellyfin library sync, and the per-user release watchlist.
-- PostgreSQL stores metadata cache, user credentials, sessions, and watchlist items with their known releases.
+- PostgreSQL stores metadata cache, user credentials, sessions, watchlist items with their known releases, and the settings saved from the UI.
 
 ## Workflow
 
@@ -29,13 +29,14 @@
 - Theme lives in `web/src/styles.scss`: `mat.theme` plus `mat.theme-overrides` with `light-dark()` values, following the device colour scheme. Components use `--mat-sys-*` roles (plus `--rm-positive`, `--rm-bar`, `--rm-mono`) and never hard-coded hexes.
 - Fonts: Google Sans Flex (UI), Google Sans Code (`.mono`: release names, paths), Material Symbols Rounded (`mat-icon`, add `.filled` for the filled variant).
 - Shared global classes in `styles.scss`: `.seg-list` + `.tile` (segmented groups), `.kv`, `.tag` (`.res`, `.hdr`), `.state` (`.own`, `.following`, `.new`), `.chip` (`.on`), `.list-head`, `.section-head`, `.seed`, `.leech`, `.fl`, `.pressable`, `.skeleton`, `.message`, `.hint`, `.phone-only`, `.desktop-only`.
-- Shell (`components/shell`): bottom navigation on phones, navigation rail from 960px; admin pages and sign out are behind `app-account-menu`.
+- Shell (`components/shell`): bottom navigation on phones, navigation rail from 960px; admin pages (Manage Users, Settings, Administration, Logs) and sign out are behind `app-account-menu`.
+- Settings (`components/settings`) is read-only `.seg-list` groups; editing happens in sheets: `app-settings-dialog` for a service's fields, `app-schedule-dialog` for a schedule.
 - On phones the document itself scrolls (sticky bottom navigation, no inner scroll containers besides the open title page) so mobile browsers can collapse their toolbars; from 960px the shell is a fixed `100dvh` frame and the list and detail panes scroll on their own.
 - Zoom is locked on purpose: `touch-action: pan-x pan-y` on `html` (no pinch or double-tap zoom) and `maximum-scale=1` in the viewport meta; keep text inputs at 16px or more so iOS does not zoom on focus.
 - Every list page is `app-list-detail` (list column + title page; a full-screen layer on phones, a side pane on desktop) filled with `app-title-row` rows and one `app-title-detail`. Page-specific content is projected into the detail; the single filled button goes into its `[primary]` slot.
 - `app-filter-search` is the 56px search bar with visible filter chips; `app-page-title` is the title bar for pages without search.
 - `app-failure-notice` is the generic notice for a service or API call that failed without breaking the page: give it `FailureNotice[]` (`utils/failure-notice.ts`, heading + detail) and it offers "Reload", which reloads the page. There is no per-call retry logic; map a new kind of failure to `FailureNotice` next to `trackerFailureNotices()`.
-- Dialogs that act on a title (download, watchlist, NFO) open with `sheetConfig()` from `utils/sheet.ts`: a bottom sheet on phones, a centred dialog otherwise.
+- Dialogs that act on a title (download, watchlist, NFO) and the settings editors open with `sheetConfig()` from `utils/sheet.ts`: a bottom sheet on phones, a centred dialog otherwise.
 - Route changes run through `withViewTransitions`; `utils/view-transitions.ts` skips the transition when only filters or the page change.
 
 ## Shared Models
@@ -44,7 +45,9 @@
 - `shared/src/tracker.models.ts` — `TRACKERS` (id, name, `nfo` capability), `TrackerId`, `trackerName()`, `trackerHasNfo()`, `ReleaseCategory`, `TvInfo`, `TrackerRelease`, `TitleReleases` (releases grouped under one title), `TrackerFailure`, `ReleaseSearchResponse`, `TitleReleasesResponse`.
 - `shared/src/release-tags.ts` — `parseReleaseTags()`: resolution, HDR, source and audio tags parsed from a release name.
 - `shared/src/tmdb.models.ts` — TMDB metadata types: `MetadataLookup`, `MovieMetadata` (includes `inJellyfinLibrary`), `TitleSummary`, `TitleSearchResponse`.
-- `shared/src/download.models.ts` — Download types: `DownloadRequest` (`tracker` + `downloadRef`), `DownloadResponse`.
+- `shared/src/download.models.ts` — Download types: `DownloadRequest` (`tracker` + `downloadRef`), `DownloadResponse`, `DownloadPaths`.
+- `shared/src/settings.models.ts` — `SETTINGS_GROUPS` (the fields the Settings page offers, per service), `SCHEDULED_JOBS`, `SettingKey`, `SettingsResponse`, `SettingsUpdateRequest`.
+- `shared/src/schedule.ts` — `Schedule` (days + time, every N hours, or a custom cron) with `cronToSchedule()`, `scheduleToCron()`, `describeSchedule()`.
 - `shared/src/user.models.ts` — User types: `UserInfo`.
 - `shared/src/recommendations.models.ts` — Recommendation types: `Recommendation`, `FeedbackValue`, `RecommendationFeedbackRequest`.
 - `shared/src/constants.ts` — Shared constants: `TMDB_GENRE_MAP`, `DOWNLOAD_CATEGORIES`, `DownloadCategory`.
@@ -66,13 +69,16 @@ backend/src/
   middleware/auth.ts     # Session authentication middleware
   routes/
     auth.routes.ts      # Passkey registration/login endpoints
-    search.routes.ts    # Release search, per-title release lookup, title metadata, TMDB title search, NFO, download
+    search.routes.ts    # Release search, per-title release lookup, title metadata, TMDB title search, NFO, download, download paths
     version.routes.ts   # App version endpoint (latest GitHub commit)
     recommendations.routes.ts # AI-powered recommendations + feedback
     admin.routes.ts     # Admin actions incl. Jellyfin sync + qBittorrent test
+    settings.routes.ts  # Read and save the UI-editable settings (admin only)
     watchlist.routes.ts # Per-user watchlist CRUD, mark as read, manual check
   services/
     auth.service.ts     # WebAuthn/Passkey logic
+    settings.service.ts # UI-editable settings: validation, storage, applying them to `config` at runtime
+    scheduler.service.ts # Cron jobs (Jellyfin sync, qBittorrent sync, watchlist check), re-applied on config changes
     github.service.ts   # GitHub API integration (latest commit info)
     tracker-provider.ts # Tracker plugin contract: `TrackerProvider`, query types, `TorrentSource`
     tracker.service.ts  # Tracker registry + everything cross-tracker: combined search, title grouping, failures
@@ -90,6 +96,7 @@ backend/src/
     user.repository.ts  # User/credential/session database operations
     recommendations.repository.ts # Feedback and recommendation cache DB operations
     log.repository.ts           # Log query database operations
+    settings.repository.ts      # Saved settings (`settings` table)
     watchlist.repository.ts     # Watchlist items, known/unseen releases and baselines per tracker
     jellyfin.repository.ts      # Jellyfin library DB operations + in-memory lookup cache + owned titles for recs
   utils/
@@ -97,6 +104,7 @@ backend/src/
     concurrent.ts       # Concurrent promise mapper
     release-parser.ts   # Release name + TV info parsing, metadata lookup building, title matching
     logger.ts           # Structured logger — writes to console + DB `logs` table
+    secret-box.ts       # AES-256-GCM encryption for secrets saved from the UI
 ```
 
 ## Authentication
@@ -104,6 +112,16 @@ backend/src/
 - Uses WebAuthn/Passkey via `@simplewebauthn/server`.
 - `requireUserVerification: false` in both registration and authentication to support desktop password managers.
 - Single-user app — no rate limiting or challenge expiry needed.
+
+## Settings
+
+- `config` (`config.ts`) is built from the environment and is the single place services read configuration from. Read it at call time (`config.x.y` inside the function), never copy a value into a module-level constant, so a change from the UI applies without a restart.
+- The Settings page edits the keys listed in `SETTINGS_GROUPS` and `SCHEDULED_JOBS` (`shared/src/settings.models.ts`). A key is a `section.field` path into `config`; to make another option editable, add it there.
+- Saved values live in the `settings` table and override the environment. `loadSettings()` applies them on startup; `updateSettings()` validates everything, stores it, mutates `config` and calls `applySchedules()`. Resetting a key deletes its row and restores the environment value.
+- `scheduler.service.ts` owns every cron task. `applySchedules()` is idempotent: it compares each job's wanted schedule with the running one and restarts only what changed, and starts or stops a job when its service becomes configured or unconfigured.
+- Schedules are stored as cron expressions; the UI edits them as a `Schedule` and shows cron text only for expressions it cannot represent. Times are in the server's time zone.
+- Secrets are write-only: the API reports only whether one is set, they are stored encrypted with `SETTINGS_ENCRYPTION_KEY` (without that variable they cannot be saved from the UI), and they are never logged. Every change is logged with the key names and the admin's username.
+- `DATABASE_URL`, `PORT`, `RP_ID`, `RP_ORIGIN` and `SETTINGS_ENCRYPTION_KEY` are environment-only on purpose.
 
 ## Trackers
 
@@ -124,7 +142,7 @@ backend/src/
 
 ## Download Flow
 
-1. Frontend calculates a suggested save path and lets the user edit it.
+1. Frontend calculates a suggested save path from `GET /api/search/download-paths` (the configured movie and TV folders) and lets the user edit it.
 2. Frontend sends `{ tracker, downloadRef, savePath, category }` to `POST /api/search/download`.
 3. Backend validates `tracker` against `TRACKERS` and `category` against `DOWNLOAD_CATEGORIES` from shared models.
 4. `trackerService.getTorrent(tracker, downloadRef)` returns a `TorrentSource`: nCore fetches the `.torrent` file using its cookies (with hostname validation against `config.ncore.baseUrl`), The Pirate Bay builds a magnet link from the info hash.
@@ -152,31 +170,34 @@ backend/src/
 
 ## Environment Variables
 
-| Variable               | Description                                                              |
-| ---------------------- | ------------------------------------------------------------------------ |
-| `DATABASE_URL`         | PostgreSQL connection string                                             |
-| `PORT`                 | Backend listen port (default: `3000`)                                    |
-| `NCORE_BASE_URL`       | nCore base URL (default: `https://ncore.pro`)                            |
-| `NCORE_USERNAME`       | nCore account username                                                   |
-| `NCORE_COOKIE_PASS`    | nCore cookie passkey                                                     |
-| `APIBAY_BASE_URL`      | The Pirate Bay API base URL (default: `https://apibay.org`)              |
-| `TMDB_ACCESS_TOKEN`    | TMDB API read access token                                               |
-| `GITHUB_REPO`          | GitHub repo for version check (default: `misomarcell/release-manager`)   |
-| `GITHUB_TOKEN`         | GitHub personal access token                                             |
-| `RP_ID`                | WebAuthn relying party ID (default: `localhost`)                         |
-| `RP_ORIGIN`            | Comma-separated allowed origins for WebAuthn                             |
-| `QBITTORRENT_URL`      | qBittorrent Web UI URL (e.g. `http://qbittorrent:8080`)                  |
-| `QBITTORRENT_USERNAME` | qBittorrent username (default: `admin`)                                  |
-| `QBITTORRENT_PASSWORD` | qBittorrent password                                                     |
-| `QBITTORRENT_CRON`     | Cron schedule for torrent sync (default: `0 6 * * *` — daily at 6 AM)    |
-| `DOWNLOAD_PATH_MOVIES` | Save path for movies (default: `/media/Movies`)                          |
-| `DOWNLOAD_PATH_TV`     | Save path for TV shows (default: `/media/TV_Shows`)                      |
-| `OPENAI_API_KEY`       | OpenAI API key for AI-powered recommendations (optional)                 |
-| `JELLYFIN_URL`         | Jellyfin server URL (e.g. `http://jellyfin:8096`)                        |
-| `JELLYFIN_API_KEY`     | Jellyfin admin API key                                                   |
-| `JELLYFIN_USER_ID`     | Jellyfin user ID to scope library sync to (optional)                     |
-| `JELLYFIN_CRON`        | Cron schedule for library sync (default: `0 6 * * *` — daily at 6 AM)    |
-| `WATCHLIST_CRON`       | Cron schedule for watchlist check (default: `0 9 * * *` — daily at 9 AM) |
+| Variable                  | Description                                                              |
+| ------------------------- | ------------------------------------------------------------------------ |
+| `DATABASE_URL`            | PostgreSQL connection string                                             |
+| `PORT`                    | Backend listen port (default: `3000`)                                    |
+| `SETTINGS_ENCRYPTION_KEY` | Key that encrypts secrets saved on the Settings page (optional)          |
+| `NCORE_BASE_URL`          | nCore base URL (default: `https://ncore.pro`)                            |
+| `NCORE_USERNAME`          | nCore account username                                                   |
+| `NCORE_COOKIE_PASS`       | nCore cookie passkey                                                     |
+| `APIBAY_BASE_URL`         | The Pirate Bay API base URL (default: `https://apibay.org`)              |
+| `TMDB_ACCESS_TOKEN`       | TMDB API read access token                                               |
+| `GITHUB_REPO`             | GitHub repo for version check (default: `misomarcell/release-manager`)   |
+| `GITHUB_TOKEN`            | GitHub personal access token                                             |
+| `RP_ID`                   | WebAuthn relying party ID (default: `localhost`)                         |
+| `RP_ORIGIN`               | Comma-separated allowed origins for WebAuthn                             |
+| `QBITTORRENT_URL`         | qBittorrent Web UI URL (e.g. `http://qbittorrent:8080`)                  |
+| `QBITTORRENT_USERNAME`    | qBittorrent username (default: `admin`)                                  |
+| `QBITTORRENT_PASSWORD`    | qBittorrent password                                                     |
+| `QBITTORRENT_CRON`        | Cron schedule for torrent sync (default: `0 6 * * *` — daily at 6 AM)    |
+| `DOWNLOAD_PATH_MOVIES`    | Save path for movies (default: `/media/Movies`)                          |
+| `DOWNLOAD_PATH_TV`        | Save path for TV shows (default: `/media/TV_Shows`)                      |
+| `OPENAI_API_KEY`          | OpenAI API key for AI-powered recommendations (optional)                 |
+| `JELLYFIN_URL`            | Jellyfin server URL (e.g. `http://jellyfin:8096`)                        |
+| `JELLYFIN_API_KEY`        | Jellyfin admin API key                                                   |
+| `JELLYFIN_USER_ID`        | Jellyfin user ID to scope library sync to (optional)                     |
+| `JELLYFIN_CRON`           | Cron schedule for library sync (default: `0 6 * * *` — daily at 6 AM)    |
+| `WATCHLIST_CRON`          | Cron schedule for watchlist check (default: `0 9 * * *` — daily at 9 AM) |
+
+Every variable from `NCORE_BASE_URL` down is only the starting value: it can be overridden on the Settings page.
 
 ## Validation Rules
 

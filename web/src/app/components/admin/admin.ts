@@ -66,20 +66,11 @@ export class AdminComponent implements OnInit {
             run: () => this.logOutAllUsers(),
         },
         {
-            id: 'qbittorrent',
-            icon: 'lan',
-            title: 'Test qBittorrent connection',
-            description:
-                'Checks whether the backend can reach the configured qBittorrent instance and authenticate successfully.',
-            busyLabel: 'Testing…',
-            run: () => this.testQbittorrent(),
-        },
-        {
             id: 'qbittorrent-sync',
             icon: 'downloading',
             title: 'qBittorrent torrent sync',
             description:
-                'Fetches the current torrent list from qBittorrent and stores names, hashes, content paths, and added dates for later library matching.',
+                'Fetches the current torrent list from qBittorrent and stores names, hashes, content paths, and added dates for later library matching. The schedule is under Settings.',
             busyLabel: 'Syncing…',
             sync: { status: this.qbittorrentStatus, unit: 'torrents' },
             run: () => this.syncQbittorrent(),
@@ -89,19 +80,10 @@ export class AdminComponent implements OnInit {
             icon: 'video_library',
             title: 'Jellyfin library sync',
             description:
-                'Fetches all movies and TV shows from Jellyfin and stores them locally so titles can be marked as available in your library. Runs automatically every day at 6:00 AM.',
+                'Fetches all movies and TV shows from Jellyfin and stores them locally so titles can be marked as available in your library. The schedule is under Settings.',
             busyLabel: 'Syncing…',
             sync: { status: this.jellyfinStatus, unit: 'items' },
             run: () => this.syncJellyfin(),
-        },
-        {
-            id: 'jellyfin-test',
-            icon: 'cast_connected',
-            title: 'Test Jellyfin connection',
-            description:
-                'Checks whether the backend can reach the configured Jellyfin server and authenticate successfully.',
-            busyLabel: 'Testing…',
-            run: () => this.testJellyfin(),
         },
     ];
 
@@ -178,32 +160,6 @@ export class AdminComponent implements OnInit {
             this.router.navigate(['/login']);
         } catch (e: unknown) {
             this.snackBar.open(extractHttpError(e, 'Failed to log out users'), 'OK', { duration: 5000 });
-            this.clearing.set(null);
-        }
-    }
-
-    protected async testQbittorrent(): Promise<void> {
-        this.clearing.set('qbittorrent');
-        try {
-            const result = await this.admin.testQbittorrent();
-            this.snackBar.open(`qBittorrent is reachable (${result.version})`, 'OK', { duration: 3000 });
-        } catch (e: unknown) {
-            this.snackBar.open(extractHttpError(e, 'Failed to reach qBittorrent'), 'OK', {
-                duration: 5000,
-            });
-        } finally {
-            this.clearing.set(null);
-        }
-    }
-
-    protected async testJellyfin(): Promise<void> {
-        this.clearing.set('jellyfin-test');
-        try {
-            const result = await this.admin.testJellyfin();
-            this.snackBar.open(`Jellyfin is reachable (v${result.version})`, 'OK', { duration: 3000 });
-        } catch (e: unknown) {
-            this.snackBar.open(extractHttpError(e, 'Failed to reach Jellyfin'), 'OK', { duration: 5000 });
-        } finally {
             this.clearing.set(null);
         }
     }

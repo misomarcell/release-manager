@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
+import { config } from '../config.js';
 import { getMetadata } from '../services/metadata.service.js';
 import { tmdbService } from '../services/tmdb.service.js';
 import { trackerService } from '../services/tracker.service.js';
@@ -9,7 +10,7 @@ import { qbittorrentService } from '../services/qbittorrent.service.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { DOWNLOAD_CATEGORIES } from 'shared/constants';
 import { isTrackerId, type TitleReleasesResponse, type TrackerId } from 'shared/tracker.models';
-import type { DownloadRequest, DownloadResponse } from 'shared/download.models';
+import type { DownloadPaths, DownloadRequest, DownloadResponse } from 'shared/download.models';
 import type { TitleSearchResponse } from 'shared/tmdb.models';
 import { logger } from '../utils/logger.js';
 import { sanitizeImdbId } from '../utils/release-parser.js';
@@ -152,6 +153,11 @@ router.get('/nfo/:tracker/:id', requireAuth, async (req: Request, res: Response)
         const message = error instanceof Error ? error.message : 'NFO fetch failed';
         res.status(502).json({ error: message });
     }
+});
+
+router.get('/download-paths', requireAuth, requireAdmin, (_req: Request, res: Response) => {
+    const { savePathMovies, savePathTv } = config.qbittorrent;
+    res.json({ movies: savePathMovies, tv: savePathTv } satisfies DownloadPaths);
 });
 
 router.post('/download', requireAuth, requireAdmin, async (req: Request, res: Response) => {

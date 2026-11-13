@@ -12,3 +12,8 @@ export interface DownloadResponse {
     success: boolean;
     message: string;
 }
+
+export interface DownloadPaths {
+    movies: string;
+    tv: string;
+}

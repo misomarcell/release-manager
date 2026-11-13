@@ -31,11 +31,12 @@ interface AiRecommendationRequest {
     previouslySuggested: PromptTitle[];
 }
 
-let client: OpenAI | null = null;
+let client: { apiKey: string; api: OpenAI } | null = null;
 
 function getClient(): OpenAI {
-    if (!client) client = new OpenAI({ apiKey: config.openai.apiKey });
-    return client;
+    const { apiKey } = config.openai;
+    if (client?.apiKey !== apiKey) client = { apiKey, api: new OpenAI({ apiKey }) };
+    return client.api;
 }
 
 export function isOpenAiAvailable(): boolean {
