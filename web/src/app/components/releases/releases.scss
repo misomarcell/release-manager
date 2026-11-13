@@ -23,12 +23,10 @@
 }
 
 .pending {
-    display: grid;
-    gap: 2px;
-
-    .skeleton {
-        height: 44px;
-    }
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
 
     .hint {
         margin-top: 6px;

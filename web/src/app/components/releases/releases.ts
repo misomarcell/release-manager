@@ -26,6 +26,7 @@ import {
     type TitleReleases,
     type TrackerId,
 } from '@rm/shared/tracker.models';
+import { MatProgressSpinner, MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 const PAGE_SIZE = 100;
 const VALID_CATEGORIES: ReleaseCategory[] = ['all', 'movies', 'tv'];
@@ -72,6 +73,7 @@ interface TitleGroup extends TitleReleases {
         MatIconModule,
         MatMenuModule,
         MatPaginatorModule,
+        MatProgressSpinnerModule,
         FailureNoticeComponent,
         FilterSearchComponent,
         ListDetailComponent,
@@ -79,6 +81,7 @@ interface TitleGroup extends TitleReleases {
         RowSkeletonsComponent,
         TitleDetailComponent,
         TitleRowComponent,
+        MatProgressSpinner,
     ],
     templateUrl: './releases.html',
     styleUrl: './releases.scss',

@@ -128,9 +128,8 @@
             <app-release-list [releases]="shownReleases()" [title]="current.title" />
             @if (lookupBusy()) {
                 <div class="pending" role="status">
-                    <div class="skeleton"></div>
-                    <div class="skeleton"></div>
-                    <p class="hint">Loading all releases…</p>
+                    <mat-progress-spinner mode="indeterminate" diameter="20" aria-hidden="true" />
+                    <p class="hint">Loading more...</p>
                 </div>
             }
             <app-failure-notice [failures]="lookupFailures()" />
