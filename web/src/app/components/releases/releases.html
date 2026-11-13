@@ -38,11 +38,10 @@
     } @else if (groups().length > 0) {
         <div class="list-head">
             <b>{{ heading() }}</b>
-            <span class="num">by seeders · page {{ page() }} of {{ pageCount() }}</span>
+            <span class="num">most seeded first · page {{ page() }} of {{ pageCount() }}</span>
         </div>
         <div class="seg-list">
             @for (group of groups(); track group.key) {
-                @let count = group.releases.length;
                 <app-title-row
                     [key]="group.key"
                     [title]="group.title"
@@ -54,8 +53,8 @@
                     [selected]="group.key === current?.key"
                     [replaceUrl]="!!open()"
                 >
-                    @for (resolution of group.resolutions; track resolution) {
-                        <span class="tag res">{{ resolution }}</span>
+                    @for (tag of group.qualities; track tag.label) {
+                        <span class="tag" [class]="tag.kind">{{ tag.label }}</span>
                     }
                     @if (group.metadata?.inJellyfinLibrary) {
                         <span class="state own">
@@ -69,12 +68,6 @@
                             Following
                         </span>
                     }
-                    <ng-container side>
-                        <span class="seed" title="Most seeders">
-                            <mat-icon aria-label="Seeders">arrow_drop_up</mat-icon>{{ group.topSeeders }}
-                        </span>
-                        <small>{{ count }} {{ count === 1 ? 'release' : 'releases' }}</small>
-                    </ng-container>
                 </app-title-row>
             }
         </div>
@@ -127,10 +120,10 @@
             </mat-menu>
             <app-release-list [releases]="shownReleases()" [title]="current.title" />
             @if (lookupBusy()) {
-                <div class="pending" role="status">
-                    <mat-progress-spinner mode="indeterminate" diameter="20" aria-hidden="true" />
-                    <p class="hint">Loading more...</p>
-                </div>
+                <p class="pending hint" role="status">
+                    <mat-icon class="spinning" aria-hidden="true">progress_activity</mat-icon>
+                    {{ shownReleases().length ? 'Looking for more releases…' : 'Looking for releases…' }}
+                </p>
             }
             <app-failure-notice [failures]="lookupFailures()" />
         </app-title-detail>

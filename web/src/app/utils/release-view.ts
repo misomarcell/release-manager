@@ -1,4 +1,4 @@
-import { parseReleaseTags, type ReleaseTag } from '@rm/shared/release-tags';
+import { parseReleaseTags, summarizeReleaseTags, type ReleaseTag } from '@rm/shared/release-tags';
 import { trackerName, type TrackerRelease } from '@rm/shared/tracker.models';
 
 interface ReleaseView {
@@ -15,11 +15,16 @@ export function describeRelease(release: TrackerRelease): ReleaseView {
     };
 }
 
+/** The resolutions, HDR formats and audio formats a title is known to exist in. */
+export function releaseQualities(releases: TrackerRelease[]): ReleaseTag[] {
+    return summarizeReleaseTags(
+        releases.map((release) => release.releaseName),
+        ['res', 'hdr', 'audio'],
+    );
+}
+
 export function releaseResolutions(releases: TrackerRelease[]): string[] {
-    const found = new Set<number>();
-    for (const release of releases) {
-        const tag = parseReleaseTags(release.releaseName).find((candidate) => candidate.kind === 'res');
-        if (tag) found.add(parseInt(tag.label, 10));
-    }
-    return [...found].sort((a, b) => b - a).map((height) => `${height}p`);
+    return releaseQualities(releases)
+        .filter((tag) => tag.kind === 'res')
+        .map((tag) => tag.label);
 }

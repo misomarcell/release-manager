@@ -26,11 +26,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
+    gap: 8px;
+    min-height: 40px;
+    margin: 0;
 
-    .hint {
-        margin-top: 6px;
-        text-align: center;
+    mat-icon {
+        flex: none;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
     }
 }
 

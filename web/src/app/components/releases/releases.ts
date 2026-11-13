@@ -16,7 +16,7 @@ import { injectIsDesktop } from '../../utils/breakpoint';
 import { trackerFailureNotices } from '../../utils/failure-notice';
 import { extractHttpError } from '../../utils/http-error';
 import { parsePage, parseQuery } from '../../utils/query-params';
-import { releaseResolutions } from '../../utils/release-view';
+import { releaseQualities, releaseResolutions } from '../../utils/release-view';
 import {
     TRACKERS,
     sortReleases,
@@ -26,7 +26,7 @@ import {
     type TitleReleases,
     type TrackerId,
 } from '@rm/shared/tracker.models';
-import { MatProgressSpinner, MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import type { ReleaseTag } from '@rm/shared/release-tags';
 
 const PAGE_SIZE = 100;
 const VALID_CATEGORIES: ReleaseCategory[] = ['all', 'movies', 'tv'];
@@ -62,8 +62,7 @@ const RELEASE_SORTS: { id: ReleaseSort; label: string; param: string | null }[] 
 ];
 
 interface TitleGroup extends TitleReleases {
-    resolutions: string[];
-    topSeeders: number;
+    qualities: ReleaseTag[];
 }
 
 @Component({
@@ -73,7 +72,6 @@ interface TitleGroup extends TitleReleases {
         MatIconModule,
         MatMenuModule,
         MatPaginatorModule,
-        MatProgressSpinnerModule,
         FailureNoticeComponent,
         FilterSearchComponent,
         ListDetailComponent,
@@ -81,7 +79,6 @@ interface TitleGroup extends TitleReleases {
         RowSkeletonsComponent,
         TitleDetailComponent,
         TitleRowComponent,
-        MatProgressSpinner,
     ],
     templateUrl: './releases.html',
     styleUrl: './releases.scss',
@@ -156,8 +153,7 @@ export class ReleasesComponent {
     protected groups = computed(() =>
         (this.response()?.titles ?? []).map((title): TitleGroup => ({
             ...title,
-            resolutions: releaseResolutions(title.releases),
-            topSeeders: Math.max(...title.releases.map((release) => release.seeders)),
+            qualities: releaseQualities(title.releases),
         })),
     );
 

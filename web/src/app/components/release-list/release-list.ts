@@ -12,7 +12,7 @@ import { extractHttpError } from '../../utils/http-error';
 import { sheetConfig } from '../../utils/sheet';
 import { describeRelease } from '../../utils/release-view';
 import type { DownloadPaths } from '@rm/shared/download.models';
-import { trackerHasNfo, type TrackerRelease } from '@rm/shared/tracker.models';
+import { TRACKERS, type TrackerRelease } from '@rm/shared/tracker.models';
 
 @Component({
     selector: 'app-release-list',
@@ -29,13 +29,13 @@ export class ReleaseListComponent {
     releases = input.required<TrackerRelease[]>();
     title = input.required<string>();
 
-    protected rows = computed(() =>
-        this.releases().map((release) => ({
-            release,
-            key: `${release.tracker}:${release.torrentId}`,
-            hasNfo: trackerHasNfo(release.tracker),
-            ...describeRelease(release),
-        })),
+    protected groups = computed(() =>
+        TRACKERS.map((tracker) => ({
+            ...tracker,
+            rows: this.releases()
+                .filter((release) => release.tracker === tracker.id)
+                .map((release) => ({ release, key: release.torrentId, ...describeRelease(release) })),
+        })).filter((group) => group.rows.length > 0),
     );
     protected formatBytes = formatBytes;
 

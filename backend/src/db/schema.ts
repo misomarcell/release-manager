@@ -53,11 +53,6 @@ export const SCHEMA_SQL = `
       expires_at   TIMESTAMPTZ NOT NULL
     );
 
-    -- TEMPORARY MIGRATION: remove after the production DB has been updated for unified metadata caching.
-    ALTER TABLE metadata_cache ADD COLUMN IF NOT EXISTS release_date TEXT DEFAULT '';
-    ALTER TABLE metadata_cache ADD COLUMN IF NOT EXISTS trailer_key VARCHAR(50);
-    ALTER TABLE metadata_cache ADD COLUMN IF NOT EXISTS imdb_id TEXT;
-
     CREATE INDEX IF NOT EXISTS metadata_cache_tmdb_media_expires_idx
       ON metadata_cache (tmdb_id, media_type, expires_at);
 
@@ -145,19 +140,6 @@ export const SCHEMA_SQL = `
 
     CREATE UNIQUE INDEX IF NOT EXISTS watchlist_items_user_tmdb_media_idx
       ON watchlist_items (user_id, tmdb_id, media_type);
-
-    -- TEMPORARY MIGRATION: remove after the production DB has been updated for multi-tracker watchlists.
-    -- Known releases from before trackers were stored are dropped; followed titles are kept and re-baselined.
-    DO $$
-    BEGIN
-      IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_schema = current_schema() AND table_name = 'watchlist_releases' AND column_name = 'tracker'
-      ) THEN
-        DROP TABLE IF EXISTS watchlist_releases;
-        UPDATE watchlist_items SET last_checked_at = NULL;
-      END IF;
-    END $$;
 
     CREATE TABLE IF NOT EXISTS watchlist_releases (
       item_id      INTEGER NOT NULL REFERENCES watchlist_items(id) ON DELETE CASCADE,

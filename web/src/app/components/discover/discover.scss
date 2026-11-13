@@ -65,4 +65,8 @@
     color: var(--mat-sys-on-tertiary-container);
     font-size: 14px;
     line-height: 21px;
+
+    mat-icon {
+        flex: none;
+    }
 }

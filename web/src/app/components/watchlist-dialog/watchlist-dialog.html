@@ -25,7 +25,7 @@
                 </mat-chip-row>
             }
             <input
-                placeholder="e.g. bluray"
+                [placeholder]="keywords().length ? '' : 'e.g. bluray'"
                 autocomplete="off"
                 [attr.maxlength]="maxKeywordLength"
                 [disabled]="limitReached()"

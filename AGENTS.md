@@ -43,7 +43,7 @@
 
 - `shared/src/` contains shared TypeScript models and constants used by both frontend and backend.
 - `shared/src/tracker.models.ts` — `TRACKERS` (id, name, `nfo` capability), `TrackerId`, `trackerName()`, `trackerHasNfo()`, `ReleaseCategory`, `TvInfo`, `TrackerRelease`, `TitleReleases` (releases grouped under one title), `TrackerFailure`, `ReleaseSearchResponse`, `TitleReleasesResponse`.
-- `shared/src/release-tags.ts` — `parseReleaseTags()`: resolution, HDR, source and audio tags parsed from a release name.
+- `shared/src/release-tags.ts` — `parseReleaseTags()`: resolution, HDR, source and audio tags parsed from a release name; `summarizeReleaseTags()`: the tags a set of releases carries.
 - `shared/src/tmdb.models.ts` — TMDB metadata types: `MetadataLookup`, `MovieMetadata` (includes `inJellyfinLibrary`), `TitleSummary`, `TitleSearchResponse`.
 - `shared/src/download.models.ts` — Download types: `DownloadRequest` (`tracker` + `downloadRef`), `DownloadResponse`, `DownloadPaths`.
 - `shared/src/settings.models.ts` — `SETTINGS_GROUPS` (the fields the Settings page offers, per service), `SCHEDULED_JOBS`, `SettingKey`, `SettingsResponse`, `SettingsUpdateRequest`.
@@ -132,7 +132,7 @@ backend/src/
 - A tracker service holds only that tracker's business logic (URLs, auth, categories, result mapping, rate limits). Anything that spans trackers (picking trackers, merging, ordering, TMDB enrichment, grouping releases into titles, failure collection) lives in `tracker.service.ts`.
 - Ordering is shared code: `sortReleases()` (tracker order, then most seeders or largest size; the Releases page keeps the choice in the `sort` query param) and `sortTitles()` (titles the primary tracker has first, then most seeded) in `shared/src/tracker.models.ts`.
 - A search with text asks every selected tracker and merges the results; releases are grouped into titles by TMDB id, so titles that exist on only one tracker still get a row.
-- A list only holds the releases of its own page, so opening a title on the Releases page calls `GET /api/search/releases` (`findTitle` on every selected tracker) and shows the full release list, with skeleton rows while it loads. `findTitle` goes by IMDb id; without one nCore falls back to a name search narrowed to the same parsed title and year, while The Pirate Bay returns nothing.
+- A list only holds the releases of its own page, so opening a title on the Releases page calls `GET /api/search/releases` (`findTitle` on every selected tracker) and shows the full release list, grouped per tracker, with a short status line while it loads. Title rows therefore show no release or seeder counts, only the quality tags found on the page (`releaseQualities()`). `findTitle` goes by IMDb id; without one nCore falls back to a name search narrowed to the same parsed title and year, while The Pirate Bay returns nothing.
 - A failing tracker never fails the request: whatever a plugin throws becomes an entry in the response's `failures` (tracker + message), which `trackerFailureNotices()` turns into notices for `app-failure-notice`.
 - Plugins return results in any order; `tracker.service.ts` does all sorting.
 - The Pirate Bay torrents with 0 seeders are dropped.

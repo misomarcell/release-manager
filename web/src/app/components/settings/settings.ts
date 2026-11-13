@@ -44,6 +44,8 @@ interface GroupView {
     group: SettingsGroup;
     rows: FieldRow[];
     testable: boolean;
+    connected: string;
+    failure: string;
 }
 
 interface TestResult {
@@ -79,7 +81,8 @@ export class SettingsComponent implements OnInit {
     });
     protected groups = computed(() => {
         const settings = this.store.settings();
-        return settings ? SETTINGS_GROUPS.map((group) => this.toGroupView(group, settings)) : [];
+        const results = { ...this.results(), [this.testing() ?? '']: undefined };
+        return settings ? SETTINGS_GROUPS.map((group) => this.toGroupView(group, settings, results[group.id])) : [];
     });
 
     ngOnInit(): void {
@@ -117,7 +120,7 @@ export class SettingsComponent implements OnInit {
         let result: TestResult;
         try {
             const { version } = await this.tests[group.id]();
-            result = { ok: true, text: `Connected, version ${version.replace(/^v/, '')}` };
+            result = { ok: true, text: `Connected · v${version.replace(/^v/, '')}` };
         } catch (e: unknown) {
             result = { ok: false, text: `Not reachable: ${extractHttpError(e, 'no answer')}` };
         }
@@ -135,11 +138,13 @@ export class SettingsComponent implements OnInit {
         };
     }
 
-    private toGroupView(group: SettingsGroup, settings: SettingsResponse): GroupView {
+    private toGroupView(group: SettingsGroup, settings: SettingsResponse, result?: TestResult): GroupView {
         return {
             group,
             rows: group.fields.map((field) => this.toFieldRow(field, settings)),
             testable: group.id in this.tests,
+            connected: result?.ok ? result.text : '',
+            failure: result && !result.ok ? result.text : '',
         };
     }
 

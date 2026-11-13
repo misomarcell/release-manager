@@ -185,7 +185,7 @@ No shadows on content. Depth is tone: ground, pane, tile, tile high. Menus keep 
 
 ### Title row
 
-Poster (56px), title on one line, a meta line (year, star rating, one more fact), then tags and state chips. The trailing column changes per page: top seeder count and release count (Releases), size on disk (Library), new or known count (Watchlist), a Follow button (title search). The whole row is one link.
+Poster (56px), title on one line, a meta line (year, star rating, one more fact), then tags and state chips. The trailing column changes per page: nothing (Releases, whose list only knows the releases of its own page, so the row shows the resolutions, HDR and audio formats found as tags instead of counts), size on disk (Library), new or known count (Watchlist), a Follow button (title search). The whole row is one link.
 
 ### Title page
 
@@ -198,7 +198,7 @@ Poster (56px), title on one line, a meta line (year, star rating, one more fact)
 
 ### Releases
 
-Each release shows parsed tags first, then the raw name in mono, breaking at the dots. It names its tracker; freeleech is a compact **FL** badge next to the tracker and never sits among the quality tags. Seeders are green with an up arrow, leechers red with a down arrow. A release is never labelled "best".
+Each release shows parsed tags first, then the raw name in mono, breaking at the dots. Releases are grouped per tracker, each group under a small heading with the tracker name and its release count. A release names its tracker; freeleech is a compact **FL** badge next to the tracker and never sits among the quality tags. Seeders are green with an up arrow, leechers red with a down arrow. A release is never labelled "best".
 
 ### Tags and state chips
 
@@ -218,7 +218,7 @@ Download ("Send to qBittorrent"), the watchlist editor, the NFO viewer and the s
 
 ### Settings
 
-A single column (up to 720px) of segmented groups under a page title. Schedules come first: each is a pressable row with the job, its schedule in words and the next run. Then one group per service: a heading with a one-line description, an optional text "Test" button and a tonal "Edit" button, and key/value rows that are read-only. URLs and paths are mono; a secret only ever shows a lock and "Set"; a value saved from the UI carries a neutral "Edited" tag.
+A single column (up to 720px) of segmented groups under a page title. Schedules come first: each is a pressable row with the job, its schedule in words and the next run. Then one group per service: a heading with a one-line description, an optional text "Test" button and a tonal "Edit" button (after a successful test the button is replaced by a green check with the version; a failure is shown right under the heading), and key/value rows that are read-only. URLs and paths are mono; a secret only ever shows a lock and "Set"; a value saved from the UI carries a neutral "Edited" tag.
 
 Editing happens in a sheet, where Save is the one filled button and Reset is kept apart from it. The schedule sheet has no cron text: chips pick the repeat (every day, certain days, every few hours), a row of equal cells picks weekdays or the hour step, and a tile states the result in a sentence.
 

@@ -23,7 +23,7 @@ export interface WatchlistDialogData {
 
 export type WatchlistDialogResult = 'added' | 'updated' | 'removed';
 
-const KEYWORD_SUGGESTIONS = ['2160p', '1080p', 'BluRay', 'Blu-ray', 'REMUX', 'WEB-DL', 'HUN', 'DV', 'HDR'];
+const KEYWORD_SUGGESTIONS = ['2160p', 'bluray', 'blu-ray', 'remux', 'dv', 'hdr', 'truehd'];
 
 @Component({
     selector: 'app-watchlist-dialog',

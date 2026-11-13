@@ -38,7 +38,12 @@
             <div class="head">
                 <h2 [id]="'settings-' + view.group.id">{{ view.group.name }}</h2>
                 <span class="hint">{{ view.group.description }}</span>
-                @if (view.testable) {
+                @if (view.connected; as text) {
+                    <span class="result" role="status">
+                        <mat-icon class="filled" aria-hidden="true">check_circle</mat-icon>
+                        {{ text }}
+                    </span>
+                } @else if (view.testable) {
                     <button
                         matButton
                         class="small"
@@ -60,6 +65,12 @@
                     Edit
                 </button>
             </div>
+            @if (view.failure; as text) {
+                <p class="result failed" role="alert">
+                    <mat-icon aria-hidden="true">error</mat-icon>
+                    {{ text }}
+                </p>
+            }
             <dl class="seg-list">
                 @for (row of view.rows; track row.key) {
                     <div class="tile kv">
@@ -76,12 +87,6 @@
                     </div>
                 }
             </dl>
-            @if (results()[view.group.id]; as result) {
-                <p class="result" role="status" [class.failed]="!result.ok">
-                    <mat-icon aria-hidden="true">{{ result.ok ? 'check_circle' : 'error' }}</mat-icon>
-                    {{ result.text }}
-                </p>
-            }
         </section>
     }
 </main>

@@ -1,4 +1,4 @@
-export type ReleaseTagKind = 'res' | 'hdr' | 'plain';
+export type ReleaseTagKind = 'res' | 'hdr' | 'plain' | 'audio';
 
 export interface ReleaseTag {
     label: string;
@@ -39,15 +39,17 @@ const TAG_GROUPS: { kind: ReleaseTagKind; options: TagOption[] }[] = [
             ['DVDRip', 'DVDRip'],
         ],
     },
+    { kind: 'audio', options: [['Atmos', 'Atmos']] },
     {
-        kind: 'plain',
+        kind: 'audio',
         options: [
-            ['Atmos', 'Atmos'],
-            ['TrueHD', 'TrueHD'],
+            ['True-?HD(?:[57]\\.1)?', 'TrueHD'],
             ['DTS-?HD', 'DTS-HD'],
         ],
     },
 ];
+
+const LABEL_ORDER = TAG_GROUPS.flatMap((group) => group.options.map(([, label]) => label));
 
 const COMPILED = TAG_GROUPS.map((group) => ({
     kind: group.kind,
@@ -63,4 +65,13 @@ export function parseReleaseTags(releaseName: string): ReleaseTag[] {
         if (match) tags.push({ label: match[1], kind: group.kind });
     }
     return tags;
+}
+
+/** Every tag of the given kinds that at least one of the releases carries, best first. */
+export function summarizeReleaseTags(releaseNames: string[], kinds: ReleaseTagKind[]): ReleaseTag[] {
+    const found = new Map<string, ReleaseTag>();
+    for (const tag of releaseNames.flatMap(parseReleaseTags)) {
+        if (kinds.includes(tag.kind)) found.set(tag.label, tag);
+    }
+    return [...found.values()].sort((a, b) => LABEL_ORDER.indexOf(a.label) - LABEL_ORDER.indexOf(b.label));
 }
