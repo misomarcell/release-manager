@@ -13,9 +13,6 @@ const TAG_GROUPS: { kind: ReleaseTagKind; options: TagOption[] }[] = [
         options: [
             ['2160[pi]', '2160p'],
             ['1080[pi]', '1080p'],
-            ['720p', '720p'],
-            ['576[pi]', '576p'],
-            ['480[pi]', '480p'],
         ],
     },
     { kind: 'hdr', options: [['DV|DoVi|Dolby[. ]?Vision', 'DV']] },
