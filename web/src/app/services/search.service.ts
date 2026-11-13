@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
 import { ApiService } from './api.service';
-import type { DownloadRequest, DownloadResponse } from '@rm/shared/download.models';
+import type { DownloadPaths, DownloadRequest, DownloadResponse } from '@rm/shared/download.models';
 import type { MediaType, MovieMetadata, TitleSearchResponse } from '@rm/shared/tmdb.models';
 import type {
     ReleaseCategory,
@@ -60,6 +60,10 @@ export class SearchService {
 
     async fetchNfo(tracker: TrackerId, torrentId: string): Promise<string> {
         return this.api.getText(`/api/search/nfo/${tracker}/${torrentId}`);
+    }
+
+    async getDownloadPaths(): Promise<DownloadPaths> {
+        return this.api.get<DownloadPaths>('/api/search/download-paths');
     }
 
     async download(request: DownloadRequest): Promise<DownloadResponse> {

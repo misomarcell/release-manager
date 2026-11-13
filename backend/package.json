@@ -19,7 +19,7 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "express-rate-limit": "^8.3.2",
-    "node-cron": "^4.2.1",
+    "node-cron": "^4.6.0",
     "openai": "^7.23.0",
     "pg": "^8.16.0",
     "shared": "workspace:*",
@@ -30,7 +30,6 @@
     "@types/cors": "^2.8.18",
     "@types/express": "^5.0.1",
     "@types/node": "^20.19.37",
-    "@types/node-cron": "^3.0.11",
     "@types/pg": "^8.15.4",
     "tsx": "^4.19.4",
     "typescript": "~6.0.3"

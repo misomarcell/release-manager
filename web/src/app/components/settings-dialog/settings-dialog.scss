@@ -1,0 +1,45 @@
+mat-dialog-content,
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+// Clears the floating label of the first field, which the dialog content would otherwise clip.
+form {
+    padding-top: 4px;
+}
+
+.code {
+    font-family: var(--rm-mono);
+}
+
+mat-form-field mat-icon {
+    color: var(--mat-sys-on-surface-variant);
+}
+
+.locked {
+    display: flex;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+
+    mat-icon {
+        flex: none;
+        color: var(--mat-sys-on-surface-variant);
+    }
+}
+
+.error {
+    color: var(--mat-sys-error);
+    font-size: 13px;
+}
+
+.reset {
+    --mat-button-text-label-text-color: var(--mat-sys-error);
+}
+
+.spacer {
+    flex: 1;
+}

@@ -1,0 +1,77 @@
+mat-dialog-content {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.label {
+    padding: 0 4px 8px;
+}
+
+// Equal cells in one row, so seven weekdays fit a phone without wrapping.
+.steps {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 6px;
+}
+
+.step {
+    justify-content: center;
+    height: 40px;
+    padding: 0;
+
+    &::after {
+        inset: -2px 0;
+    }
+
+    &.on {
+        padding: 0;
+    }
+}
+
+.time {
+    align-self: flex-start;
+    width: 160px;
+    margin-top: 4px;
+}
+
+.custom,
+.summary {
+    padding: 12px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+}
+
+.summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    mat-icon {
+        flex: none;
+        color: var(--mat-sys-on-surface-variant);
+    }
+
+    span {
+        display: grid;
+    }
+
+    b {
+        font-size: 14.5px;
+        font-weight: 600;
+    }
+}
+
+.error {
+    color: var(--mat-sys-error);
+    font-size: 13px;
+}
+
+.reset {
+    --mat-button-text-label-text-color: var(--mat-sys-error);
+}
+
+.spacer {
+    flex: 1;
+}

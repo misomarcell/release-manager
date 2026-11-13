@@ -11,10 +11,8 @@ import { formatBytes } from '../../utils/format-bytes';
 import { extractHttpError } from '../../utils/http-error';
 import { sheetConfig } from '../../utils/sheet';
 import { describeRelease } from '../../utils/release-view';
+import type { DownloadPaths } from '@rm/shared/download.models';
 import { trackerHasNfo, type TrackerRelease } from '@rm/shared/tracker.models';
-
-const MOVIES_BASE = '/media/Movies';
-const TV_BASE = '/media/TV_Shows';
 
 @Component({
     selector: 'app-release-list',
@@ -50,13 +48,20 @@ export class ReleaseListComponent {
         }
     }
 
-    protected download(release: TrackerRelease): void {
+    protected async download(release: TrackerRelease): Promise<void> {
         const isTV = release.mediaType === 'tv';
+        let paths: DownloadPaths;
+        try {
+            paths = await this.search.getDownloadPaths();
+        } catch (e: unknown) {
+            this.snackBar.open(extractHttpError(e, 'Failed to load the save paths'), 'OK', { duration: 5000 });
+            return;
+        }
         const data: DownloadDialogData = {
             release,
             isTV,
             category: isTV ? 'TV Shows' : 'Movies',
-            suggestedPath: isTV ? this.tvPath(release) : MOVIES_BASE,
+            suggestedPath: isTV ? this.tvPath(release, paths.tv) : paths.movies,
         };
 
         this.dialog
@@ -70,10 +75,10 @@ export class ReleaseListComponent {
             });
     }
 
-    private tvPath(release: TrackerRelease): string {
+    private tvPath(release: TrackerRelease, base: string): string {
         const tv = release.tvInfo;
         const season =
             tv?.type === 'episode' && tv.season != null ? `/Season ${String(tv.season).padStart(2, '0')}` : '';
-        return `${TV_BASE}/${this.title()}${season}`;
+        return `${base}/${this.title()}${season}`;
     }
 }

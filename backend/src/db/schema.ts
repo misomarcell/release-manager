@@ -179,4 +179,11 @@ export const SCHEMA_SQL = `
     );
 
     CREATE INDEX IF NOT EXISTS watchlist_releases_unseen_idx ON watchlist_releases (item_id) WHERE NOT seen;
+
+    CREATE TABLE IF NOT EXISTS settings (
+      key        VARCHAR(64) PRIMARY KEY,
+      value      TEXT NOT NULL,
+      encrypted  BOOLEAN NOT NULL DEFAULT FALSE,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
   `;

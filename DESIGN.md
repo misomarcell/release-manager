@@ -168,7 +168,7 @@ All colour comes from theme roles. Components never contain hexes.
 - **Phone (default):** a bottom navigation bar with Releases, Library, Watchlist and Discover. Opening a title is a full-screen page that slides over the list.
 - **Desktop (from 960px):** an 88px navigation rail, a list column up to 432px wide and a detail pane. The first row is shown in the pane until another is selected.
 - The top bar is always 56px tall: a search field (`app-filter-search`), a page title (`app-page-title`) or back button and label (title page on phones).
-- Manage Users, Administration, Logs and Sign out are behind the account avatar: in the top bar on phones, at the bottom of the rail on desktop.
+- Manage Users, Settings, Administration, Logs and Sign out are behind the account avatar: in the top bar on phones, at the bottom of the rail on desktop.
 - Fixed bars pad by the safe-area insets.
 
 ## Elevation & Depth
@@ -214,7 +214,13 @@ Rail items sit on a 56×48 shape with a 14px radius; the active one fills with t
 
 ### Sheets
 
-Download ("Send to qBittorrent"), the watchlist editor and the NFO viewer are bottom sheets on phones and centred dialogs otherwise. In the download sheet the save path is the focused field. In the watchlist sheet Remove is kept apart from Save.
+Download ("Send to qBittorrent"), the watchlist editor, the NFO viewer and the settings editors are bottom sheets on phones and centred dialogs otherwise. In the download sheet the save path is the focused field. In the watchlist sheet Remove is kept apart from Save.
+
+### Settings
+
+A single column (up to 720px) of segmented groups under a page title. Schedules come first: each is a pressable row with the job, its schedule in words and the next run. Then one group per service: a heading with a one-line description, an optional text "Test" button and a tonal "Edit" button, and key/value rows that are read-only. URLs and paths are mono; a secret only ever shows a lock and "Set"; a value saved from the UI carries a neutral "Edited" tag.
+
+Editing happens in a sheet, where Save is the one filled button and Reset is kept apart from it. The schedule sheet has no cron text: chips pick the repeat (every day, certain days, every few hours), a row of equal cells picks weekdays or the hour step, and a tile states the result in a sentence.
 
 ### Loading
 

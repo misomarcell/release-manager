@@ -57,6 +57,10 @@ interface JellyfinConnectionConfig {
 }
 
 class JellyfinService {
+    isConfigured(): boolean {
+        return Boolean(config.jellyfin.url && config.jellyfin.apiKey);
+    }
+
     async testConnection(): Promise<{ version: string }> {
         this.getRequiredConfig();
 
@@ -223,7 +227,7 @@ class JellyfinService {
     private getRequiredConfig(): JellyfinConnectionConfig {
         const { url, apiKey, userId } = config.jellyfin;
         if (!url || !apiKey) {
-            throw new Error('Jellyfin is not configured. Set JELLYFIN_URL and JELLYFIN_API_KEY.');
+            throw new Error('Jellyfin is not configured. Add its URL and API key in Settings.');
         }
 
         return { url, apiKey, userId };

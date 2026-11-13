@@ -3,23 +3,20 @@ import express from 'express';
 import type { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import cron from 'node-cron';
 import { closeDatabase, initDatabase } from './db/connection.js';
 import { logger } from './utils/logger.js';
 import { reloadCache } from './repositories/jellyfin.repository.js';
-import { needsSyncOnStartup } from './repositories/sync.repository.js';
-import { jellyfinService } from './services/jellyfin.service.js';
-import { qbittorrentService } from './services/qbittorrent.service.js';
-import { watchlistService } from './services/watchlist.service.js';
+import { applySchedules, stopSchedules } from './services/scheduler.service.js';
+import { loadSettings } from './services/settings.service.js';
 import authRoutes from './routes/auth.routes.js';
 import searchRoutes from './routes/search.routes.js';
 import userRoutes from './routes/user.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import settingsRoutes from './routes/settings.routes.js';
 import versionRoutes from './routes/version.routes.js';
 import recommendationsRoutes from './routes/recommendations.routes.js';
 import libraryRoutes from './routes/library.routes.js';
 import watchlistRoutes from './routes/watchlist.routes.js';
-import type { SyncService } from 'shared/sync.models';
 
 const app = express();
 
@@ -37,6 +34,7 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/admin/settings', settingsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/version', versionRoutes);
 app.use('/api/recommendations', recommendationsRoutes);
@@ -67,34 +65,13 @@ app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
     res.status(500).json({ error: 'Internal server error' });
 });
 
-interface ScheduledSync {
-    service: SyncService;
-    label: string;
-    enabled: boolean;
-    cronSchedule: string;
-    sync: () => Promise<number>;
-}
-
 async function start() {
     await initDatabase();
 
     await reloadCache();
 
-    scheduleSync({
-        service: 'jellyfin',
-        label: 'Jellyfin',
-        enabled: Boolean(config.jellyfin.url && config.jellyfin.apiKey),
-        cronSchedule: config.jellyfin.cronSchedule,
-        sync: () => jellyfinService.syncLibrary(),
-    });
-    scheduleSync({
-        service: 'qbittorrent',
-        label: 'qBittorrent',
-        enabled: Boolean(config.qbittorrent.url),
-        cronSchedule: config.qbittorrent.cronSchedule,
-        sync: () => qbittorrentService.syncTorrents(),
-    });
-    scheduleWatchlistCheck();
+    await loadSettings();
+    applySchedules();
 
     const server = app.listen(config.port, () => {
         logger.info(`Backend started`, { port: config.port });
@@ -102,7 +79,7 @@ async function start() {
 
     const shutdown = (signal: string) => {
         console.log(`Received ${signal}, shutting down`);
-        cron.getTasks().forEach((task) => void task.stop());
+        stopSchedules();
         server.close(() => {
             closeDatabase()
                 .catch((err: unknown) => console.error('Failed to close database pool:', err))
@@ -112,51 +89,6 @@ async function start() {
     };
     process.once('SIGTERM', () => shutdown('SIGTERM'));
     process.once('SIGINT', () => shutdown('SIGINT'));
-}
-
-function scheduleSync({ service, label, enabled, cronSchedule, sync }: ScheduledSync): void {
-    if (!enabled) {
-        logger.info(`${label} not configured - sync disabled`);
-        return;
-    }
-
-    needsSyncOnStartup(service)
-        .then((shouldSync) => {
-            if (shouldSync) {
-                sync().catch((err: unknown) =>
-                    logger.error(`${label} initial sync failed`, {
-                        error: err instanceof Error ? err.message : String(err),
-                    }),
-                );
-            } else {
-                logger.info(`${label} startup sync skipped - data is recent`);
-            }
-        })
-        .catch((err: unknown) =>
-            logger.error(`${label} startup check failed`, {
-                error: err instanceof Error ? err.message : String(err),
-            }),
-        );
-
-    cron.schedule(cronSchedule, () => {
-        sync().catch((err: unknown) =>
-            logger.error(`${label} scheduled sync failed`, {
-                error: err instanceof Error ? err.message : String(err),
-            }),
-        );
-    });
-    logger.info(`${label} sync scheduled`, { schedule: cronSchedule });
-}
-
-function scheduleWatchlistCheck(): void {
-    cron.schedule(config.watchlist.cronSchedule, () => {
-        watchlistService.checkAll().catch((err: unknown) =>
-            logger.error('Watchlist scheduled check failed', {
-                error: err instanceof Error ? err.message : String(err),
-            }),
-        );
-    });
-    logger.info('Watchlist check scheduled', { schedule: config.watchlist.cronSchedule });
 }
 
 start().catch((err) => {

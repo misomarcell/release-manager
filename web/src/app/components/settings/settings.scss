@@ -1,0 +1,173 @@
+:host {
+    display: block;
+}
+
+.page {
+    // Keeps Material buttons, which stack above their neighbours, under the sticky bottom navigation.
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    box-sizing: border-box;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 12px 24px;
+
+    @media (min-width: 960px) {
+        padding: 12px 16px 32px;
+    }
+}
+
+app-page-title {
+    margin-bottom: -12px;
+}
+
+section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 8px;
+    min-height: 36px;
+    padding: 0 2px 0 6px;
+
+    h2 {
+        font-size: 16px;
+        line-height: 22px;
+        font-weight: 650;
+    }
+
+    .hint {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    // On a narrow screen the description gets its own line under the heading and its buttons.
+    @media (max-width: 599.98px) {
+        h2 {
+            flex: 1;
+        }
+
+        .hint {
+            order: 1;
+            flex-basis: 100%;
+            padding-bottom: 4px;
+        }
+    }
+}
+
+.small {
+    --mat-button-text-container-height: 34px;
+    --mat-button-tonal-container-height: 34px;
+    flex: none;
+    font-size: 13px;
+}
+
+.job {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 2px 12px;
+    padding: 12px 10px 12px 16px;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+
+    b {
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    > mat-icon {
+        grid-area: 1 / 2 / span 2;
+        color: var(--mat-sys-on-surface-variant);
+    }
+
+    @media (min-width: 600px) {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+
+        > mat-icon {
+            grid-area: auto;
+        }
+
+        .when {
+            text-align: end;
+        }
+    }
+}
+
+.what,
+.when {
+    display: grid;
+    min-width: 0;
+}
+
+.when > :first-child {
+    font-weight: 550;
+}
+
+dl {
+    margin: 0;
+}
+
+.kv {
+    grid-template-columns: 112px minmax(0, 1fr);
+    align-items: center;
+    min-height: 24px;
+}
+
+dd {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+
+    &.empty {
+        color: var(--mat-sys-on-surface-variant);
+    }
+
+    mat-icon {
+        flex: none;
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        color: var(--mat-sys-on-surface-variant);
+    }
+
+    .tag {
+        margin-inline-start: auto;
+        font-family: var(--mat-sys-body-medium-font);
+    }
+}
+
+.result {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 6px 0;
+    font-size: 13px;
+    color: var(--rm-positive);
+    overflow-wrap: anywhere;
+
+    mat-icon {
+        flex: none;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+    }
+
+    &.failed {
+        color: var(--mat-sys-error);
+    }
+}
+
+.skeleton {
+    height: 64px;
+}

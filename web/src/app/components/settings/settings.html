@@ -1,0 +1,87 @@
+<main class="page">
+    <app-page-title title="Settings" />
+
+    <app-failure-notice [failures]="failures()" />
+
+    @if (jobs().length) {
+        <section aria-labelledby="settings-schedules">
+            <div class="head">
+                <h2 id="settings-schedules">Schedules</h2>
+                <span class="hint">Server time, {{ timeZone() }}</span>
+            </div>
+            <div class="seg-list">
+                @for (row of jobs(); track row.job.id) {
+                    <button class="tile job pressable" type="button" (click)="editSchedule(row.job)">
+                        <span class="what">
+                            <b>{{ row.job.name }}</b>
+                            <span class="hint">{{ row.job.description }}</span>
+                        </span>
+                        <span class="when">
+                            <span>{{ row.summary }}</span>
+                            <span class="hint num">{{ row.status }}</span>
+                        </span>
+                        <mat-icon aria-hidden="true">chevron_right</mat-icon>
+                    </button>
+                }
+            </div>
+        </section>
+    } @else if (!failures().length) {
+        <div class="seg-list" aria-hidden="true">
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+        </div>
+    }
+
+    @for (view of groups(); track view.group.id) {
+        <section [attr.aria-labelledby]="'settings-' + view.group.id">
+            <div class="head">
+                <h2 [id]="'settings-' + view.group.id">{{ view.group.name }}</h2>
+                <span class="hint">{{ view.group.description }}</span>
+                @if (view.testable) {
+                    <button
+                        matButton
+                        class="small"
+                        type="button"
+                        [disabled]="testing() !== null"
+                        [attr.aria-label]="'Test the ' + view.group.name + ' connection'"
+                        (click)="test(view.group)"
+                    >
+                        {{ testing() === view.group.id ? 'Testing…' : 'Test' }}
+                    </button>
+                }
+                <button
+                    matButton="tonal"
+                    class="small"
+                    type="button"
+                    [attr.aria-label]="'Edit ' + view.group.name"
+                    (click)="edit(view)"
+                >
+                    Edit
+                </button>
+            </div>
+            <dl class="seg-list">
+                @for (row of view.rows; track row.key) {
+                    <div class="tile kv">
+                        <dt>{{ row.label }}</dt>
+                        <dd [class.mono]="row.mono" [class.empty]="row.empty">
+                            @if (row.secret) {
+                                <mat-icon aria-hidden="true">lock</mat-icon>
+                            }
+                            {{ row.text }}
+                            @if (row.saved) {
+                                <span class="tag">Edited</span>
+                            }
+                        </dd>
+                    </div>
+                }
+            </dl>
+            @if (results()[view.group.id]; as result) {
+                <p class="result" role="status" [class.failed]="!result.ok">
+                    <mat-icon aria-hidden="true">{{ result.ok ? 'check_circle' : 'error' }}</mat-icon>
+                    {{ result.text }}
+                </p>
+            }
+        </section>
+    }
+</main>
