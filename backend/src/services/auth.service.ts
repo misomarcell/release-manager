@@ -8,7 +8,7 @@ import {
 import type {
     RegistrationResponseJSON,
     AuthenticationResponseJSON,
-    AuthenticatorTransportFuture,
+    AuthenticatorTransport,
 } from '@simplewebauthn/server';
 import { config } from '../config.js';
 import {
@@ -116,7 +116,7 @@ export async function finishAuthentication(
             id: cred.id,
             publicKey: new Uint8Array(cred.public_key),
             counter: cred.counter,
-            transports: cred.transports as AuthenticatorTransportFuture[],
+            transports: cred.transports as AuthenticatorTransport[],
         },
     });
 

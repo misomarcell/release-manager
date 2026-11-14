@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import { resolve } from 'node:path';
 
-dotenv.config({ path: resolve(import.meta.dirname, '../../.env') });
+dotenv.config({ path: resolve(import.meta.dirname, '../../.env'), quiet: true });
 
 export const config = {
     port: parseInt(process.env['PORT'] ?? '3000', 10),
