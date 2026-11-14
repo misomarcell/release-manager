@@ -1,8 +1,8 @@
-FROM node:22.22.3-alpine AS base
+FROM node:26.13.1-alpine AS base
 WORKDIR /app
 
 FROM base AS pnpm
-ARG PNPM_VERSION=12.5.1
+ARG PNPM_VERSION=12.18.0
 RUN npm install -g pnpm@${PNPM_VERSION} && npm cache clean --force
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY shared/package.json shared/

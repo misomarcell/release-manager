@@ -1,9 +1,9 @@
 {
   "name": "release-manager-workspace",
   "private": true,
-  "packageManager": "pnpm@12.5.1",
+  "packageManager": "pnpm@12.18.0",
   "engines": {
-    "node": ">=22.22.3 <23"
+    "node": ">=26.13.1 <27"
   },
   "scripts": {
     "start": "pnpm --filter web start",
@@ -21,11 +21,11 @@
     "@eslint/js": "^10.0.1",
     "eslint": "^10.14.0",
     "husky": "^9.1.7",
-    "knip": "^5.88.1",
-    "lint-staged": "^16.4.0",
+    "knip": "^6.45.1",
+    "lint-staged": "^17.6.0",
     "prettier": "3.10.1",
     "typescript": "~6.0.3",
-    "typescript-eslint": "8.66.0"
+    "typescript-eslint": "8.72.2"
   },
   "lint-staged": {
     "*.{ts,html}": "eslint",

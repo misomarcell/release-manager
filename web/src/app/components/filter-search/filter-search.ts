@@ -12,7 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { AccountMenuComponent } from '../account-menu/account-menu';
 
-export type SearchFilterValue = string | boolean;
+type SearchFilterValue = string | boolean;
 
 interface SearchFilterOption {
     value: string;

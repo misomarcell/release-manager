@@ -30,7 +30,7 @@ A self-hosted web app for finding movie and TV releases on your trackers, enrich
 | Layer    | Technology                        |
 | -------- | --------------------------------- |
 | Frontend | Angular 22, Material 3, SSR       |
-| Backend  | Express 5, TypeScript, Node.js 22 |
+| Backend  | Express 5, TypeScript, Node.js 26 |
 | Database | PostgreSQL 17                     |
 | Auth     | WebAuthn (SimpleWebAuthn)         |
 | Tooling  | pnpm workspaces                   |
@@ -38,7 +38,7 @@ A self-hosted web app for finding movie and TV releases on your trackers, enrich
 
 ## Requirements
 
-- Docker with Docker Compose, or Node.js 22 (see `.nvmrc`) and pnpm (`corepack enable`) for development
+- Docker with Docker Compose, or Node.js 26 (see `.nvmrc`) and pnpm (`npm install -g pnpm`) for development
 - A [TMDB](https://www.themoviedb.org/settings/api) API read access token
 - An account on at least one supported tracker (nCore needs your cookie credentials; The Pirate Bay needs none)
 - Optional: qBittorrent with the Web UI enabled, Jellyfin, an OpenAI API key
