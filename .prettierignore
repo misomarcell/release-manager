@@ -4,4 +4,3 @@ node_modules/
 .agents/
 .impeccable/
 pnpm-lock.yaml
-skills-lock.json

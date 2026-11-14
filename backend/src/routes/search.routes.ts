@@ -148,7 +148,7 @@ router.get('/nfo/:tracker/:id', requireAuth, async (req: Request, res: Response)
             res.status(404).json({ error: 'This tracker has no NFO files' });
             return;
         }
-        res.type('html').send(html);
+        res.type('text/plain').send(html);
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'NFO fetch failed';
         res.status(502).json({ error: message });

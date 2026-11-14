@@ -198,8 +198,6 @@ class JellyfinService {
             endpoint.searchParams.set(key, value);
         }
 
-        console.log(`[Jellyfin] GET ${endpoint.pathname}${endpoint.search}`);
-
         const response = await fetch(endpoint, {
             headers: this.authHeaders(),
             signal: AbortSignal.timeout(timeoutMs),

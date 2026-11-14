@@ -117,7 +117,6 @@ class ApibayService implements TrackerProvider {
     private async fetchReleases(url: URL): Promise<TrackerRelease[]> {
         if (Date.now() < this.blockedUntil) throw this.rateLimited();
 
-        console.log('[apibay]', url.toString());
         const response = await fetch(url, {
             headers: { Accept: 'application/json' },
             signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
