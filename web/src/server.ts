@@ -22,6 +22,14 @@ const SKIPPED_RESPONSE_HEADERS = new Set([
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
+app.disable('x-powered-by');
+app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+});
+
 app.use('/api', express.raw({ type: '*/*' }), async (req, res) => {
     try {
         const url = new URL(req.originalUrl, backendUrl);

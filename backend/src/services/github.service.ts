@@ -13,11 +13,11 @@ interface VersionInfo {
 }
 
 let cached: { repo: string; data: VersionInfo; fetchedAt: number } | null = null;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
 export async function fetchLatestCommit(): Promise<VersionInfo> {
     const { repo, token } = config.github;
-    if (cached?.repo === repo && Date.now() - cached.fetchedAt < CACHE_TTL) {
+    if (cached?.repo === repo && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
         return cached.data;
     }
 

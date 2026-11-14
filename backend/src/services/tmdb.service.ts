@@ -5,6 +5,7 @@ import type { MovieMetadata, MetadataLookup, MediaType, TitleSummary } from 'sha
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w342';
+const REQUEST_TIMEOUT_MS = 10_000;
 
 function posterUrl(posterPath: string): string {
     return posterPath ? `${IMAGE_BASE}${posterPath}` : '';
@@ -13,7 +14,6 @@ function posterUrl(posterPath: string): string {
 function formatRating(voteAverage: number): string {
     return voteAverage ? String(Math.round(voteAverage * 10) / 10) : '';
 }
-const REQUEST_TIMEOUT_MS = 10_000;
 
 interface FindResult {
     id: number;
@@ -213,8 +213,6 @@ class TmdbService {
         for (const [key, value] of Object.entries(params ?? {})) {
             url.searchParams.set(key, value);
         }
-
-        console.log('[TMDB]', url.toString());
 
         try {
             const res = await fetch(url, {

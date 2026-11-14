@@ -89,8 +89,6 @@ class NcoreService implements TrackerProvider {
         const ncore = this.getRequiredConfig('Missing nCore credentials.');
         const url = this.getDownloadUrl(downloadRef, ncore.baseUrl);
 
-        console.log('[nCore]', `Downloading torrent from ${url.toString()}`);
-
         const response = await fetch(url, {
             headers: { Cookie: this.getCookieHeader(ncore) },
             signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -175,7 +173,6 @@ class NcoreService implements TrackerProvider {
             searchUrl.searchParams.set('query', '*');
         }
 
-        // nCore uses 'oldal' for page number.
         if (params.page > 1) {
             searchUrl.searchParams.set('oldal', String(params.page));
         }
@@ -184,8 +181,6 @@ class NcoreService implements TrackerProvider {
     }
 
     private async requestNcoreBody(url: URL, headers: Record<string, string>, errorPrefix: string): Promise<string> {
-        console.log('[nCore]', url.toString());
-
         const response = await fetch(url, {
             method: 'GET',
             headers,
@@ -255,8 +250,7 @@ class NcoreService implements TrackerProvider {
             throw new Error('Invalid download URL.');
         }
 
-        const expected = new URL(baseUrl);
-        if (parsed.hostname !== expected.hostname) {
+        if (parsed.origin !== new URL(baseUrl).origin) {
             throw new Error('Download URL does not match the configured nCore domain.');
         }
 

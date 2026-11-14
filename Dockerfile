@@ -41,6 +41,7 @@ COPY backend/package.json backend/
 COPY --from=build-backend /app/shared/dist ./shared/dist
 COPY --from=build-backend /app/backend/dist ./backend/dist
 EXPOSE 3000
+USER node
 CMD ["node", "backend/dist/index.js"]
 
 # --- Frontend runtime ---
@@ -49,4 +50,5 @@ ENV NODE_ENV=production
 COPY --from=build-web /app/web/dist ./web/dist
 EXPOSE 4000
 ENV PORT=4000
+USER node
 CMD ["node", "web/dist/release-manager/server/server.mjs"]

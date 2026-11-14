@@ -24,7 +24,7 @@ export const config = {
     },
     rp: {
         id: process.env['RP_ID'] ?? 'localhost',
-        name: 'MovieReleases',
+        name: 'Release Manager',
         origin: (process.env['RP_ORIGIN'] ?? 'http://localhost:4000,http://localhost:4200')
             .split(',')
             .map((o) => o.trim()),
@@ -37,7 +37,7 @@ export const config = {
         savePathTv: process.env['DOWNLOAD_PATH_TV']?.trim() || '/media/TV_Shows',
         cronSchedule: process.env['QBITTORRENT_CRON']?.trim() || '0 6 * * *',
     },
-    cacheExpiryMs: 7 * 24 * 60 * 60 * 1000, // 1 week
+    cacheExpiryMs: 7 * 24 * 60 * 60 * 1000,
     openai: {
         apiKey: process.env['OPENAI_API_KEY']?.trim() || '',
     },

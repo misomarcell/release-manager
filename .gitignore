@@ -40,15 +40,10 @@ testem.log
 /typings
 __screenshots__/
 .env
-firebase-debug.log
-firebase-debug.*.log
 
 # System files
 .DS_Store
 Thumbs.db
 /web/.angular
 /web/dist
-shared/tsconfig.tsbuildinfo
-shared/tsconfig.tsbuildinfo
-shared/tsconfig.tsbuildinfo
 *.tsbuildinfo

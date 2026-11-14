@@ -27,7 +27,7 @@ import {
     updateLastLogin,
 } from '../repositories/user.repository.js';
 
-const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 
 export async function startRegistration(username: string, ipAddress?: string, userAgent?: string) {
     const existingUser = await findUserByUsername(username);

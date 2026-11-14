@@ -67,12 +67,15 @@ backend/src/
   db/connection.ts      # PostgreSQL pool + schema init
   db/schema.ts          # Schema SQL run on startup
   middleware/auth.ts     # Session authentication middleware
+  middleware/validate.ts # Shared zod schemas + request parsing helper
   routes/
     auth.routes.ts      # Passkey registration/login endpoints
     search.routes.ts    # Release search, per-title release lookup, title metadata, TMDB title search, NFO, download, download paths
     version.routes.ts   # App version endpoint (latest GitHub commit)
     recommendations.routes.ts # AI-powered recommendations + feedback
     admin.routes.ts     # Admin actions incl. Jellyfin sync + qBittorrent test
+    user.routes.ts      # Manage Users: list, activate, admin flag, delete (admin only)
+    library.routes.ts   # Jellyfin library list enriched with TMDB metadata
     settings.routes.ts  # Read and save the UI-editable settings (admin only)
     watchlist.routes.ts # Per-user watchlist CRUD, mark as read, manual check
   services/
@@ -85,7 +88,9 @@ backend/src/
     ncore.service.ts    # nCore plugin: search, top list, title lookup, NFO, torrent file download
     apibay.service.ts   # The Pirate Bay plugin (apibay.org): search, title lookup, magnet links, throttling
     watchlist.service.ts # Watchlist release check: title lookup on every tracker, keyword filter, new release detection
-    tmdb.service.ts     # TMDB API + PostgreSQL caching; enriches all results with inJellyfinLibrary
+    tmdb.service.ts     # TMDB API client: metadata lookup, title search, top-rated/trending
+    metadata.service.ts # TMDB metadata behind the PostgreSQL cache; adds inJellyfinLibrary
+    library.service.ts  # Library page: Jellyfin items matched to qBittorrent torrents, delete, free space
     qbittorrent.service.ts # qBittorrent Web API integration
     jellyfin.service.ts # Jellyfin API: library sync (incl. per-season episode counts) + connection test
     recommendations.service.ts # AI personalized recs (filtered by TMDB id) + TMDB top-rated/trending
@@ -97,6 +102,8 @@ backend/src/
     recommendations.repository.ts # Feedback and recommendation cache DB operations
     log.repository.ts           # Log query database operations
     settings.repository.ts      # Saved settings (`settings` table)
+    qbittorrent.repository.ts   # Synced qBittorrent torrents (hash + content path)
+    sync.repository.ts          # Sync log per service + stale check on startup
     watchlist.repository.ts     # Watchlist items, known/unseen releases and baselines per tracker
     jellyfin.repository.ts      # Jellyfin library DB operations + in-memory lookup cache + owned titles for recs
   utils/
@@ -111,7 +118,9 @@ backend/src/
 
 - Uses WebAuthn/Passkey via `@simplewebauthn/server`.
 - `requireUserVerification: false` in both registration and authentication to support desktop password managers.
-- Single-user app — no rate limiting or challenge expiry needed.
+- A new account is created inactive (`valid = false`); an admin activates it on the Manage Users page, or the first one is activated in the database.
+- `/api/auth/*` is rate limited (20 requests per 15 minutes per IP) and challenges expire after 5 minutes.
+- Sessions are an `httpOnly`, `SameSite=Lax` cookie (`Secure` in production) valid for 30 days.
 
 ## Settings
 
@@ -139,13 +148,15 @@ backend/src/
 - The Pirate Bay only contributes releases that carry an IMDb id: its text search drops uploads without one and its title lookup is strictly by id, so its results can always be tied to a title.
 - apibay has no paging (one page, at most 100 results), no top list, no NFO and no `.torrent` files, and it rate limits quickly. `apibay.service.ts` therefore runs requests one at a time with a pause, caches results for 10 minutes and, after a 429, fails fast until the cooldown has passed.
 - `TrackerRelease.downloadRef` is an opaque value only its tracker understands (nCore: the download URL, The Pirate Bay: the info hash).
+- An nCore download URL carries the account's passkey: never log a `downloadRef` or a tracker URL built from one.
+- NFO content comes from the tracker and is untrusted: the API serves it as `text/plain` and the UI renders it through Angular's sanitizer.
 
 ## Download Flow
 
 1. Frontend calculates a suggested save path from `GET /api/search/download-paths` (the configured movie and TV folders) and lets the user edit it.
 2. Frontend sends `{ tracker, downloadRef, savePath, category }` to `POST /api/search/download`.
 3. Backend validates `tracker` against `TRACKERS` and `category` against `DOWNLOAD_CATEGORIES` from shared models.
-4. `trackerService.getTorrent(tracker, downloadRef)` returns a `TorrentSource`: nCore fetches the `.torrent` file using its cookies (with hostname validation against `config.ncore.baseUrl`), The Pirate Bay builds a magnet link from the info hash.
+4. `trackerService.getTorrent(tracker, downloadRef)` returns a `TorrentSource`: nCore fetches the `.torrent` file using its cookies (the URL must have the same origin as `config.ncore.baseUrl`), The Pirate Bay builds a magnet link from the info hash.
 5. `qbittorrent.service` uploads it with `addTorrent(torrentBuffer, savePath, category)` or `addMagnet(magnetUri, savePath, category)`.
 6. nCore cookies are built via a private `getCookieHeader()` helper in `ncore.service.ts`.
 
@@ -163,7 +174,8 @@ backend/src/
 
 - `docker-compose.yml` runs four services: `db` (PostgreSQL), `backend` (Express), `frontend` (Angular SSR), `pgadmin` (pgAdmin 4 database UI).
 - Backend is on both `default` and `media` networks — `media` is an external Docker network shared with qBittorrent.
-- Configuration via `.env` file at project root.
+- Configuration via `.env` file at project root. `docker-compose.yml` holds no deployment-specific values: the public host name comes from `RP_ID`, `RP_ORIGIN` and `NG_ALLOWED_HOSTS` in `.env`.
+- `db` and `pgadmin` publish their ports on `127.0.0.1` only; the runtime images run as the unprivileged `node` user.
 - `Dockerfile` uses multi-stage builds with separate targets for backend and frontend. pnpm is only used in build stages; the backend runtime gets a `--prod` install filtered to `backend...`, the frontend runtime only ships the self-contained Angular SSR bundle.
 - New native dependencies with install scripts must be allowed under `allowBuilds` in `pnpm-workspace.yaml`.
 - For development, start only `db` and `pgadmin`: `docker compose up db pgadmin -d`.
@@ -184,6 +196,7 @@ backend/src/
 | `GITHUB_TOKEN`            | GitHub personal access token                                             |
 | `RP_ID`                   | WebAuthn relying party ID (default: `localhost`)                         |
 | `RP_ORIGIN`               | Comma-separated allowed origins for WebAuthn                             |
+| `NG_ALLOWED_HOSTS`        | Frontend only: host names Angular SSR answers to (default: `localhost`)  |
 | `QBITTORRENT_URL`         | qBittorrent Web UI URL (e.g. `http://qbittorrent:8080`)                  |
 | `QBITTORRENT_USERNAME`    | qBittorrent username (default: `admin`)                                  |
 | `QBITTORRENT_PASSWORD`    | qBittorrent password                                                     |
