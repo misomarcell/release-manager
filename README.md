@@ -5,6 +5,12 @@
 
 A self-hosted web app for finding movie and TV releases on your trackers, enriched with TMDB metadata, and sending them to qBittorrent.
 
+<p align="center">
+  <img src="docs/screenshots/desktop.png" alt="Releases page on desktop: the release list with a title open beside it" width="74%" />
+  <img src="docs/screenshots/mobile.png" alt="Releases page on a phone" width="21%" />
+</p>
+<p align="center"><sub>Screenshots use made-up titles and placeholder posters.</sub></p>
+
 > This project only talks to services you configure yourself and ships no content. You are responsible for using it in line with the laws that apply to you and the terms of the services you connect.
 
 ## Features
