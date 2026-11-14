@@ -1,5 +1,8 @@
 # Release Manager
 
+[![Checks](https://github.com/misomarcell/release-manager/actions/workflows/checks.yml/badge.svg)](https://github.com/misomarcell/release-manager/actions/workflows/checks.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A self-hosted web app for finding movie and TV releases on your trackers, enriched with TMDB metadata, and sending them to qBittorrent.
 
 > This project only talks to services you configure yourself and ships no content. You are responsible for using it in line with the laws that apply to you and the terms of the services you connect.
@@ -26,6 +29,14 @@ A self-hosted web app for finding movie and TV releases on your trackers, enrich
 | Auth     | WebAuthn (SimpleWebAuthn)         |
 | Tooling  | pnpm workspaces                   |
 | Deploy   | Docker Compose                    |
+
+## Requirements
+
+- Docker with Docker Compose, or Node.js 22 (see `.nvmrc`) and pnpm (`corepack enable`) for development
+- A [TMDB](https://www.themoviedb.org/settings/api) API read access token
+- An account on at least one supported tracker (nCore needs your cookie credentials; The Pirate Bay needs none)
+- Optional: qBittorrent with the Web UI enabled, Jellyfin, an OpenAI API key
+- HTTPS in front of the app for anything other than `localhost`, since passkeys only work on a secure origin
 
 ## Quick Start (Docker)
 
@@ -166,6 +177,16 @@ Everything from `NCORE_BASE_URL` down is only a starting value and can be change
 pnpm validate   # format check + lint + build + knip
 ```
 
-## CI
+GitHub Actions runs the same checks on every pull request to `master` and on pushes to `master`.
 
-GitHub Actions runs the same checks on every pull request to `master` and on pushes to `master`. Deploy by pulling on your server and rebuilding with the command under "Updating".
+## Contributing
+
+Issues and pull requests are welcome. Please run `pnpm validate` before opening a pull request; `AGENTS.md` describes the architecture and the conventions the code follows (lint limits, formatting, how trackers plug in).
+
+## Security
+
+Please do not report security problems in public issues. Use **Report a vulnerability** on the repository's Security tab instead.
+
+## License
+
+[MIT](LICENSE)
