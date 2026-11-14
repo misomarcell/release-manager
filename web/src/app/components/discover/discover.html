@@ -80,24 +80,22 @@
                 </a>
             }
         </nav>
-        <app-ribbon
-            heading="Movies"
-            icon="movie"
-            [items]="movies.items()"
-            [loading]="movies.loading()"
-            [canRefresh]="tab() === 'personalized' && movies.canRefresh()"
-            [selectedKey]="selectedKey()"
-            (refresh)="movies.refresh()"
-        />
-        <app-ribbon
-            heading="TV Shows"
-            icon="tv"
-            [items]="tvShows.items()"
-            [loading]="tvShows.loading()"
-            [canRefresh]="tab() === 'personalized' && tvShows.canRefresh()"
-            [selectedKey]="selectedKey()"
-            (refresh)="tvShows.refresh()"
-        />
+        <app-failure-notice [failures]="failures()" />
+        @for (ribbon of ribbons; track ribbon.heading) {
+            @if (!ribbon.failure()) {
+                <app-ribbon
+                    [heading]="ribbon.heading"
+                    [icon]="ribbon.icon"
+                    [items]="ribbon.items()"
+                    [note]="ribbon.note()"
+                    [hint]="ribbon.hint()"
+                    [loading]="ribbon.loading()"
+                    [canRefresh]="ribbon.canRefresh()"
+                    [selectedKey]="selectedKey()"
+                    (refresh)="ribbon.refresh()"
+                />
+            }
+        }
     }
 
     @if (current) {
@@ -114,16 +112,16 @@
             [library]="libraryStatus()"
             [hideTrackers]="true"
         >
-            <a primary mat-flat-button routerLink="/releases" [queryParams]="releasesQuery()">
-                <mat-icon>search</mat-icon>
-                Search releases
-            </a>
             @if (reason(); as text) {
                 <div class="why">
                     <mat-icon class="filled" aria-hidden="true">auto_awesome</mat-icon>
                     <p><b>Why this pick</b><br />{{ text }}</p>
                 </div>
             }
+            <a primary mat-flat-button routerLink="/releases" [queryParams]="releasesQuery()">
+                <mat-icon>search</mat-icon>
+                Search releases
+            </a>
         </app-title-detail>
     }
 </app-list-detail>

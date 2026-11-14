@@ -26,23 +26,34 @@ class RecommendationsService {
 
         const cached = await getCache(userId, mediaType);
         if (cached?.fresh && !forceRefresh) {
-            return { recommendations: await this.enrichRecommendations(cached.refs), canRefresh };
+            return this.respond(await this.enrichRecommendations(cached.refs), feedback.length, canRefresh);
         }
 
         if (feedback.length === 0 || !isOpenAiAvailable()) {
             const refs = await this.getTopRatedRefs(mediaType);
-            return { recommendations: await this.enrichRecommendations(refs), canRefresh: false };
+            return this.respond(await this.enrichRecommendations(refs), feedback.length, false);
         }
 
         const recommendations = await this.getAiPersonalized(userId, mediaType, feedback, cached?.refs ?? []);
         if (recommendations.length < MIN_AI_SUGGESTIONS) {
             const refs = await this.getTopRatedRefs(mediaType);
             await setCache(refs, userId, mediaType);
-            return { recommendations: await this.enrichRecommendations(refs), canRefresh };
+            return this.respond(await this.enrichRecommendations(refs), feedback.length, canRefresh);
         }
 
         await setCache(recommendations.map(this.toRef), userId, mediaType);
-        return { recommendations, canRefresh };
+        return this.respond(recommendations, feedback.length, canRefresh);
+    }
+
+    private respond(
+        recommendations: Recommendation[],
+        feedbackCount: number,
+        canRefresh: boolean,
+    ): RecommendationsResponse {
+        if (recommendations.some((rec) => rec.reason)) return { recommendations, canRefresh };
+
+        const fallback = feedbackCount === 0 && isOpenAiAvailable() ? 'no-feedback' : 'unavailable';
+        return { recommendations, canRefresh, fallback };
     }
 
     async getTrendingRecommendations(mediaType: MediaType): Promise<RecommendationsResponse> {

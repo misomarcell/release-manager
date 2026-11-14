@@ -1,6 +1,5 @@
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -24,7 +23,6 @@ const DATE_FORMAT = 'yyyy-MM-dd HH:mm';
     selector: 'app-watchlist',
     imports: [
         DatePipe,
-        RouterLink,
         MatButtonModule,
         MatIconModule,
         ListDetailComponent,

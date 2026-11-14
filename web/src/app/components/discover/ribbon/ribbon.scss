@@ -9,13 +9,88 @@
     }
 }
 
+header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 32px;
+    padding: 0 4px;
+}
+
 h2 {
+    flex: none;
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 0 4px;
     font-size: 16px;
     font-weight: 650;
+}
+
+.note {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: end;
+    font-size: 12.5px;
+    color: var(--mat-sys-on-surface-variant);
+
+    @media (min-width: 960px) {
+        text-align: start;
+    }
+}
+
+.pager {
+    display: none;
+    gap: 2px;
+
+    @media (hover: hover) and (pointer: fine) {
+        display: flex;
+    }
+
+    button {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 32px;
+        padding: 0;
+        border: 0;
+        border-radius: 6px;
+        background-color: var(--mat-sys-surface-container);
+        color: var(--mat-sys-on-surface);
+
+        &:first-child {
+            border-start-start-radius: 16px;
+            border-end-start-radius: 16px;
+        }
+
+        &:last-child {
+            border-start-end-radius: 16px;
+            border-end-end-radius: 16px;
+        }
+
+        &:disabled {
+            color: color-mix(in srgb, var(--mat-sys-on-surface) 38%, transparent);
+            pointer-events: none;
+        }
+    }
+
+    mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+    }
+}
+
+.hint {
+    margin-top: -6px;
+    padding: 0 4px;
+    text-wrap: pretty;
+
+    &:empty {
+        display: none;
+    }
 }
 
 .scroller {
@@ -28,6 +103,12 @@ h2 {
     scroll-snap-type: x mandatory;
     scroll-padding-inline: 12px;
     scrollbar-width: none;
+    min-height: calc(var(--tile-width) * 1.5 + 76px);
+    box-sizing: border-box;
+
+    @media (prefers-reduced-motion: no-preference) {
+        scroll-behavior: smooth;
+    }
 
     > * {
         flex: none;
@@ -52,6 +133,16 @@ h2 {
         font-size: 14px;
         line-height: 19px;
         font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    &:focus-visible {
+        outline: 0;
+
+        .poster {
+            outline: 2px solid var(--mat-sys-primary);
+            outline-offset: 2px;
+        }
     }
 
     &:active .poster {
@@ -59,7 +150,13 @@ h2 {
     }
 
     &.selected .poster {
-        box-shadow: 0 0 0 3px var(--mat-sys-primary);
+        outline: 3px solid var(--mat-sys-primary);
+    }
+
+    @media (hover: hover) {
+        &:hover app-poster {
+            filter: brightness(1.12);
+        }
     }
 }
 
@@ -72,20 +169,26 @@ h2 {
     app-poster {
         width: 100%;
         border-radius: inherit;
+        transition: filter 120ms ease-out;
     }
 }
 
-.own {
+.badges {
     position: absolute;
     top: 6px;
     right: 6px;
-    display: grid;
-    place-items: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--mat-sys-primary-container);
-    color: var(--mat-sys-on-primary-container);
+    display: flex;
+    gap: 4px;
+
+    > span {
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--mat-sys-primary-container);
+        color: var(--mat-sys-on-primary-container);
+    }
 
     mat-icon {
         font-size: 16px;
@@ -97,9 +200,20 @@ h2 {
 .meta {
     display: flex;
     align-items: center;
-    gap: 4px;
     font-size: 12.5px;
+    line-height: 18px;
     color: var(--mat-sys-on-surface-variant);
+}
+
+.year:not(:empty) + .rating::before {
+    content: '·';
+    margin-inline: 5px;
+}
+
+.rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
 
     mat-icon {
         font-size: 14px;
@@ -109,9 +223,20 @@ h2 {
     }
 }
 
+.text {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    padding-top: 3px;
+}
+
 .line {
     height: 14px;
-    width: 70%;
+    width: 80%;
+
+    &.short {
+        width: 45%;
+    }
 }
 
 .more {
@@ -122,11 +247,23 @@ h2 {
     gap: 8px;
     aspect-ratio: 2 / 3;
     padding: 0 12px;
-    border: 1.5px dashed var(--mat-sys-outline);
+    border: 0;
     border-radius: 16px;
-    background: none;
-    color: var(--mat-sys-on-surface-variant);
+    background-color: var(--mat-sys-surface-container);
+    color: var(--mat-sys-on-surface);
     font: inherit;
     font-size: 13px;
+    line-height: 18px;
     font-weight: 550;
+
+    mat-icon {
+        color: var(--mat-sys-on-surface-variant);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .poster,
+    .poster app-poster {
+        transition: none;
+    }
 }

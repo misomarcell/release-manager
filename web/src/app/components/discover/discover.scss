@@ -46,6 +46,14 @@
     }
 }
 
+app-ribbon {
+    margin-top: 8px;
+
+    & + & {
+        margin-top: 12px;
+    }
+}
+
 .follow {
     --mat-icon-button-icon-color: var(--mat-sys-on-secondary-container);
     background-color: var(--mat-sys-secondary-container);

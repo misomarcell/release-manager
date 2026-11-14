@@ -1,11 +1,6 @@
 @let current = selected();
 <app-list-detail [openKey]="current ? '' + current.id : null">
-    <app-page-title title="Watchlist">
-        <a matButton="tonal" routerLink="/discover" [queryParams]="{ focus: 'search' }">
-            <mat-icon>add</mat-icon>
-            Add title
-        </a>
-    </app-page-title>
+    <app-page-title title="Watchlist" />
 
     @if (!watchlist.loaded()) {
         <app-row-skeletons [count]="3" />

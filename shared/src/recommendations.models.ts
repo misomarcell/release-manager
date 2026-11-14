@@ -31,7 +31,11 @@ export interface RecommendationFeedbackRequest {
     feedback: FeedbackValue;
 }
 
+/** Why a personalized list holds TMDB top-rated titles instead of AI picks. */
+export type RecommendationFallback = 'no-feedback' | 'unavailable';
+
 export interface RecommendationsResponse {
     recommendations: Recommendation[];
     canRefresh: boolean;
+    fallback?: RecommendationFallback;
 }

@@ -49,7 +49,7 @@
 - `shared/src/settings.models.ts` — `SETTINGS_GROUPS` (the fields the Settings page offers, per service), `SCHEDULED_JOBS`, `SettingKey`, `SettingsResponse`, `SettingsUpdateRequest`.
 - `shared/src/schedule.ts` — `Schedule` (days + time, every N hours, or a custom cron) with `cronToSchedule()`, `scheduleToCron()`, `describeSchedule()`.
 - `shared/src/user.models.ts` — User types: `UserInfo`.
-- `shared/src/recommendations.models.ts` — Recommendation types: `Recommendation`, `FeedbackValue`, `RecommendationFeedbackRequest`.
+- `shared/src/recommendations.models.ts` — Recommendation types: `Recommendation`, `FeedbackValue`, `RecommendationFeedbackRequest`, `RecommendationsResponse` (with `fallback` when a personalized list holds top-rated titles instead of AI picks).
 - `shared/src/constants.ts` — Shared constants: `TMDB_GENRE_MAP`, `DOWNLOAD_CATEGORIES`, `DownloadCategory`.
 - `shared/src/jellyfin.models.ts` — Jellyfin library types: `MediaStream`, `MediaInfo`, `SeasonInfo`, `LibraryItem` (includes per-season episode counts for TV), `LibraryResponse`.
 - `shared/src/watchlist.models.ts` — Watchlist types: `WatchlistItem`, `WatchlistRelease`, `WatchlistAddRequest`, `WatchlistUpdateRequest`, `WatchlistResponse`, `WatchlistCheckResponse` (items + tracker failures), keyword limits.

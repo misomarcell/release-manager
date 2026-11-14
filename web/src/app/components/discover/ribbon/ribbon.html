@@ -1,52 +1,93 @@
-<h2>
-    <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
-    {{ heading() }}
-</h2>
-@if (loading()) {
-    <div class="scroller" aria-busy="true">
-        @for (i of skeletons; track i) {
-            <div class="tile-card">
-                <div class="skeleton poster"></div>
-                <div class="skeleton line"></div>
-            </div>
-        }
-    </div>
-} @else if (items().length > 0) {
-    <div class="scroller">
-        @for (rec of items(); track rec.tmdbId) {
-            @let key = rec.mediaType + ':' + rec.tmdbId;
-            <a
-                class="tile-card"
-                [class.selected]="key === selectedKey()"
-                [routerLink]="[]"
-                [queryParams]="{ open: key }"
-                queryParamsHandling="merge"
-                [replaceUrl]="!!selectedKey()"
+<header>
+    <h2>
+        <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
+        {{ heading() }}
+    </h2>
+    <span class="note">{{ note() }}</span>
+    @if (scrollable()) {
+        <span class="pager">
+            <button
+                class="pressable"
+                type="button"
+                [attr.aria-label]="'Scroll ' + heading() + ' back'"
+                [disabled]="atStart()"
+                (click)="page(-1)"
             >
-                <span class="poster">
-                    <app-poster [src]="rec.poster" [mediaType]="rec.mediaType" />
-                    @if (rec.inJellyfinLibrary) {
-                        <span class="own" title="In library">
-                            <mat-icon aria-label="In library">check</mat-icon>
-                        </span>
-                    }
-                </span>
-                <b>{{ rec.title }}</b>
-                <span class="meta">
-                    {{ rec.year }}
-                    @if (rec.rating) {
-                        · <mat-icon class="filled" aria-label="Rating">star</mat-icon> {{ rec.rating }}
-                    }
-                </span>
-            </a>
-        }
-        @if (canRefresh()) {
-            <button class="more pressable" type="button" (click)="refresh.emit()">
-                <mat-icon aria-hidden="true">refresh</mat-icon>
-                Get new recommendations
+                <mat-icon aria-hidden="true">chevron_left</mat-icon>
             </button>
+            <button
+                class="pressable"
+                type="button"
+                [attr.aria-label]="'Scroll ' + heading() + ' forward'"
+                [disabled]="atEnd()"
+                (click)="page(1)"
+            >
+                <mat-icon aria-hidden="true">chevron_right</mat-icon>
+            </button>
+        </span>
+    }
+</header>
+<p class="hint">{{ hint() }}</p>
+@if (empty()) {
+    <p class="hint">Nothing to show here right now.</p>
+} @else {
+    <div #scroller class="scroller" [attr.aria-busy]="loading()" (scroll)="measure()">
+        @if (loading()) {
+            @for (i of skeletons; track i) {
+                <div class="tile-card">
+                    <div class="skeleton poster"></div>
+                    <div class="text">
+                        <div class="skeleton line"></div>
+                        <div class="skeleton line short"></div>
+                    </div>
+                </div>
+            }
+        } @else {
+            @for (rec of items(); track rec.tmdbId) {
+                @let key = rec.mediaType + ':' + rec.tmdbId;
+                <a
+                    class="tile-card"
+                    [class.selected]="key === selectedKey()"
+                    [routerLink]="[]"
+                    [queryParams]="{ open: key }"
+                    queryParamsHandling="merge"
+                    [replaceUrl]="!!selectedKey()"
+                >
+                    <span class="poster">
+                        <app-poster [src]="rec.poster" [mediaType]="rec.mediaType" />
+                        <span class="badges">
+                            @if (rec.inJellyfinLibrary) {
+                                <span title="In library">
+                                    <mat-icon aria-hidden="false" aria-label="In library">check</mat-icon>
+                                </span>
+                            }
+                            @if (watchlist.find(rec.tmdbId, rec.mediaType)) {
+                                <span title="Following">
+                                    <mat-icon class="filled" aria-hidden="false" aria-label="Following"
+                                        >bookmark</mat-icon
+                                    >
+                                </span>
+                            }
+                        </span>
+                    </span>
+                    <b>{{ rec.title }}</b>
+                    <span class="meta num">
+                        <span class="year">{{ rec.year }}</span>
+                        @if (rec.rating) {
+                            <span class="rating">
+                                <mat-icon class="filled" aria-hidden="false" aria-label="Rating">star</mat-icon>
+                                {{ rec.rating }}
+                            </span>
+                        }
+                    </span>
+                </a>
+            }
+            @if (canRefresh()) {
+                <button class="more pressable" type="button" (click)="refresh.emit()">
+                    <mat-icon aria-hidden="true">refresh</mat-icon>
+                    Get new recommendations
+                </button>
+            }
         }
     </div>
-} @else {
-    <p class="hint">Nothing to show here right now.</p>
 }

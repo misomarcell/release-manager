@@ -1,7 +1,9 @@
-import { Component, computed, inject, input, resource } from '@angular/core';
+import { Component, computed, inject, input, resource, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { FailureNoticeComponent } from '../failure-notice/failure-notice';
 import { FilterSearchComponent, FilterSearchSubmit, SearchFilterDefinition } from '../filter-search/filter-search';
 import { ListDetailComponent } from '../list-detail/list-detail';
 import { RowSkeletonsComponent } from '../row-skeletons/row-skeletons';
@@ -13,15 +15,30 @@ import { RecommendationsService } from '../../services/recommendations.service';
 import { SearchService } from '../../services/search.service';
 import { WatchlistService } from '../../services/watchlist.service';
 import { injectIsDesktop } from '../../utils/breakpoint';
+import type { FailureNotice } from '../../utils/failure-notice';
 import { extractHttpError } from '../../utils/http-error';
 import { parseQuery } from '../../utils/query-params';
 import { cleanSearchTerm } from '../../utils/search-term';
-import type { Recommendation } from '@rm/shared/recommendations.models';
+import type { Recommendation, RecommendationFallback } from '@rm/shared/recommendations.models';
 import type { MediaType, TitleSummary } from '@rm/shared/tmdb.models';
 
 type DiscoverTab = 'trending' | 'personalized';
 type TypeFilter = MediaType | 'all';
 type DiscoverTitle = TitleSummary | Recommendation;
+
+interface RibbonKind {
+    mediaType: MediaType;
+    heading: string;
+    icon: string;
+    noun: string;
+}
+
+const MOVIES: RibbonKind = { mediaType: 'movie', heading: 'Movies', icon: 'movie', noun: 'movies' };
+const TV_SHOWS: RibbonKind = { mediaType: 'tv', heading: 'TV Shows', icon: 'tv', noun: 'TV shows' };
+const FALLBACK_HINTS: Record<RecommendationFallback, (noun: string) => string> = {
+    'no-feedback': (noun) => `Like or dislike a few ${noun} and picks based on your taste will show up here.`,
+    unavailable: () => 'AI picks are not available right now.',
+};
 
 const TABS: { id: DiscoverTab; label: string; icon: string }[] = [
     { id: 'trending', label: 'Trending', icon: 'local_fire_department' },
@@ -51,6 +68,7 @@ function titleKey(title: DiscoverTitle): string {
         RouterLink,
         MatButtonModule,
         MatIconModule,
+        FailureNoticeComponent,
         FilterSearchComponent,
         ListDetailComponent,
         RibbonComponent,
@@ -66,6 +84,7 @@ export class DiscoverComponent {
     private search = inject(SearchService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
+    private snackBar = inject(MatSnackBar);
     private isDesktop = injectIsDesktop();
     private watchlistSheet = inject(WatchlistSheetService);
     protected watchlist = inject(WatchlistService);
@@ -81,8 +100,10 @@ export class DiscoverComponent {
     protected titleKey = titleKey;
     protected filterValues = computed(() => ({ type: this.type() }));
 
-    protected movies = this.ribbon('movie');
-    protected tvShows = this.ribbon('tv');
+    protected movies = this.ribbon(MOVIES);
+    protected tvShows = this.ribbon(TV_SHOWS);
+    protected ribbons = [this.movies, this.tvShows];
+    protected failures = computed(() => this.ribbons.flatMap((ribbon) => ribbon.failure() ?? []));
 
     private resultsResource = resource({
         params: () => (this.q() ? { query: this.q(), type: this.type() } : undefined),
@@ -138,7 +159,8 @@ export class DiscoverComponent {
         });
     }
 
-    private ribbon(mediaType: MediaType) {
+    private ribbon(kind: RibbonKind) {
+        const { mediaType, heading, icon, noun } = kind;
         const source = resource({
             params: () => (this.q() ? undefined : this.tab()),
             loader: ({ params }) =>
@@ -146,13 +168,44 @@ export class DiscoverComponent {
                     ? this.recommendations.getTrending(mediaType)
                     : this.recommendations.getPersonalized(mediaType),
         });
+        const refreshing = signal(false);
+        const loading = computed(() => source.isLoading() || refreshing());
+        const personalized = computed(() => this.tab() === 'personalized');
+        const fallback = computed(() => (source.hasValue() && !loading() ? source.value().fallback : undefined));
+
         return {
-            loading: source.isLoading,
+            heading,
+            icon,
+            loading,
             items: computed(() => (source.hasValue() ? source.value().recommendations : [])),
-            canRefresh: computed(() => source.hasValue() && source.value().canRefresh),
+            canRefresh: computed(() => personalized() && source.hasValue() && source.value().canRefresh),
+            note: computed(() => {
+                if (!personalized()) return 'This week on TMDB';
+                if (loading()) return 'Picking for you…';
+                return fallback() ? 'Top rated on TMDB' : 'From your likes and dislikes';
+            }),
+            hint: computed(() => {
+                const reason = fallback();
+                return reason ? FALLBACK_HINTS[reason](noun) : '';
+            }),
+            failure: computed<FailureNotice | undefined>(() => {
+                const error = source.error();
+                return error
+                    ? { heading: `${heading} could not be loaded`, detail: extractHttpError(error, 'Request failed') }
+                    : undefined;
+            }),
             refresh: async () => {
-                source.set(undefined);
-                source.set(await this.recommendations.refreshPersonalized(mediaType).catch(() => undefined));
+                refreshing.set(true);
+                try {
+                    const fresh = await this.recommendations.refreshPersonalized(mediaType);
+                    if (personalized()) source.set(fresh);
+                } catch (error) {
+                    this.snackBar.open(extractHttpError(error, 'Could not get new recommendations'), 'OK', {
+                        duration: 4000,
+                    });
+                } finally {
+                    refreshing.set(false);
+                }
             },
         };
     }
