@@ -10,12 +10,17 @@ import {
     type TrackerSearchQuery,
     type TrackerTitleQuery,
 } from './tracker-provider.js';
-import type { ReleaseCategory, TrackerRelease } from 'shared/tracker.models';
+import type { ReleaseCategory, ReleaseFilter, TrackerRelease } from 'shared/tracker.models';
 
 const SUPPORTED_CATEGORIES: Record<ReleaseCategory, string> = {
     all: 'hd_hun,hd,hdser_hun,hdser',
     movies: 'hd_hun,hd',
     tv: 'hdser_hun,hdser',
+};
+// nCore matches every word as a part of the name, so "blu ray" finds both "BluRay" and "Blu-ray".
+const FILTER_KEYWORDS: Record<ReleaseFilter, string> = {
+    uhd: '2160p',
+    bluray: 'blu ray',
 };
 
 const SEARCH_ACCEPT = 'application/json,text/plain,*/*';
@@ -44,7 +49,7 @@ interface NcoreSearchParams {
     category: ReleaseCategory;
     search: string;
     page: number;
-    uhd?: boolean;
+    filters?: ReleaseFilter[];
     searchIn?: NcoreSearchField;
     sortBy?: NcoreSortField;
 }
@@ -153,7 +158,8 @@ class NcoreService implements TrackerProvider {
     }
 
     private buildSearchUrl(params: NcoreSearchParams, baseUrl: string): URL {
-        const searchQuery = params.search.trim();
+        const filterKeywords = (params.filters ?? []).map((filter) => FILTER_KEYWORDS[filter]);
+        const searchQuery = [...filterKeywords, params.search.trim()].filter(Boolean).join(' ');
         const searchUrl = new URL('/torrents.php', baseUrl);
         searchUrl.searchParams.set('kivalasztott_tipus', SUPPORTED_CATEGORIES[params.category]);
         searchUrl.searchParams.set('tipus', 'kivalasztottak_kozott');
@@ -167,8 +173,6 @@ class NcoreService implements TrackerProvider {
             if (params.searchIn === 'imdb') {
                 searchUrl.searchParams.set('miben', params.searchIn);
             }
-        } else if (params.uhd) {
-            searchUrl.searchParams.set('mire', '2160p');
         } else {
             searchUrl.searchParams.set('query', '*');
         }

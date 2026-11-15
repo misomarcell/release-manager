@@ -31,7 +31,6 @@ const VALID_MEDIA_FILTERS: LibraryMediaFilter[] = ['all', 'movie', 'tv'];
 const LIBRARY_SEARCH_FILTERS: SearchFilterDefinition[] = [
     {
         key: 'mediaType',
-        label: 'Media type',
         control: 'select',
         defaultValue: 'all',
         options: [

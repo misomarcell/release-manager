@@ -12,20 +12,18 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { AccountMenuComponent } from '../account-menu/account-menu';
 
-type SearchFilterValue = string | boolean;
-
 interface SearchFilterOption {
     value: string;
     label: string;
 }
 
-export interface SearchFilterDefinition {
-    key: string;
-    label: string;
-    control: 'select' | 'toggle';
-    defaultValue: SearchFilterValue;
-    options: SearchFilterOption[];
-}
+/** A group of chips: `select` always has exactly one option on, `toggle` any number of them. */
+export type SearchFilterDefinition =
+    | { key: string; control: 'select'; defaultValue: string; options: SearchFilterOption[] }
+    | { key: string; control: 'toggle'; options: SearchFilterOption[] };
+
+// The chosen option of a `select`, the options that are on for a `toggle`.
+type SearchFilterValue = string | string[];
 
 type SearchFilterValues = Record<string, SearchFilterValue>;
 
@@ -52,8 +50,10 @@ export class FilterSearchComponent {
     protected searchQuery = linkedSignal(() => this.query());
     private selectedFilters = linkedSignal(() => this.values());
 
-    protected filterValues = computed(() => ({
-        ...Object.fromEntries(this.filters().map((filter) => [filter.key, filter.defaultValue])),
+    protected filterValues = computed<SearchFilterValues>(() => ({
+        ...Object.fromEntries(
+            this.filters().map((filter) => [filter.key, filter.control === 'select' ? filter.defaultValue : []]),
+        ),
         ...this.selectedFilters(),
     }));
 
@@ -76,13 +76,19 @@ export class FilterSearchComponent {
 
     protected isOn(filter: SearchFilterDefinition, option: SearchFilterOption): boolean {
         const value = this.filterValues()[filter.key];
-        return filter.control === 'toggle' ? value === true : value === option.value;
+        return Array.isArray(value) ? value.includes(option.value) : value === option.value;
     }
 
     protected choose(filter: SearchFilterDefinition, option: SearchFilterOption): void {
-        const value = filter.control === 'toggle' ? !this.isOn(filter, option) : option.value;
+        const value = filter.control === 'select' ? option.value : this.toggled(filter, option);
         this.selectedFilters.update((filters) => ({ ...filters, [filter.key]: value }));
         this.emitSearch();
+    }
+
+    private toggled(filter: SearchFilterDefinition, option: SearchFilterOption): string[] {
+        return filter.options
+            .filter((candidate) => this.isOn(filter, candidate) !== (candidate === option))
+            .map((candidate) => candidate.value);
     }
 
     private emitSearch(): void {

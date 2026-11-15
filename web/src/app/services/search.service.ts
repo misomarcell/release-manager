@@ -5,6 +5,7 @@ import type { DownloadPaths, DownloadRequest, DownloadResponse } from '@rm/share
 import type { MediaType, MovieMetadata, TitleSearchResponse } from '@rm/shared/tmdb.models';
 import type {
     ReleaseCategory,
+    ReleaseFilter,
     ReleaseSearchResponse,
     TitleReleasesResponse,
     TrackerId,
@@ -14,7 +15,7 @@ interface ReleaseSearchOptions {
     category: ReleaseCategory;
     query: string;
     page: number;
-    uhd: boolean;
+    filters: ReleaseFilter[];
     trackers: TrackerId[];
 }
 
@@ -23,6 +24,7 @@ export interface TitleReleasesOptions {
     title: string;
     year: string;
     mediaType: MediaType;
+    filters: ReleaseFilter[];
     trackers: TrackerId[];
 }
 
@@ -31,20 +33,12 @@ export class SearchService {
     private api = inject(ApiService);
 
     async search(options: ReleaseSearchOptions): Promise<ReleaseSearchResponse> {
-        let params = new HttpParams()
+        const params = new HttpParams()
             .set('category', options.category)
-            .set('page', options.page.toString())
+            .set('search', options.query)
+            .set('page', options.page)
+            .set('filters', options.filters.join(','))
             .set('trackers', options.trackers.join(','));
-
-        const query = options.query.trim();
-        if (query) {
-            params = params.set('search', query);
-        }
-
-        if (options.uhd) {
-            params = params.set('uhd', 'true');
-        }
-
         return this.api.get<ReleaseSearchResponse>('/api/search', params);
     }
 
@@ -54,6 +48,7 @@ export class SearchService {
             .set('title', options.title)
             .set('year', options.year)
             .set('type', options.mediaType)
+            .set('filters', options.filters.join(','))
             .set('trackers', options.trackers.join(','));
         return this.api.get<TitleReleasesResponse>('/api/search/releases', params);
     }

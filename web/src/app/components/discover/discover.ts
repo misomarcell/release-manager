@@ -47,7 +47,6 @@ const TABS: { id: DiscoverTab; label: string; icon: string }[] = [
 const TYPE_FILTERS: SearchFilterDefinition[] = [
     {
         key: 'type',
-        label: 'Media type',
         control: 'select',
         defaultValue: 'all',
         options: [

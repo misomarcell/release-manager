@@ -19,6 +19,7 @@ import { parsePage, parseQuery } from '../../utils/query-params';
 import { releaseQualities, releaseResolutions } from '../../utils/release-view';
 import {
     TRACKERS,
+    parseReleaseFilters,
     sortReleases,
     trackerName,
     type ReleaseCategory,
@@ -38,7 +39,6 @@ const HEADINGS: Record<ReleaseCategory, string> = {
 const RELEASE_SEARCH_FILTERS: SearchFilterDefinition[] = [
     {
         key: 'category',
-        label: 'Category',
         control: 'select',
         defaultValue: 'all',
         options: [
@@ -48,11 +48,12 @@ const RELEASE_SEARCH_FILTERS: SearchFilterDefinition[] = [
         ],
     },
     {
-        key: 'uhdOnly',
-        label: 'Quality',
+        key: 'filters',
         control: 'toggle',
-        defaultValue: false,
-        options: [{ value: 'true', label: '4K only' }],
+        options: [
+            { value: 'uhd', label: '4K only' },
+            { value: 'bluray', label: 'BluRay only' },
+        ],
     },
 ];
 
@@ -93,7 +94,7 @@ export class ReleasesComponent {
 
     q = input('', { transform: parseQuery });
     category = input<ReleaseCategory, unknown>('all', { transform: parseCategory });
-    uhd = input(false, { transform: (value: string | undefined) => value === 'true' });
+    filters = input('', { transform: parseQuery });
     tracker = input<TrackerId | null, unknown>(null, { transform: parseTracker });
     page = input(1, { transform: parsePage });
     sort = input<ReleaseSort, unknown>('seeders', { transform: parseSort });
@@ -106,7 +107,8 @@ export class ReleasesComponent {
     protected currentSort = computed(
         () => RELEASE_SORTS.find((option) => option.id === this.sort()) ?? RELEASE_SORTS[0],
     );
-    protected searchFilterValues = computed(() => ({ category: this.category(), uhdOnly: this.uhd() }));
+    private activeFilters = computed(() => parseReleaseFilters(this.filters()));
+    protected searchFilterValues = computed(() => ({ category: this.category(), filters: this.activeFilters() }));
     protected trackerLabel = computed(() => {
         const tracker = this.tracker();
         return tracker ? trackerName(tracker) : 'All trackers';
@@ -114,11 +116,10 @@ export class ReleasesComponent {
 
     private searchParams = computed(() => {
         const tracker = this.tracker();
-        const query = this.q();
         return {
-            query,
+            query: this.q(),
             category: this.category(),
-            uhd: !query && this.uhd(),
+            filters: this.activeFilters(),
             page: this.page(),
             trackers: tracker ? [tracker] : [],
         };
@@ -169,7 +170,14 @@ export class ReleasesComponent {
 
         const tracker = this.tracker();
         const { imdbId, title: name, year, mediaType } = title;
-        return { imdbId, title: name, year, mediaType, trackers: tracker ? [tracker] : [] };
+        return {
+            imdbId,
+            title: name,
+            year,
+            mediaType,
+            filters: this.activeFilters(),
+            trackers: tracker ? [tracker] : [],
+        };
     });
     private lookupResource = resource({
         params: () => this.lookupParams(),
@@ -220,12 +228,13 @@ export class ReleasesComponent {
 
     protected onSearch(params: FilterSearchSubmit): void {
         const category = parseCategory(params.filters['category']);
+        const filters = parseReleaseFilters(params.filters['filters']);
         void this.router.navigate([], {
             relativeTo: this.route,
             queryParams: {
                 q: params.query.trim() || null,
                 category: category !== 'all' ? category : null,
-                uhd: params.filters['uhdOnly'] === true ? 'true' : null,
+                filters: filters.length > 0 ? filters.join(',') : null,
                 tracker: this.tracker(),
                 sort: this.currentSort().param,
             },

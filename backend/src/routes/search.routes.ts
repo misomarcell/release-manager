@@ -9,7 +9,7 @@ import { isInLibrary } from '../repositories/jellyfin.repository.js';
 import { qbittorrentService } from '../services/qbittorrent.service.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { DOWNLOAD_CATEGORIES } from 'shared/constants';
-import { isTrackerId, type TitleReleasesResponse, type TrackerId } from 'shared/tracker.models';
+import { isTrackerId, parseReleaseFilters, type TitleReleasesResponse, type TrackerId } from 'shared/tracker.models';
 import type { DownloadPaths, DownloadRequest, DownloadResponse } from 'shared/download.models';
 import type { TitleSearchResponse } from 'shared/tmdb.models';
 import { logger } from '../utils/logger.js';
@@ -24,14 +24,13 @@ const TrackerListSchema = z
     .default('')
     .transform((value) => value.split(',').filter(isTrackerId));
 
+const ReleaseFiltersSchema = z.string().max(100).default('').transform(parseReleaseFilters);
+
 const SearchQuerySchema = z.object({
     category: z.enum(['all', 'movies', 'tv']).default('all'),
-    search: z.string().max(200).default(''),
+    search: z.string().trim().max(200).default(''),
     page: z.coerce.number().int().min(1).default(1),
-    uhd: z
-        .string()
-        .optional()
-        .transform((v) => v === 'true'),
+    filters: ReleaseFiltersSchema,
     trackers: TrackerListSchema,
 });
 
@@ -41,6 +40,7 @@ const TitleReleasesQuerySchema = z
         title: z.string().trim().max(200).default(''),
         year: z.string().max(4).default(''),
         type: MediaTypeSchema,
+        filters: ReleaseFiltersSchema,
         trackers: TrackerListSchema,
     })
     .refine((query) => query.imdbId || query.title, 'An IMDb ID or a title is required');
@@ -94,7 +94,7 @@ router.get('/releases', requireAuth, async (req: Request, res: Response) => {
 
     const { releases, failures } = await trackerService.findTitle(
         { imdbId: query.imdbId, title: query.title, year: query.year, mediaType: query.type },
-        query.trackers,
+        { trackers: query.trackers, filters: query.filters },
     );
     res.json({ releases, failures } satisfies TitleReleasesResponse);
 });

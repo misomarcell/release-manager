@@ -10,7 +10,7 @@ import {
     type TrackerSearchQuery,
     type TrackerTitleQuery,
 } from './tracker-provider.js';
-import type { ReleaseCategory, TrackerRelease } from 'shared/tracker.models';
+import type { ReleaseCategory, ReleaseFilter, TrackerRelease } from 'shared/tracker.models';
 
 // The Pirate Bay category ids: 207 HD movies, 211 UHD movies, 208 HD TV shows, 212 UHD TV shows.
 const CATEGORY_IDS: Record<ReleaseCategory, string> = {
@@ -19,6 +19,11 @@ const CATEGORY_IDS: Record<ReleaseCategory, string> = {
     tv: '208,212',
 };
 const TV_CATEGORY_IDS = new Set(['208', '212']);
+// apibay only matches whole words, and "blu-ray" or "blu ray" find nothing there.
+const FILTER_KEYWORDS: Record<ReleaseFilter, string> = {
+    uhd: '2160p',
+    bluray: 'bluray',
+};
 const NO_RESULTS_ID = '0';
 const DETAILS_URL = 'https://thepiratebay.org/description.php';
 const INFO_HASH_PATTERN = /^[a-f0-9]{40}$/;
@@ -57,9 +62,8 @@ class ApibayService implements TrackerProvider {
         }
 
         // Uploads without an IMDb id cannot be tied to a title reliably, so they are left out.
-        const releases = (await this.query(query.search, CATEGORY_IDS[query.category])).filter(
-            (release) => release.imdbId,
-        );
+        const keywords = [...query.filters.map((filter) => FILTER_KEYWORDS[filter]), query.search].join(' ');
+        const releases = (await this.query(keywords, CATEGORY_IDS[query.category])).filter((release) => release.imdbId);
 
         return { results: releases, totalResults: releases.length };
     }

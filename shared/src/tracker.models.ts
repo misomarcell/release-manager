@@ -22,6 +22,17 @@ export function trackerHasNfo(id: TrackerId): boolean {
 
 export type ReleaseCategory = 'all' | 'movies' | 'tv';
 
+// Narrow a release search together with its text; the backend decides what each one means.
+export const RELEASE_FILTERS = ['uhd', 'bluray'] as const;
+
+export type ReleaseFilter = (typeof RELEASE_FILTERS)[number];
+
+/** Reads the filters from a comma-separated string or a list, dropping unknown ones. */
+export function parseReleaseFilters(value: unknown): ReleaseFilter[] {
+    const ids: unknown = typeof value === 'string' ? value.split(',') : value;
+    return Array.isArray(ids) ? RELEASE_FILTERS.filter((filter) => ids.includes(filter)) : [];
+}
+
 export type TvType = 'episode' | 'season' | 'series';
 
 export interface TvInfo {

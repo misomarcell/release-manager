@@ -1,13 +1,13 @@
 import { apibayService } from './apibay.service.js';
 import { getCacheKey, getMetadata } from './metadata.service.js';
 import { ncoreService } from './ncore.service.js';
-import type { TorrentSource, TrackerPage, TrackerProvider, TrackerTitleQuery } from './tracker-provider.js';
+import type { TorrentSource, TrackerProvider, TrackerSearchQuery, TrackerTitleQuery } from './tracker-provider.js';
 import { mapConcurrent } from '../utils/concurrent.js';
 import { logger } from '../utils/logger.js';
 import type { MetadataLookup, MovieMetadata } from 'shared/tmdb.models';
 import { sortReleases, sortTitles } from 'shared/tracker.models';
 import type {
-    ReleaseCategory,
+    ReleaseFilter,
     ReleaseSearchResponse,
     TitleReleases,
     TitleReleasesResponse,
@@ -24,12 +24,18 @@ const PROVIDERS = [REGISTRY.primaryTracker, ...REGISTRY.secondaryTrackers];
 
 const METADATA_CONCURRENCY = 6;
 
-interface ReleaseSearchParams {
-    category: ReleaseCategory;
-    search: string;
-    page: number;
-    uhd: boolean;
+// What a filter means, whatever a tracker searched for: a release has to carry it in its name.
+const FILTER_PATTERNS: Record<ReleaseFilter, RegExp> = {
+    uhd: /2160p/i,
+    bluray: /blu[-. ]?ray/i,
+};
+
+interface TrackerSelection {
     trackers?: TrackerId[];
+}
+
+interface TitleLookupOptions extends TrackerSelection {
+    filters?: ReleaseFilter[];
 }
 
 export interface TitleLookup extends TitleReleasesResponse {
@@ -43,13 +49,16 @@ interface Gathered<T> {
 }
 
 class TrackerService {
-    async search(params: ReleaseSearchParams): Promise<ReleaseSearchResponse> {
-        const search = params.search.trim();
-        const providers = this.select(search ? PROVIDERS : [REGISTRY.primaryTracker], params.trackers);
-        const gathered = await this.gather(providers, (provider) => fetchPage(provider, { ...params, search }));
+    /** A text search on every tracker, or the primary tracker's top list when there is no text. */
+    async search({ trackers, ...query }: TrackerSearchQuery & TrackerSelection): Promise<ReleaseSearchResponse> {
+        const providers = this.select(query.search ? PROVIDERS : [REGISTRY.primaryTracker], trackers);
+        const gathered = await this.gather(providers, (provider) =>
+            query.search ? provider.search(query) : provider.browseTop(query),
+        );
+        const releases = gathered.values.flatMap((page) => page.results);
 
         return {
-            titles: await groupByTitle(gathered.values.flatMap((page) => page.results)),
+            titles: await groupByTitle(withFilters(releases, query.filters)),
             totalResults: Math.max(0, ...gathered.values.map((page) => page.totalResults)),
             trackers: providers.map((provider) => provider.id),
             failures: gathered.failures,
@@ -57,10 +66,13 @@ class TrackerService {
     }
 
     /** Every release of one title, as far as each tracker can match it. */
-    async findTitle(title: TrackerTitleQuery, trackers?: TrackerId[]): Promise<TitleLookup> {
+    async findTitle(
+        title: TrackerTitleQuery,
+        { trackers, filters = [] }: TitleLookupOptions = {},
+    ): Promise<TitleLookup> {
         const gathered = await this.gather(this.select(PROVIDERS, trackers), (provider) => provider.findTitle(title));
         return {
-            releases: sortReleases(gathered.values.flat()),
+            releases: sortReleases(withFilters(gathered.values.flat(), filters)),
             checked: gathered.succeeded,
             failures: gathered.failures,
         };
@@ -105,8 +117,8 @@ class TrackerService {
     }
 }
 
-function fetchPage(provider: TrackerProvider, params: ReleaseSearchParams): Promise<TrackerPage> {
-    return params.search ? provider.search(params) : provider.browseTop(params);
+function withFilters(releases: TrackerRelease[], filters: ReleaseFilter[]): TrackerRelease[] {
+    return releases.filter((release) => filters.every((filter) => FILTER_PATTERNS[filter].test(release.releaseName)));
 }
 
 function toFailure(tracker: TrackerId, error: unknown): TrackerFailure {
